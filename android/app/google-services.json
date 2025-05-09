@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "411267723186",
+    "project_id": "guess-up-646e0",
+    "storage_bucket": "guess-up-646e0.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:411267723186:android:762b7d7d8861c12c113eab",
+        "android_client_info": {
+          "package_name": "com.example.guess_up"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDLiAp2sQllxdjuB16-POjt4_ryhwSX438"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
