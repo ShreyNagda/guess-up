@@ -1,64 +1,63 @@
-import 'dart:convert';
-
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:guess_up/screens/home_screen.dart';
-// import 'package:just_audio/just_audio.dart';
+import 'package:guess_up/screens/splash_screen.dart';
+import 'package:guess_up/services/audio_service.dart';
+import 'package:guess_up/services/storage_service.dart';
+import 'package:guess_up/services/theme_service.dart';
+import 'package:guess_up/theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+  await AudioService().init();
+  await ThemeService().loadTheme();
+
+  // Load saved settings
+  final isDarkTheme = await StorageService().getTheme();
+  final customWords = await StorageService().getCustomWords();
+
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  runApp(const MyApp());
+
+  runApp(MyApp(isDarkTheme: isDarkTheme, customWords: customWords));
 }
 
-Future<void> uploadCategoriesFromJsonFile() async {
-  final FirebaseFirestore firestore = FirebaseFirestore.instance;
+class MyApp extends StatefulWidget {
+  final bool isDarkTheme;
+  final List<String> customWords;
 
-  try {
-    // Load the JSON file as a string
-    final String jsonString = await rootBundle.loadString('assets/data.json');
+  const MyApp({
+    super.key,
+    required this.isDarkTheme,
+    required this.customWords,
+  });
 
-    // Decode the JSON into a List
-    final List<dynamic> jsonData = json.decode(jsonString);
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
 
-    // Upload each category
-    for (var category in jsonData) {
-      String id = category['name'].toString().toLowerCase().replaceAll(
-        ' ',
-        '_',
-      );
-
-      await firestore.collection('categories').doc(id).set({
-        'name': category['name'],
-        'icon': category['icon'] ?? '',
-        'words': List<String>.from(category['words']),
-      });
-
-      print('✅ Uploaded category: ${category['name']}');
-    }
-  } catch (e) {
-    print('❌ Failed to upload categories: $e');
+class _MyAppState extends State<MyApp> {
+  void updateTheme(bool value) {
+    StorageService().setTheme(value);
   }
-}
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+  void updateCustomWords(List<String> words) {}
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      title: 'GUESS UP',
-      theme: ThemeData(
-        scaffoldBackgroundColor: Colors.grey.shade200,
-        appBarTheme: AppBarTheme(backgroundColor: Colors.transparent),
-        colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF673AB7)),
-      ),
-      home: const HomeScreen(),
+    return AnimatedBuilder(
+      animation: ThemeService(),
+      builder: (context, _) {
+        return MaterialApp(
+          debugShowCheckedModeBanner: false,
+          title: 'guesse up',
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          themeMode: ThemeService().themeMode,
+          home: const SplashScreen(),
+        );
+      },
     );
   }
 }

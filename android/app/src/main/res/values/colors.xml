@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="ic_launcher_background">#ffffff</color>
+    <color name="splash_background">#4caf50</color> <!-- Match Flutter splash bg -->
+
+</resources>
