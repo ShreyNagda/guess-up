@@ -45,6 +45,7 @@ dependencies:
   shared_preferences: ^2.5.3
   flutter_native_splash: ^2.4.7
   google_fonts: ^6.3.2
+  json_annotation: ^4.9.0
 
 dev_dependencies:
   flutter_test:
@@ -57,6 +58,8 @@ dev_dependencies:
   # rules and activating additional ones.
   flutter_lints: ^5.0.0
   icons_launcher: ^3.0.3
+  json_serializable: ^6.11.1
+  build_runner: ^2.10.1
 
 flutter_launcher_icons:
   android: true
@@ -81,7 +84,7 @@ flutter:
     - assets/sounds/pass_sound.wav
     - assets/sounds/correct_sound.wav
     - assets/images/logo.png
-    - assets/images/splash.png
+    - assets/images/background.png
   #   - images/a_dot_ham.jpeg
 
   # An image asset can refer to one or more resolution-specific "variants", see
