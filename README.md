@@ -40,7 +40,7 @@ This project is a Flutter application.
 2.  **Clone the Repository:**
 
     ```bash
-    git clone <your-repository-url>
+    git clone https://github.com/ShreyNagda/guess-up
     cd guess_up
     ```
 
