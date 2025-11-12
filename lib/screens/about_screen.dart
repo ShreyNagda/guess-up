@@ -153,7 +153,7 @@ class _AboutScreenState extends State<AboutScreen> {
                 const Spacer(flex: 2), // Pushes copyright to bottom
                 // Copyright or Footer
                 Text(
-                  "© 2025 YourAppName/Company.\nAll rights reserved.", // TODO: Update year and name
+                  "© 2025 guesse up/Shrey Nagda.\nAll rights reserved.", // TODO: Update year and name
                   style: theme.textTheme.bodySmall?.copyWith(
                     // Use a very subtle color
                     color: theme.textTheme.bodySmall?.color?.withAlpha(100),

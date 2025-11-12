@@ -1,4 +1,4 @@
-package com.example.guess_up
+package com.shreynagda.guess_up
 
 import io.flutter.embedding.android.FlutterActivity
 

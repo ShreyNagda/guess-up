@@ -1,9 +1,12 @@
+import 'dart:async'; // Import for Future
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:guess_up/models/category.dart';
 import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/services/category_service.dart';
+import 'package:guess_up/services/storage_service.dart'; // Import StorageService
+import 'package:connectivity_plus/connectivity_plus.dart'; // Import connectivity
 
 class ConfigScreen extends StatefulWidget {
   const ConfigScreen({super.key});
@@ -14,6 +17,7 @@ class ConfigScreen extends StatefulWidget {
 
 class _ConfigScreenState extends State<ConfigScreen> {
   final CategoryService service = CategoryService();
+  final StorageService storage = StorageService(); // Instance of StorageService
 
   List<Category> categories = [];
   List<Category> selectedCategories = [];
@@ -21,32 +25,111 @@ class _ConfigScreenState extends State<ConfigScreen> {
   final List<int> timerOptions = [45, 60, 90, 120];
   int selectedTimer = 60;
 
+  bool _isLoading = true;
+  bool _hasInternet =
+      false; // This is the ONLY state variable we need for the UI
+
   @override
   void initState() {
     super.initState();
     _setPortrait(); // Keep this screen portrait
-    fetchCategories();
+    _loadCategoriesWithConnectivityCheck(); // Call the loading function
   }
-
-  // Removed dispose method resetting orientation, assuming we want portrait here.
-  // Add it back if navigating away needs to allow landscape immediately.
 
   void _setPortrait() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
 
-  Future<void> fetchCategories() async {
-    final fetched = await service.getAllCategories();
-    // Exclude the offline category if it exists (assuming ID "-1")
-    // If you fetch it from Firebase, it likely won't have ID "-1" anyway.
-    // If you manually add an offline option later, filter it here if needed.
-    setState(() {
-      categories = fetched.where((cat) => cat.id != "-1").toList();
-    });
+  // New function to check internet and then fetch categories
+  Future<void> _loadCategoriesWithConnectivityCheck() async {
+    if (mounted) setState(() => _isLoading = true);
+
+    // 1. Check connectivity
+    List<ConnectivityResult> connectivityStatus; // This is a local variable
+    try {
+      connectivityStatus = await Connectivity().checkConnectivity();
+      print(connectivityStatus);
+    } catch (e) {
+      connectivityStatus = [
+        ConnectivityResult.none,
+      ]; // Assume no internet if check fails
+    }
+
+    // 2. Determine if we should fetch from Firebase (ANY connection)
+    final bool hasInternetAccess =
+        !connectivityStatus.contains(ConnectivityResult.none);
+
+    // 3. Update the member variable that the UI reads
+    if (mounted) {
+      setState(() {
+        _hasInternet = hasInternetAccess;
+      });
+    }
+
+    // 4. Fetch categories based on the check
+    await fetchCategories(hasInternetAccess);
+
+    // 5. Update UI
+    if (mounted) setState(() => _isLoading = false);
+  }
+
+  // Modified function to accept internet status
+  Future<void> fetchCategories(bool hasInternet) async {
+    List<Category> allCategories = [];
+
+    // 1. Try fetching from Firebase ONLY if internet is available
+    if (hasInternet) {
+      try {
+        final fetched = await service.getAllCategories();
+        // We no longer filter for id != "-1"
+        allCategories.addAll(fetched);
+      } catch (e) {
+        // Handle Firebase error
+        debugPrint("Firebase fetching error: $e");
+        // If Firebase fails, update our state to reflect we have no internet
+        if (mounted) setState(() => _hasInternet = false);
+      }
+    }
+
+    // 2. ALWAYS fetch local and custom words (from StorageService)
+    try {
+      final localWords = await storage.getWordsFromLocalFile();
+      final customWords = await storage.getCustomWords();
+
+      // 3. Create "dummy" categories for them
+      if (localWords.isNotEmpty) {
+        allCategories.add(
+          Category(
+            id: "local", // New ID
+            name: "Local Words",
+            icon: "📦",
+            words: localWords,
+          ),
+        );
+      }
+      if (customWords.isNotEmpty) {
+        allCategories.add(
+          Category(
+            id: "custom", // New ID
+            name: "My Words",
+            icon: "✏️",
+            words: customWords,
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint("Error loading offline words: $e");
+    }
+
+    // 4. Update state with all found categories
+    if (mounted) {
+      setState(() {
+        categories = allCategories;
+      });
+    }
   }
 
   bool isAllSelected() {
-    // Check against the available categories fetched (excluding potential offline ones)
     if (categories.isEmpty) return false;
     return selectedCategories.length == categories.length;
   }
@@ -61,13 +144,12 @@ class _ConfigScreenState extends State<ConfigScreen> {
     });
   }
 
-  // Updated toggleAll function for the SwitchListTile
   void toggleAllCategories(bool? selectAll) {
     setState(() {
       if (selectAll == true) {
-        selectedCategories = List.from(categories); // Select all available
+        selectedCategories = List.from(categories);
       } else {
-        selectedCategories.clear(); // Deselect all
+        selectedCategories.clear();
       }
     });
   }
@@ -87,203 +169,266 @@ class _ConfigScreenState extends State<ConfigScreen> {
               time: selectedTimer,
               selectedCategories: selectedCategories,
             ),
-        fullscreenDialog: true, // Keep as fullscreenDialog for modal feel
+        fullscreenDialog: true,
       ),
     );
   }
 
   @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    bool _isAllSelected = isAllSelected(); // Cache the value for the switch
+  Widget build(BuildContext buildContext) {
+    final theme = Theme.of(buildContext);
+    bool _isAllSelected = isAllSelected();
 
     return Scaffold(
       appBar: AppBar(
         title: const Text("Configure Game"),
         leading: IconButton(
           icon: const Icon(Icons.chevron_left, size: 36),
-          onPressed: () => Navigator.of(context).pop(),
+          onPressed: () => Navigator.of(buildContext).pop(),
         ),
       ),
       body:
-          categories.isEmpty
+          _isLoading
               ? const Center(child: CircularProgressIndicator())
-              : Padding(
-                // Use Padding instead of ListView padding for overall spacing
-                padding: const EdgeInsets.all(16.0),
-                child: ListView(
-                  // Keep ListView for scrollability
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    // --- Categories Section ---
-                    Text(
-                      "Categories",
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Card(
-                      // Wrap category selection in a Card
-                      clipBehavior:
-                          Clip.antiAlias, // Ensures content respects shape
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 2, // Subtle elevation for the card
-                      child: Padding(
-                        padding: const EdgeInsets.all(
-                          12.0,
-                        ), // Padding inside the card
-                        child: Column(
-                          children: [
-                            // "Select All" Switch
-                            Padding(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 8.0,
-                                vertical: 4.0,
-                              ), // Adjust padding
-                              child: Row(
-                                children: [
-                                  Checkbox(
-                                    value: _isAllSelected,
-                                    onChanged:
-                                        toggleAllCategories, // Use the updated method
-                                    activeColor: theme.colorScheme.primary,
-                                    visualDensity: VisualDensity.compact,
-                                    materialTapTargetSize:
-                                        MaterialTapTargetSize.shrinkWrap,
-                                  ),
-                                  // Add GestureDetector to make the text tappable too
-                                  GestureDetector(
-                                    onTap:
-                                        () => toggleAllCategories(
-                                          !_isAllSelected,
-                                        ), // Toggle the current state
-                                    child: Text(
-                                      "Select All Categories",
-                                      style: theme.textTheme.titleMedium
-                                          ?.copyWith(
-                                            fontWeight: FontWeight.w600,
-                                          ),
-                                    ),
-                                  ),
-                                  // Optional Spacer to push checkbox/text left if needed
-                                  // const Spacer(),
-                                ],
+              : RefreshIndicator(
+                onRefresh: _loadCategoriesWithConnectivityCheck,
+                child:
+                    categories.isEmpty
+                        ? _buildEmptyState(theme) // Show a specific empty state
+                        : Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: ListView(
+                            physics: const BouncingScrollPhysics(
+                              parent: AlwaysScrollableScrollPhysics(),
+                            ),
+                            children: [
+                              // --- Categories Section ---
+                              Text(
+                                "Categories",
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
-                            ),
-                            const Divider(height: 1), // Separator
-                            const SizedBox(height: 12),
-                            // Category Grid
-                            GridView.builder(
-                              shrinkWrap:
-                                  true, // Keep shrinkWrap for ListView context
-                              physics:
-                                  const NeverScrollableScrollPhysics(), // Keep this
-                              gridDelegate:
-                                  const SliverGridDelegateWithFixedCrossAxisCount(
-                                    crossAxisCount: 3,
-                                    crossAxisSpacing:
-                                        10, // Adjusted spacing slightly
-                                    mainAxisSpacing: 10,
-                                    childAspectRatio:
-                                        1, // Keep square aspect ratio
+                              // The UI only needs to check _hasInternet
+                              if (!_hasInternet)
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 8.0,
                                   ),
-                              itemCount:
-                                  categories
-                                      .length, // Only loop through actual categories
-                              itemBuilder: (context, index) {
-                                final category = categories[index];
-                                final isSelected = selectedCategories.contains(
-                                  category,
-                                );
-                                return _buildAnimatedCategoryCard(
-                                  category,
-                                  isSelected,
-                                  theme,
-                                );
-                              },
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24), // Space between sections
-                    // --- Timer Section ---
-                    Text(
-                      "Select Time",
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Card(
-                      // Wrap timer selection in a Card
-                      clipBehavior: Clip.antiAlias,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      elevation: 2,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          vertical: 16.0,
-                          horizontal: 12.0,
-                        ), // Padding inside card
-                        child: Wrap(
-                          spacing: 10,
-                          runSpacing: 10,
-                          alignment: WrapAlignment.center,
-                          children:
-                              timerOptions.map((time) {
-                                final isSelected = selectedTimer == time;
-                                // Keep AnimatedScale for timer selection feedback
-                                return AnimatedScale(
-                                  scale: isSelected ? 1.1 : 1.0,
-                                  duration: const Duration(milliseconds: 200),
-                                  curve: Curves.easeInOut,
-                                  child: ChoiceChip(
-                                    label: Padding(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                        vertical: 8, // Adjusted padding
-                                      ),
-                                      child: Text("$time sec"),
+                                  child: Text(
+                                    "No internet. Showing offline categories only.\nPull to refresh.",
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      color: theme.hintColor,
                                     ),
-                                    selected: isSelected,
-                                    onSelected: (_) {
-                                      setState(() {
-                                        selectedTimer = time;
-                                      });
-                                    },
+                                    textAlign: TextAlign.center,
                                   ),
-                                );
-                              }).toList(),
+                                ),
+                              const SizedBox(height: 8),
+                              Card(
+                                clipBehavior: Clip.antiAlias,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 2,
+                                child: Padding(
+                                  padding: const EdgeInsets.all(12.0),
+                                  child: Column(
+                                    children: [
+                                      // "Select All" Switch
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 8.0,
+                                          vertical: 4.0,
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Checkbox(
+                                              value: _isAllSelected,
+                                              onChanged: toggleAllCategories,
+                                              activeColor:
+                                                  theme.colorScheme.primary,
+                                              visualDensity:
+                                                  VisualDensity.compact,
+                                              materialTapTargetSize:
+                                                  MaterialTapTargetSize
+                                                      .shrinkWrap,
+                                            ),
+                                            GestureDetector(
+                                              onTap:
+                                                  () => toggleAllCategories(
+                                                    !_isAllSelected,
+                                                  ),
+                                              child: Text(
+                                                "Select All Categories",
+                                                style: theme
+                                                    .textTheme
+                                                    .titleMedium
+                                                    ?.copyWith(
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      // Category Grid
+                                      GridView.builder(
+                                        shrinkWrap: true,
+                                        physics:
+                                            const NeverScrollableScrollPhysics(),
+                                        gridDelegate:
+                                            const SliverGridDelegateWithFixedCrossAxisCount(
+                                              crossAxisCount: 3,
+                                              crossAxisSpacing: 10,
+                                              mainAxisSpacing: 10,
+                                              childAspectRatio: 1,
+                                            ),
+                                        itemCount: categories.length,
+                                        itemBuilder: (context, index) {
+                                          final category = categories[index];
+                                          final isSelected = selectedCategories
+                                              .contains(category);
+                                          return _buildAnimatedCategoryCard(
+                                            category,
+                                            isSelected,
+                                            theme,
+                                          );
+                                        },
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(
+                                height: 24,
+                              ), // Space between sections
+                              // --- Timer Section ---
+                              Text(
+                                "Select Time",
+                                style: theme.textTheme.headlineMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Card(
+                                clipBehavior: Clip.antiAlias,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                elevation: 2,
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    vertical: 16.0,
+                                    horizontal: 12.0,
+                                  ),
+                                  child: Wrap(
+                                    spacing: 10,
+                                    runSpacing: 10,
+                                    alignment: WrapAlignment.center,
+                                    children:
+                                        timerOptions.map((time) {
+                                          final isSelected =
+                                              selectedTimer == time;
+                                          return AnimatedScale(
+                                            scale: isSelected ? 1.1 : 1.0,
+                                            duration: const Duration(
+                                              milliseconds: 200,
+                                            ),
+                                            curve: Curves.easeInOut,
+                                            child: ChoiceChip(
+                                              label: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 12,
+                                                      vertical: 8,
+                                                    ),
+                                                child: Text("$time sec"),
+                                              ),
+                                              selected: isSelected,
+                                              onSelected: (_) {
+                                                setState(() {
+                                                  selectedTimer = time;
+                                                });
+                                              },
+                                            ),
+                                          );
+                                        }).toList(),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 32),
+                              // --- Start Button ---
+                              ElevatedButton.icon(
+                                onPressed: handleStartGame,
+                                icon: const Icon(
+                                  Icons.play_arrow_rounded,
+                                  size: 28,
+                                ),
+                                label: const Text(
+                                  "Start Guessing!",
+                                  style: TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                            ],
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(height: 32),
-                    // --- Start Button ---
-                    ElevatedButton.icon(
-                      onPressed: handleStartGame,
-                      icon: const Icon(Icons.play_arrow_rounded, size: 28),
-                      label: const Text(
-                        "Start Guessing!",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16), // Padding at the very bottom
-                  ],
-                ),
               ),
-      // Removed floatingActionButton and location
     );
   }
 
-  // Updated Category Card builder
+  // Helper widget for empty state (checks _hasInternet)
+  Widget _buildEmptyState(ThemeData theme) {
+    String title =
+        _hasInternet ? "No Categories Found" : "No Internet or Offline Words";
+    String message =
+        _hasInternet
+            ? "We couldn't load any categories. Pull to refresh or add your own in Settings."
+            : "Please connect to the internet to download categories or add custom words in Settings.";
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              _hasInternet
+                  ? Icons.cloud_off_outlined
+                  : Icons.signal_wifi_off_outlined,
+              size: 60,
+              color: theme.hintColor,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              title,
+              style: theme.textTheme.headlineSmall,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              style: theme.textTheme.bodyLarge,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              icon: const Icon(Icons.refresh),
+              label: const Text("Retry Connection"),
+              onPressed: _loadCategoriesWithConnectivityCheck,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // Category Card builder (no changes needed)
   Widget _buildAnimatedCategoryCard(
     Category category,
     bool isSelected,
@@ -294,11 +439,10 @@ class _ConfigScreenState extends State<ConfigScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         curve: Curves.easeInOut,
-        // Keep scale effect for selection feedback
         transform:
             Matrix4.identity()..scaleByDouble(
-              isSelected ? 1.03 : 1.0,
-              isSelected ? 1.0 : 1.0,
+              isSelected ? 1.02 : 1.0,
+              isSelected ? 1.02 : 1.0,
               1.0,
               1.0,
             ),
@@ -306,31 +450,25 @@ class _ConfigScreenState extends State<ConfigScreen> {
           color:
               isSelected
                   ? theme.colorScheme.primary.withAlpha(50)
-                  : theme.cardColor.withAlpha(
-                    100,
-                  ), // Slightly transparent unselected cards
-          // Use standard rounded rectangle
+                  : theme.cardColor.withAlpha(100),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color:
                 isSelected
                     ? theme.colorScheme.primary
-                    : theme.dividerColor.withAlpha(
-                      100,
-                    ), // Subtle border when not selected
-            width: isSelected ? 2.5 : 1.5, // Thicker border when selected
+                    : theme.dividerColor.withAlpha(100),
+            width: isSelected ? 2.5 : 1.5,
           ),
           boxShadow:
               isSelected
                   ? [
-                    // Only add shadow when selected for more pop
                     BoxShadow(
                       color: theme.colorScheme.primary.withAlpha(50),
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
                   ]
-                  : [], // No shadow when not selected
+                  : [],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -338,15 +476,14 @@ class _ConfigScreenState extends State<ConfigScreen> {
             Text(category.icon, style: const TextStyle(fontSize: 28)),
             const SizedBox(height: 8),
             Padding(
-              // Add padding for text to avoid touching edges
               padding: const EdgeInsets.symmetric(horizontal: 4.0),
               child: Text(
                 category.name,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
+                style: theme.textTheme.bodyLarge?.copyWith(
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
-                maxLines: 2, // Allow text wrapping
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
             ),

@@ -1,16 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:guess_up/models/category.dart'; // Ensure Category model is imported
+// import 'package:guess_up/models/category.dart'; // No longer needed here
 import 'package:guess_up/screens/about_screen.dart';
 import 'package:guess_up/screens/config_screen.dart';
-import 'package:guess_up/screens/game_screen.dart';
+// import 'package:guess_up/screens/game_screen.dart'; // No longer needed here
 import 'package:guess_up/screens/how_to_play_screen.dart';
 import 'package:guess_up/screens/settings_screen.dart';
-// TODO: Uncomment these imports when the screens are created
-// import 'package:guess_up/screens/how_to_play_screen.dart';
-// import 'package:guess_up/screens/about_screen.dart';
-import 'package:guess_up/services/storage_service.dart';
+// import 'package:guess_up/services/storage_service.dart'; // No longer needed here
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -56,50 +53,6 @@ class _HomeScreenState extends State<HomeScreen>
   // Function to set portrait mode
   void _setPortraitOnly() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  }
-
-  // Helper to fetch offline words (custom + local JSON)
-  Future<List<String>> _fetchOfflineWords() async {
-    final customWords = await StorageService().getCustomWords();
-    final localWords = await StorageService().getWordsFromLocalFile();
-    return [...customWords, ...localWords];
-  }
-
-  // Function to handle starting offline game
-  Future<void> _startOfflineGame() async {
-    final offlineWords = await _fetchOfflineWords();
-
-    if (!mounted) return; // Check if the widget is still in the tree
-
-    if (offlineWords.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            "No offline words found! Add custom words in Settings.",
-          ),
-          duration: Duration(seconds: 2),
-        ),
-      );
-      return;
-    }
-
-    // Wrap words into a dummy category for GameScreen
-    final offlineCategory = Category(
-      id: "-1", // Special ID for offline/custom words
-      name: "Offline Mix",
-      icon: "💾", // Example icon
-      words: offlineWords..shuffle(), // Shuffle them for variety
-    );
-
-    Navigator.of(context).push(
-      CupertinoPageRoute(
-        builder:
-            (_) => GameScreen(
-              time: 60, // Default time, consider making this configurable
-              selectedCategories: [offlineCategory],
-            ),
-      ),
-    );
   }
 
   @override
@@ -199,9 +152,8 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                     ),
                   ),
-                  // The Offline button is removed from the center column
 
-                  // 3. Bottom Section: Secondary Action Buttons (Now includes Offline)
+                  // 3. Bottom Section: Secondary Action Buttons
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16.0),
                     child: Row(
@@ -232,14 +184,7 @@ class _HomeScreenState extends State<HomeScreen>
                             );
                           },
                         ),
-                        // Add Offline button back here
-                        _buildSecondaryButton(
-                          context,
-                          icon:
-                              Icons.save_alt_rounded, // Using your chosen icon
-                          label: "Offline",
-                          onPressed: _startOfflineGame,
-                        ),
+                        // --- OFFLINE BUTTON REMOVED ---
                         _buildSecondaryButton(
                           context,
                           icon: Icons.info_outline,
@@ -266,7 +211,6 @@ class _HomeScreenState extends State<HomeScreen>
   }
 
   // Helper widget for creating consistent secondary buttons WITH labels
-  // (Removed the isProminent flag as it's less needed now)
   Widget _buildSecondaryButton(
     BuildContext context, {
     required IconData icon,
@@ -276,15 +220,19 @@ class _HomeScreenState extends State<HomeScreen>
     final theme = Theme.of(context);
     return TextButton(
       onPressed: onPressed,
+      style: TextButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 28),
+          Icon(icon, size: 35),
           const SizedBox(height: 4),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: theme.textTheme.labelSmall?.copyWith(fontSize: 10),
+            style: theme.textTheme.labelLarge,
             overflow: TextOverflow.ellipsis,
           ),
         ],

@@ -7,9 +7,9 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:411267723186:android:762b7d7d8861c12c113eab",
+        "mobilesdk_app_id": "1:411267723186:android:fe7e50c4a041739a113eab",
         "android_client_info": {
-          "package_name": "com.example.guess_up"
+          "package_name": "com.shreynagda.guess_up"
         }
       },
       "oauth_client": [],
