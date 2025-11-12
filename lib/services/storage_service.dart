@@ -16,9 +16,6 @@ class StorageService {
   Future<SharedPreferences> get _prefs async =>
       await SharedPreferences.getInstance();
 
-  // --- Theme ---
-  // REMOVED old getTheme and setTheme methods
-
   // Get the saved ThemeMode
   Future<ThemeMode> getThemeMode() async {
     final prefs = await _prefs;

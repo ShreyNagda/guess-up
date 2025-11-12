@@ -1,5 +1,5 @@
 name: "guess_up"
-description: "A "
+description: "Guess Up is a mobile-based charades party game, designed especially for Indian youths and audiences. Put your phone on your forehead and guess the word based on your friends' clues!"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -80,14 +80,23 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/data.json
-    - assets/sounds/start_beep.wav
-    - assets/sounds/end_beep.wav
-    - assets/sounds/pass_sound.wav
-    - assets/sounds/correct_sound.wav
-    - assets/images/logo.png
-    - assets/images/background.png
+    - assets/sounds/
+    - assets/images/
+    - assets/fonts/
   #   - images/a_dot_ham.jpeg
-
+  fonts:
+    - family: Manrope
+      fonts:
+        - asset: assets/fonts/Manrope-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Manrope-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Manrope-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Manrope-Bold.ttf
+          weight: 700
+        - asset: assets/fonts/Manrope-ExtraBold.ttf
+          weight: 800
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
 

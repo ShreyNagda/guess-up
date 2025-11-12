@@ -55,6 +55,14 @@ This project is a Flutter application.
     flutter run
     ```
 
+### 📱 Or, Install the APK (Android Only)
+
+If you just want to test the game on an Android device without building it yourself:
+
+1. Go to the Releases page for this repository.
+2. Download the app-release.apk file from the latest release.
+3. Transfer the file to your Android phone and install it. (You may need to enable "Install from unknown sources" in your phone's settings).
+
 ## 🎮 How to Play
 
 1.  Launch the app.

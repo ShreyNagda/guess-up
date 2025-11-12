@@ -6,7 +6,9 @@ import 'package:guess_up/models/category.dart';
 import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/services/category_service.dart';
 import 'package:guess_up/services/storage_service.dart'; // Import StorageService
-import 'package:connectivity_plus/connectivity_plus.dart'; // Import connectivity
+
+// We no longer need connectivity_plus here
+// import 'package:connectivity_plus/connectivity_plus.dart';
 
 class ConfigScreen extends StatefulWidget {
   const ConfigScreen({super.key});
@@ -26,87 +28,52 @@ class _ConfigScreenState extends State<ConfigScreen> {
   int selectedTimer = 60;
 
   bool _isLoading = true;
-  bool _hasInternet =
-      false; // This is the ONLY state variable we need for the UI
+  // We no longer need _hasInternet
+  // bool _hasInternet = false;
 
   @override
   void initState() {
     super.initState();
     _setPortrait(); // Keep this screen portrait
-    _loadCategoriesWithConnectivityCheck(); // Call the loading function
+    fetchCategories(); // Just call fetchCategories directly
   }
 
   void _setPortrait() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
 
-  // New function to check internet and then fetch categories
-  Future<void> _loadCategoriesWithConnectivityCheck() async {
+  // Simplified loading function
+  Future<void> fetchCategories() async {
     if (mounted) setState(() => _isLoading = true);
 
-    // 1. Check connectivity
-    List<ConnectivityResult> connectivityStatus; // This is a local variable
-    try {
-      connectivityStatus = await Connectivity().checkConnectivity();
-      print(connectivityStatus);
-    } catch (e) {
-      connectivityStatus = [
-        ConnectivityResult.none,
-      ]; // Assume no internet if check fails
-    }
-
-    // 2. Determine if we should fetch from Firebase (ANY connection)
-    final bool hasInternetAccess =
-        !connectivityStatus.contains(ConnectivityResult.none);
-
-    // 3. Update the member variable that the UI reads
-    if (mounted) {
-      setState(() {
-        _hasInternet = hasInternetAccess;
-      });
-    }
-
-    // 4. Fetch categories based on the check
-    await fetchCategories(hasInternetAccess);
-
-    // 5. Update UI
-    if (mounted) setState(() => _isLoading = false);
-  }
-
-  // Modified function to accept internet status
-  Future<void> fetchCategories(bool hasInternet) async {
     List<Category> allCategories = [];
 
-    // 1. Try fetching from Firebase ONLY if internet is available
-    if (hasInternet) {
-      try {
-        final fetched = await service.getAllCategories();
-        // We no longer filter for id != "-1"
-        allCategories.addAll(fetched);
-      } catch (e) {
-        // Handle Firebase error
-        debugPrint("Firebase fetching error: $e");
-        // If Firebase fails, update our state to reflect we have no internet
-        if (mounted) setState(() => _hasInternet = false);
+    // 1. ALWAYS try to get categories.
+    // The service will return from cache if offline, or fetch if online.
+    try {
+      final fetched = await service.getAllCategories();
+      allCategories.addAll(fetched); // No more filtering for "-1"
+    } catch (e) {
+      // This catch block will run if we're offline AND have no cache
+      debugPrint("Firebase/Cache fetching error: $e");
+      if (mounted) {
+        // Inform the user, but we'll still load local words
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              "Couldn't load online categories. Showing offline words only.",
+            ),
+          ),
+        );
       }
     }
 
     // 2. ALWAYS fetch local and custom words (from StorageService)
     try {
-      final localWords = await storage.getWordsFromLocalFile();
+      await storage.getWordsFromLocalFile();
       final customWords = await storage.getCustomWords();
 
       // 3. Create "dummy" categories for them
-      if (localWords.isNotEmpty) {
-        allCategories.add(
-          Category(
-            id: "local", // New ID
-            name: "Local Words",
-            icon: "📦",
-            words: localWords,
-          ),
-        );
-      }
       if (customWords.isNotEmpty) {
         allCategories.add(
           Category(
@@ -125,6 +92,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
     if (mounted) {
       setState(() {
         categories = allCategories;
+        _isLoading = false; // Set loading to false here
       });
     }
   }
@@ -191,7 +159,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
           _isLoading
               ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
-                onRefresh: _loadCategoriesWithConnectivityCheck,
+                onRefresh:
+                    fetchCategories, // Pull to refresh now just calls fetchCategories
                 child:
                     categories.isEmpty
                         ? _buildEmptyState(theme) // Show a specific empty state
@@ -209,20 +178,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
-                              // The UI only needs to check _hasInternet
-                              if (!_hasInternet)
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 8.0,
-                                  ),
-                                  child: Text(
-                                    "No internet. Showing offline categories only.\nPull to refresh.",
-                                    style: theme.textTheme.bodyMedium?.copyWith(
-                                      color: theme.hintColor,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                  ),
-                                ),
+                              // We don't need the _hasInternet check here anymore
                               const SizedBox(height: 8),
                               Card(
                                 clipBehavior: Clip.antiAlias,
@@ -382,14 +338,12 @@ class _ConfigScreenState extends State<ConfigScreen> {
     );
   }
 
-  // Helper widget for empty state (checks _hasInternet)
+  // Helper widget for empty state
   Widget _buildEmptyState(ThemeData theme) {
-    String title =
-        _hasInternet ? "No Categories Found" : "No Internet or Offline Words";
+    // This state now means "We're offline AND have no cache AND no local words"
+    String title = "No Categories Found";
     String message =
-        _hasInternet
-            ? "We couldn't load any categories. Pull to refresh or add your own in Settings."
-            : "Please connect to the internet to download categories or add custom words in Settings.";
+        "Please connect to the internet and pull to refresh, or add your own custom words in Settings.";
 
     return Center(
       child: Padding(
@@ -397,13 +351,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              _hasInternet
-                  ? Icons.cloud_off_outlined
-                  : Icons.signal_wifi_off_outlined,
-              size: 60,
-              color: theme.hintColor,
-            ),
+            Icon(Icons.cloud_off_outlined, size: 60, color: theme.hintColor),
             const SizedBox(height: 16),
             Text(
               title,
@@ -419,8 +367,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
             const SizedBox(height: 24),
             ElevatedButton.icon(
               icon: const Icon(Icons.refresh),
-              label: const Text("Retry Connection"),
-              onPressed: _loadCategoriesWithConnectivityCheck,
+              label: const Text("Retry"),
+              onPressed: fetchCategories, // Just call fetchCategories
             ),
           ],
         ),
@@ -441,8 +389,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
         curve: Curves.easeInOut,
         transform:
             Matrix4.identity()..scaleByDouble(
-              isSelected ? 1.02 : 1.0,
-              isSelected ? 1.02 : 1.0,
+              isSelected ? 1.03 : 1.0, // Use 1.03, not 1.02
+              isSelected ? 1.03 : 1.0, // Use 1.03, not 1.02
               1.0,
               1.0,
             ),
@@ -480,7 +428,8 @@ class _ConfigScreenState extends State<ConfigScreen> {
               child: Text(
                 category.name,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge?.copyWith(
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  // Changed from bodyLarge
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
                 maxLines: 2,
