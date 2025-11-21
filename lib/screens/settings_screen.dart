@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Import services if orientation lock is needed
+import 'package:flutter/services.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/services/theme_service.dart';
+import 'package:guess_up/theme/app_theme.dart';
+import 'package:provider/provider.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -12,85 +14,78 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  // bool isDarkTheme = false; // Replaced by selectedThemeMode
-  ThemeMode _selectedThemeMode = ThemeMode.system; // Default to system
-  bool isVolumeOn = true;
+  ThemeMode _selectedThemeMode = ThemeMode.system;
+  bool isMusicOn = true;
+  bool isSfxOn = true;
+  bool isHapticsOn = true;
   List<String> customWords = [];
-
-  // final TextEditingController wordController = TextEditingController(); // Removed single word controller
   final TextEditingController multiWordController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
-    _setPortraitOnly(); // Keep settings screen portrait
+    _setPortraitOnly();
     _loadSettings();
   }
-
-  // Optional: Add dispose if resetting orientation is needed when leaving
-  // @override
-  // void dispose() {
-  //   _resetOrientation();
-  //   super.dispose();
-  // }
 
   void _setPortraitOnly() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
 
-  // Optional: Function to allow any orientation after leaving screen
-  // void _resetOrientation() {
-  //   SystemChrome.setPreferredOrientations([
-  //     DeviceOrientation.portraitUp,
-  //     DeviceOrientation.portraitDown,
-  //     DeviceOrientation.landscapeLeft,
-  //     DeviceOrientation.landscapeRight,
-  //   ]);
-  // }
-
   Future<void> _loadSettings() async {
-    // --- TODO: Update StorageService to load ThemeMode ---
-    // Example: Replace StorageService().getTheme() with something like:
-    // final storedThemeMode = await StorageService().getThemeMode(); // Returns ThemeMode
-    // For now, we'll use the ThemeService's current mode if available
-    final currentThemeMode = ThemeService().themeMode; // Get mode from service
-    final volume = await StorageService().getVolume();
-    final words = await StorageService().getCustomWords();
+    // Access the singleton directly for consistency with AudioService usage
+    final storage = StorageService();
+    final currentThemeMode =
+        Provider.of<ThemeService>(context, listen: false).themeMode;
+    final words = storage.getCustomWords();
 
     if (mounted) {
-      // Check mounted before setState
       setState(() {
-        _selectedThemeMode = currentThemeMode; // Set initial selection
-        isVolumeOn = volume;
+        _selectedThemeMode = currentThemeMode;
+        // Use specific getters from StorageService
+        isMusicOn = storage.isMusicEnabled;
+        isSfxOn = storage.isSfxEnabled;
+        isHapticsOn = storage.isHapticsEnabled;
         customWords = words;
       });
     }
   }
 
-  // Updated theme update function
-  void _updateTheme(ThemeMode? newMode) {
-    if (newMode == null) return;
-    if (mounted) {
-      // Check mounted before setState
-      setState(() => _selectedThemeMode = newMode);
-    }
-    // --- TODO: Update ThemeService and StorageService ---
-    // Example: Replace toggleTheme with something like:
-    ThemeService().setThemeMode(newMode); // Update ThemeService
-    // Example: Replace StorageService().setTheme(bool) with:
-    // StorageService().setThemeMode(newMode); // Persist selection
+  void _updateTheme(ThemeMode newMode) {
+    if (mounted) setState(() => _selectedThemeMode = newMode);
+    Provider.of<ThemeService>(context, listen: false).setThemeMode(newMode);
+    // Update StorageService singleton directly
+    StorageService().setThemeMode(newMode);
   }
 
-  void _updateVolume(bool value) {
-    if (mounted) {
-      // Check mounted before setState
-      setState(() => isVolumeOn = value);
-    }
-    StorageService().setVolume(value);
-    AudioService().setVolume(value ? 1.0 : 0.0);
+  Future<void> _toggleMusic() async {
+    final newValue = !isMusicOn;
+    if (mounted) setState(() => isMusicOn = newValue);
+
+    final storage = StorageService();
+    await storage.setMusicEnabled(newValue); // Use specific method
+    await AudioService().toggleMusic(newValue);
   }
 
-  // Removed _addWord function
+  Future<void> _toggleSfx() async {
+    final newValue = !isSfxOn;
+    if (mounted) setState(() => isSfxOn = newValue);
+
+    final storage = StorageService();
+    await storage.setSfxEnabled(newValue); // Use specific method
+    if (newValue) {
+      AudioService().playCorrect(); // Play a sound to confirm it works
+    }
+  }
+
+  Future<void> _toggleHaptics() async {
+    final newValue = !isHapticsOn;
+    if (mounted) setState(() => isHapticsOn = newValue);
+
+    final storage = StorageService();
+    await storage.setHapticsEnabled(newValue);
+    if (newValue) AudioService().mediumImpact();
+  }
 
   void _addMultipleWords(String text) {
     if (text.isEmpty) return;
@@ -102,204 +97,408 @@ class _SettingsScreenState extends State<SettingsScreen> {
             .toList();
 
     if (mounted) {
-      // Check mounted before setState
       setState(() {
-        // Avoid adding duplicates already in the list
         customWords.addAll(
           newWords.where((word) => !customWords.contains(word)),
         );
         multiWordController.clear();
       });
     }
-    // Save the updated list (consider saving only unique words)
     StorageService().setCustomWords(customWords.toSet().toList());
   }
 
   void _removeWord(String word) {
-    if (mounted) {
-      // Check mounted before setState
-      setState(() => customWords.remove(word));
-    }
+    if (mounted) setState(() => customWords.remove(word));
     StorageService().setCustomWords(customWords);
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    // Consistent Theme Colors
+    final primaryColor =
+        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
+    final accentColor =
+        isDark ? AppTheme.darkAccentColor : AppTheme.lightAccentColor;
+    final textColor =
+        isDark ? AppTheme.darkTextColor : AppTheme.lightAccentColor;
+    final borderColor =
+        isDark ? primaryColor.withAlpha(77) : accentColor.withAlpha(26);
+
     return Scaffold(
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text("Settings"),
-        // Removed local shape, relies on theme
         leading: IconButton(
-          icon: const Icon(Icons.chevron_left, size: 36),
+          icon: Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
+        title: Text(
+          "SETTINGS",
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.w900,
+            letterSpacing: 2,
+            color: textColor,
+          ),
+        ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ListView(
-          children: [
-            // --- Theme Selection Card ---
-            Card(
-              // shape: RoundedRectangleBorder( // Inherits from theme
-              //   borderRadius: BorderRadius.circular(16),
-              // ),
-              // elevation: 4, // Inherits from theme
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 12.0,
-                  horizontal: 16.0,
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "Appearance", // Section title
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(
-                      // Use Wrap for flexibility
-                      spacing: 12.0, // Horizontal space between chips
-                      runSpacing: 8.0, // Vertical space if chips wrap
-                      alignment:
-                          WrapAlignment.center, // Center chips horizontally
-                      children: [
-                        ChoiceChip(
-                          label: const Text("Light"),
-                          selected: _selectedThemeMode == ThemeMode.light,
-                          onSelected: (selected) {
-                            if (selected) _updateTheme(ThemeMode.light);
-                          },
-                          // Use theme defaults for styling
-                          // showCheckmark: false, // Default is false
-                        ),
-                        ChoiceChip(
-                          label: const Text("Dark"),
-                          selected: _selectedThemeMode == ThemeMode.dark,
-                          onSelected: (selected) {
-                            if (selected) _updateTheme(ThemeMode.dark);
-                          },
-                        ),
-                        ChoiceChip(
-                          label: const Text("System"),
-                          selected: _selectedThemeMode == ThemeMode.system,
-                          onSelected: (selected) {
-                            if (selected) _updateTheme(ThemeMode.system);
-                          },
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+      body: ListView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        children: [
+          // --- 1. Appearance Section ---
+          _buildSectionTitle("APPEARANCE", textColor),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              border: Border.all(color: borderColor, width: 2),
+              borderRadius: BorderRadius.circular(16),
             ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: _buildThemeButton(
+                    ThemeMode.light,
+                    "Light",
+                    Icons.wb_sunny_rounded,
+                    isDark,
+                  ),
+                ),
+                Expanded(
+                  child: _buildThemeButton(
+                    ThemeMode.dark,
+                    "Dark",
+                    Icons.nights_stay_rounded,
+                    isDark,
+                  ),
+                ),
+                Expanded(
+                  child: _buildThemeButton(
+                    ThemeMode.system,
+                    "System",
+                    Icons.settings_brightness_rounded,
+                    isDark,
+                  ),
+                ),
+              ],
+            ),
+          ),
 
-            // --- Volume Card (Centered Content) ---
-            Card(
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  vertical: 8.0,
-                  horizontal: 16.0,
-                ), // Adjust padding
-                child: Row(
-                  mainAxisAlignment:
-                      MainAxisAlignment
-                          .spaceBetween, // Space between label and switch
-                  children: [
-                    // Add some flexible space to push content towards center if needed,
-                    // but spaceBetween usually looks better for ListTile-like rows.
-                    // const Spacer(flex: 1),
-                    Text(
-                      "Game Sound",
-                      style:
-                          theme
-                              .textTheme
-                              .titleMedium, // Use appropriate text style
-                    ),
-                    // const SizedBox(width: 16), // Explicit spacing
-                    Switch(value: isVolumeOn, onChanged: _updateVolume),
-                    // const Spacer(flex: 1),
-                  ],
+          const SizedBox(height: 32),
+
+          // --- 2. Controls Section (Music, SFX, Haptics) ---
+          _buildSectionTitle("CONTROLS", textColor),
+          Row(
+            children: [
+              Expanded(
+                child: _buildToggleButton(
+                  "Music",
+                  isMusicOn
+                      ? Icons.music_note_rounded
+                      : Icons.music_off_rounded,
+                  isMusicOn,
+                  _toggleMusic,
+                  primaryColor,
+                  accentColor,
+                  isDark,
                 ),
               ),
-            ),
-
-            const SizedBox(height: 24), // Increased space before next section
-            Text(
-              "Custom Words",
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildToggleButton(
+                  "Sounds",
+                  isSfxOn ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                  isSfxOn,
+                  _toggleSfx,
+                  primaryColor,
+                  accentColor,
+                  isDark,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-
-            // Single-word input Row REMOVED
-
-            // --- Multi-word input ---
-            Text(
-              "Add words (comma separated)", // Simplified label
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+              const SizedBox(width: 12),
+              Expanded(
+                child: _buildToggleButton(
+                  "Haptics",
+                  isHapticsOn
+                      ? Icons.vibration_rounded
+                      : Icons.smartphone_rounded,
+                  isHapticsOn,
+                  _toggleHaptics,
+                  primaryColor,
+                  accentColor,
+                  isDark,
+                ),
               ),
+            ],
+          ),
+
+          const SizedBox(height: 32),
+
+          // --- 3. Custom Words Section ---
+          _buildSectionTitle("CUSTOM WORDS", textColor),
+
+          // Input Field
+          Container(
+            decoration: BoxDecoration(
+              color: isDark ? AppTheme.darkSurfaceColor : Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: borderColor, width: 2),
             ),
-            const SizedBox(height: 8),
-            TextField(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: TextField(
               controller: multiWordController,
-              decoration: const InputDecoration(
-                // Relies on theme now
-                hintText: "e.g. apple, banana, cat, dog",
+              style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
+              decoration: InputDecoration(
+                border: InputBorder.none,
+                hintText: "Add words (comma separated)...",
+                hintStyle: TextStyle(color: textColor.withAlpha(100)),
               ),
-              minLines: 3,
-              maxLines: 5,
+              minLines: 1,
+              maxLines: 3,
             ),
-            const SizedBox(height: 12), // Increased space
-            ElevatedButton(
+          ),
+
+          const SizedBox(height: 12),
+
+          // Add Button
+          SizedBox(
+            width: double.infinity,
+            height: 50,
+            child: ElevatedButton(
               onPressed:
                   () => _addMultipleWords(multiWordController.text.trim()),
-              // Style removed, inherits theme (pill shape)
-              // Make button full width for better tap target
               style: ElevatedButton.styleFrom(
-                minimumSize: const Size(double.infinity, 45),
+                backgroundColor: primaryColor,
+                foregroundColor:
+                    isDark ? accentColor : Colors.white, // Text color
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
               ),
-              child: const Text("Add Words"),
+              child: Text(
+                "ADD WORDS",
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 1,
+                  color:
+                      isDark
+                          ? AppTheme.darkAccentColor
+                          : AppTheme.lightAccentColor,
+                ),
+              ),
             ),
+          ),
 
-            const SizedBox(height: 24), // Increased space
-            if (customWords.isNotEmpty) // Show title only if there are words
-              Text(
-                "Your Words",
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+          const SizedBox(height: 16),
+
+          // Words List
+          if (customWords.isNotEmpty) ...[
+            Text(
+              "${customWords.length} WORDS ADDED",
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+                color: textColor.withAlpha(125),
+                letterSpacing: 1,
               ),
+            ),
             const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children:
+                  customWords.map((word) {
+                    return Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color:
+                            isDark
+                                ? AppTheme.darkSurfaceColor
+                                : AppTheme.lightScaffoldBackground,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: borderColor),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            word,
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: textColor,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () => _removeWord(word),
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 16,
+                              color: Colors.redAccent.withAlpha(200),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }).toList(),
+            ),
+          ],
 
-            // Word List
-            // Wrap list in a Column if it's inside another ListView to avoid nesting issues
-            // Or ensure the outer ListView is the only scrollable parent
-            ...customWords.map(
-              (word) => Card(
-                // Use theme defaults for shape, elevation
-                elevation: 2,
-                margin: const EdgeInsets.symmetric(vertical: 6),
-                child: ListTile(
-                  title: Text(word),
-                  trailing: IconButton(
-                    icon: const Icon(
-                      Icons.delete_outline,
-                      color: Colors.redAccent,
-                    ), // Outline icon
-                    tooltip: "Remove '$word'",
-                    onPressed: () => _removeWord(word),
-                  ),
-                  visualDensity:
-                      VisualDensity.compact, // Make list items tighter
-                ),
+          const SizedBox(height: 40), // Bottom padding
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title, Color color) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12.0, left: 4.0),
+      child: Text(
+        title,
+        style: TextStyle(
+          color: color.withAlpha(150),
+          fontWeight: FontWeight.w900,
+          fontSize: 12,
+          letterSpacing: 1.5,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildThemeButton(
+    ThemeMode mode,
+    String label,
+    IconData icon,
+    bool isDark,
+  ) {
+    final isSelected = _selectedThemeMode == mode;
+    final inactiveColor =
+        isDark
+            ? AppTheme.darkTextColor.withAlpha(125)
+            : AppTheme.lightAccentColor.withAlpha(100);
+
+    return InkWell(
+      onTap: () => _updateTheme(mode),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color:
+              isSelected
+                  ? (isDark
+                      ? AppTheme.darkPrimaryColor
+                      : AppTheme.lightPrimaryColor)
+                  : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color:
+                  isSelected
+                      ? (isDark
+                          ? AppTheme.darkAccentColor
+                          : AppTheme.lightAccentColor)
+                      : inactiveColor,
+              size: 24,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                color:
+                    isSelected
+                        ? (isDark
+                            ? AppTheme.darkAccentColor
+                            : AppTheme.lightAccentColor)
+                        : inactiveColor,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildToggleButton(
+    String label,
+    IconData icon,
+    bool isActive,
+    VoidCallback onTap,
+    Color primaryColor,
+    Color accentColor,
+    bool isDark,
+  ) {
+    // Active State: Filled with Primary Color (Yellow/Amber)
+    // Inactive State: Outline with faint border
+
+    final bgColor =
+        isActive
+            ? primaryColor
+            : (isDark ? AppTheme.darkSurfaceColor : Colors.white);
+
+    final iconColor =
+        isActive
+            ? (isDark ? AppTheme.darkAccentColor : AppTheme.lightAccentColor)
+            : (isDark
+                ? AppTheme.darkTextColor.withAlpha(75)
+                : AppTheme.lightAccentColor.withAlpha(75));
+
+    final borderColor =
+        isActive
+            ? Colors.transparent
+            : (isDark ? primaryColor.withAlpha(50) : accentColor.withAlpha(25));
+
+    return GestureDetector(
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap();
+      },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: borderColor, width: 2),
+          boxShadow:
+              isActive
+                  ? [
+                    BoxShadow(
+                      color: primaryColor.withAlpha(75),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                  : [],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(icon, size: 32, color: iconColor),
+            const SizedBox(height: 8),
+            Text(
+              label.toUpperCase(),
+              style: TextStyle(
+                color: iconColor,
+                fontWeight: FontWeight.w900,
+                fontSize: 12, // Slightly smaller to fit 3 buttons
+                letterSpacing: 1,
+              ),
+            ),
+            Text(
+              isActive ? "ON" : "OFF",
+              style: TextStyle(
+                color: iconColor.withAlpha(150),
+                fontWeight: FontWeight.w700,
+                fontSize: 10,
               ),
             ),
           ],

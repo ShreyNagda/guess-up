@@ -1,39 +1,89 @@
 import 'dart:convert';
-import 'package:flutter/material.dart'; // Import for ThemeMode
-import 'package:flutter/services.dart';
+import 'package:flutter/material.dart'; // For ThemeMode
+import 'package:flutter/services.dart'; // For rootBundle
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
+  // Singleton pattern
   static final StorageService _instance = StorageService._internal();
   factory StorageService() => _instance;
   StorageService._internal();
 
   // --- Constants for Keys ---
-  static const String _themeModeKey = 'themeMode'; // New key for ThemeMode
-  static const String _volumeKey = 'isVolumeOn';
+  static const String _themeModeKey = 'themeMode';
+  // Renaming/Adding specific keys
+  static const String _musicKey = 'isMusicEnabled';
+  static const String _sfxKey = 'isSfxEnabled';
+  static const String _hapticsKey = 'isHapticsEnabled';
   static const String _customWordsKey = 'customWords';
 
-  Future<SharedPreferences> get _prefs async =>
-      await SharedPreferences.getInstance();
+  late SharedPreferences _prefs;
+  bool _isInitialized = false;
 
-  // Get the saved ThemeMode
-  Future<ThemeMode> getThemeMode() async {
-    final prefs = await _prefs;
-    final themeString = prefs.getString(_themeModeKey);
+  // --- In-Memory Cache ---
+  bool _isMusicEnabled = true;
+  bool _isSfxEnabled = true;
+  bool _isHapticsEnabled = true;
+  ThemeMode _themeMode = ThemeMode.system;
+
+  /// Initialize the service and pre-load critical settings
+  Future<void> init() async {
+    if (_isInitialized) return;
+    _prefs = await SharedPreferences.getInstance();
+
+    // 1. Load Music & SFX
+    // Default to true if not set
+    _isMusicEnabled = _prefs.getBool(_musicKey) ?? true;
+    _isSfxEnabled = _prefs.getBool(_sfxKey) ?? true;
+
+    // 2. Load Haptics
+    _isHapticsEnabled = _prefs.getBool(_hapticsKey) ?? true;
+
+    // 3. Load Theme
+    final themeString = _prefs.getString(_themeModeKey);
     switch (themeString) {
       case 'light':
-        return ThemeMode.light;
+        _themeMode = ThemeMode.light;
+        break;
       case 'dark':
-        return ThemeMode.dark;
-      case 'system':
-      default: // Default to system if null or unknown value
-        return ThemeMode.system;
+        _themeMode = ThemeMode.dark;
+        break;
+      default:
+        _themeMode = ThemeMode.system;
     }
+
+    _isInitialized = true;
   }
 
-  // Save the selected ThemeMode
+  // --- Music Settings ---
+  bool get isMusicEnabled => _isMusicEnabled;
+
+  Future<void> setMusicEnabled(bool value) async {
+    _isMusicEnabled = value;
+    await _prefs.setBool(_musicKey, value);
+  }
+
+  // --- SFX Settings ---
+  bool get isSfxEnabled => _isSfxEnabled;
+
+  Future<void> setSfxEnabled(bool value) async {
+    _isSfxEnabled = value;
+    await _prefs.setBool(_sfxKey, value);
+  }
+
+  // --- Haptics Settings ---
+  bool get isHapticsEnabled => _isHapticsEnabled;
+
+  Future<void> setHapticsEnabled(bool value) async {
+    _isHapticsEnabled = value;
+    await _prefs.setBool(_hapticsKey, value);
+  }
+
+  // --- Theme Mode ---
+  ThemeMode get themeMode => _themeMode;
+
   Future<void> setThemeMode(ThemeMode mode) async {
-    final prefs = await _prefs;
+    _themeMode = mode;
     String themeString;
     switch (mode) {
       case ThemeMode.light:
@@ -46,46 +96,25 @@ class StorageService {
         themeString = 'system';
         break;
     }
-    await prefs.setString(_themeModeKey, themeString);
-  }
-
-  // --- Volume ---
-  Future<bool> getVolume() async {
-    final prefs = await _prefs;
-    // Use the constant key
-    return prefs.getBool(_volumeKey) ?? true; // Default to true (sound on)
-  }
-
-  Future<void> setVolume(bool value) async {
-    final prefs = await _prefs;
-    // Use the constant key
-    await prefs.setBool(_volumeKey, value);
+    await _prefs.setString(_themeModeKey, themeString);
   }
 
   // --- Custom Words ---
-  Future<List<String>> getCustomWords() async {
-    final prefs = await _prefs;
-    // Use the constant key
-    return prefs.getStringList(_customWordsKey) ?? [];
+  List<String> getCustomWords() {
+    return _prefs.getStringList(_customWordsKey) ?? [];
   }
 
   Future<void> setCustomWords(List<String> words) async {
-    final prefs = await _prefs;
-    // Use the constant key
-    // Ensure uniqueness before saving
-    await prefs.setStringList(_customWordsKey, words.toSet().toList());
+    await _prefs.setStringList(_customWordsKey, words.toSet().toList());
   }
 
-  // Note: addCustomWords might add duplicates temporarily,
-  // but setCustomWords now saves only unique words.
   Future<void> addCustomWords(List<String> words) async {
-    final current = await getCustomWords();
-    // Add only new words to avoid unnecessary list growth before saving
+    final current = getCustomWords();
     current.addAll(words.where((word) => !current.contains(word)));
-    await setCustomWords(current); // This will save the unique list
+    await setCustomWords(current);
   }
 
-  // --- Local File Words --- (No changes needed here)
+  // --- Local File Words ---
   Future<List<String>> getWordsFromLocalFile() async {
     try {
       final jsonString = await rootBundle.loadString('assets/data.json');
@@ -93,7 +122,7 @@ class StorageService {
       final List<dynamic> wordsDynamic = jsonMap['words'] ?? [];
       return wordsDynamic.map((e) => e.toString()).toList();
     } catch (e) {
-      print("Error loading local words from data.json: $e");
+      debugPrint("Error loading local words from data.json: $e");
       return [];
     }
   }

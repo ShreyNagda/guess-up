@@ -1,40 +1,26 @@
 import 'package:flutter/material.dart';
-import 'storage_service.dart'; // Ensure StorageService is imported
+import 'package:guess_up/services/storage_service.dart';
 
-class ThemeService extends ChangeNotifier {
-  static final ThemeService _instance = ThemeService._internal();
-  factory ThemeService() => _instance;
-  ThemeService._internal();
-
-  // Replace _isDark with _themeMode
-  ThemeMode _themeMode = ThemeMode.system; // Default to system
-
-  // Keep the getter for themeMode
+class ThemeService with ChangeNotifier {
+  ThemeMode _themeMode = ThemeMode.system;
   ThemeMode get themeMode => _themeMode;
-
-  // Remove the isDark getter
-  // bool get isDark => _isDark;
-
-  // Load the saved ThemeMode from StorageService
-  Future<void> loadTheme() async {
-    // Call the new method in StorageService
-    _themeMode = await StorageService().getThemeMode();
-    notifyListeners(); // Notify listeners after loading
+  ThemeService() {
+    _loadTheme();
+  }
+  Future<void> _loadTheme() async {
+    // Ensure StorageService is ready (it's a singleton, so we can access it directly)
+    // Or better, just read the synchronous value if init() has run in main.dart
+    _themeMode = StorageService().themeMode;
+    notifyListeners();
   }
 
-  // Replace toggleTheme with setThemeMode
-  Future<void> setThemeMode(ThemeMode mode) async {
-    // No need to check if it's the same, just update
+  void setThemeMode(ThemeMode mode) {
+    if (_themeMode == mode) return;
+
     _themeMode = mode;
-    // Call the new method in StorageService
-    await StorageService().setThemeMode(mode);
-    notifyListeners(); // Notify listeners about the change
-  }
+    notifyListeners(); // This triggers MaterialApp to rebuild
 
-  // --- Old toggleTheme method removed ---
-  // Future<void> toggleTheme(bool value) async {
-  //   _isDark = value;
-  //   await StorageService().setTheme(value);
-  //   notifyListeners();
-  // }
+    // Persist the change
+    StorageService().setThemeMode(mode);
+  }
 }

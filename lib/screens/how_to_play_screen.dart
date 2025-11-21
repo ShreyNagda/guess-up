@@ -45,7 +45,7 @@ class _HowToPlayScreenState extends State<HowToPlayScreen> {
         // No local shape needed, theme provides it
         leading: IconButton(
           // Using a standard back icon, size inherited or themed
-          icon: const Icon(Icons.arrow_back_ios_new),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
           tooltip: "Back",
           onPressed: () => Navigator.of(context).pop(),
         ),

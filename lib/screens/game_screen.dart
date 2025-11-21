@@ -2,51 +2,52 @@ import 'dart:async';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:guess_up/models/category.dart';
 import 'package:guess_up/screens/result_screen.dart';
 import 'package:guess_up/services/audio_service.dart';
+import 'package:guess_up/services/category_service.dart';
+import 'package:guess_up/widgets/game_pause_overlay.dart';
 import 'package:guess_up/widgets/game_top_bar.dart';
 import 'package:guess_up/widgets/tilt_detector.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:timer_controller/timer_controller.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:guess_up/models/category.dart';
-import 'package:guess_up/services/category_service.dart';
-
-import '../widgets/game_pause_overlay.dart';
 
 class GameScreen extends StatefulWidget {
   final int time;
   final List<Category> selectedCategories;
-
   const GameScreen({
     super.key,
     required this.time,
     required this.selectedCategories,
   });
-
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
 
 class _GameScreenState extends State<GameScreen> {
+  // --- Game State ---
   bool isGamePaused = false;
   bool isGameFinished = false;
   bool isPlacedOnForehead = false;
   bool isCountdownRunning = false;
-  bool canDetectTilt = true; // Renamed from isTiltAllowed for clarity
-
+  bool canDetectTilt = true;
+  bool isLoadingWords = true;
   int getReadyCountdown = 3;
   int score = 0;
   int currentIndex = 0;
-
   List<String> wordsList = [];
   Map<String, String> scoreMap = {}; // word -> "Correct"/"Pass"
-
+  // --- Feedback Overlay State ---
+  String? _feedbackMessage;
+  Color? _feedbackColor;
+  IconData? _feedbackIcon;
+  // --- Services & Controllers ---
   final CategoryService service = CategoryService();
   StreamSubscription<AccelerometerEvent>? _subscription;
   late TimerController gameTimerController;
   Timer? countdownTimer;
-  double lastZ = 0; // Keep track of Z-axis for tilt reset logic
+  double lastZ = 0;
 
   @override
   void initState() {
@@ -70,50 +71,32 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Future<void> _fetchInitialWords() async {
-    List<String> initialWords = [];
-    // Online mode: Only get words from the selected Firestore categories
-    initialWords = service.getWordsFromSelectedCategories(
+    // Simulate async fetch if needed, or just process
+    // In a real scenario, this might await a DB cal
+    final initialWords = service.getWordsFromSelectedCategories(
       widget.selectedCategories,
     );
-
     if (mounted) {
       setState(() {
-        // Use toSet() to ensure all words (especially in offline) are unique
         wordsList = initialWords.toSet().toList()..shuffle();
+        isLoadingWords = false;
       });
     }
   }
 
-  // // Helper for loading local file words
-  // Future<List<String>> _getWordsFromLocalFile() async {
-  //   try {
-  //     final jsonStr = await rootBundle.loadString("assets/data.json");
-  //     final data = json.decode(jsonStr);
-  //     // Assuming data.json structure is {"words": ["Word1", "Word2", ...]}
-  //     if (data is Map && data.containsKey('words') && data['words'] is List) {
-  //       return List<String>.from(data['words']);
-  //     }
-  //     if (data is List) {
-  //       return data.map((e) => e.toString()).toList();
-  //     }
-  //     return [];
-  //   } catch (e) {
-  //     print("Error loading local words: $e");
-  //     return [];
-  //   }
-  // }
-
   void _handleAccelerometer(AccelerometerEvent event) {
     lastZ = event.z;
-    final isFlat = lastZ.abs() < 2;
-    if (isFlat &&
-        !isPlacedOnForehead &&
-        !isCountdownRunning &&
-        gameTimerController.value.status != TimerStatus.running &&
-        !isGamePaused &&
-        !isGameFinished) {
+    // Ignore if game hasn't started or is paused
+    if (isGamePaused ||
+        isGameFinished ||
+        gameTimerController.value.status == TimerStatus.running) {
+      return;
+    }
+    // Logic to start the game when phone is placed on forehead (vertical)
+    // Z-axis close to 0 means the screen is vertical (landscape mode)
+    final isFlat = lastZ.abs() < 2.5;
+    if (isFlat && !isPlacedOnForehead && !isCountdownRunning) {
       if (mounted) {
-        // Guard setState
         setState(() {
           isPlacedOnForehead = true;
           isCountdownRunning = true;
@@ -127,7 +110,6 @@ class _GameScreenState extends State<GameScreen> {
   void _startGetReadyCountdown() {
     AudioService().playStartCountdown();
     HapticFeedback.heavyImpact();
-
     countdownTimer?.cancel();
     countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
@@ -148,100 +130,101 @@ class _GameScreenState extends State<GameScreen> {
     });
   }
 
+  // --- Tilt Cooldown Logic ---
   Future<void> _resetTiltDetection() async {
     if (!mounted) return;
     setState(() => canDetectTilt = false);
+    // Debounce time
     await Future.delayed(const Duration(milliseconds: 700));
-
-    while (mounted && lastZ.abs() > 2.5) {
+    // Check mounted after await
+    if (!mounted) return;
+    // Wait for user to bring phone back to neutral (vertical) position
+    while (mounted && lastZ.abs() > 4.0) {
+      // Increased threshold slightly for easier reset
       await Future.delayed(const Duration(milliseconds: 100));
     }
-
-    if (mounted) setState(() => canDetectTilt = true);
+    if (mounted) {
+      setState(() => canDetectTilt = true);
+    }
   }
 
   void handleGamePauseToggle() {
-    if (isGameFinished) return;
-    if (!mounted) return;
-
+    if (isGameFinished || !mounted || isCountdownRunning) return;
     if (isGamePaused) {
-      final isFlat = lastZ.abs() < 2;
-      if (!isFlat) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Place phone flat to resume"),
-              duration: Duration(seconds: 1),
-            ),
-          );
-        }
-        return;
-      }
+      // Resume
       gameTimerController.start();
     } else {
+      // Pause
       gameTimerController.pause();
     }
-    if (mounted) {
-      setState(() {
-        isGamePaused = !isGamePaused;
-      });
-    }
+    setState(() {
+      isGamePaused = !isGamePaused;
+    });
   }
 
-  void _handleExitGamePressed() async {
-    final shouldExit = await _showExitDialog();
-    if (!mounted) return;
-    if (shouldExit) {
-      _setPortraitOrientation(); // Set back to portrait before leaving
-      Navigator.of(context).pop();
-    }
-  }
-
-  void showTiltDialog(String message) {
-    showGeneralDialog(
+  Future<void> _handleExitGamePressed() async {
+    // Pause timer while showing dialog
+    final wasRunning = gameTimerController.value.status == TimerStatus.running;
+    if (wasRunning) gameTimerController.pause();
+    final shouldExit = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
-      barrierLabel: "TiltFeedbackDialog",
-      transitionDuration: const Duration(milliseconds: 150),
-      pageBuilder:
-          (_, __, ___) => Scaffold(
-            backgroundColor: Colors.transparent,
-            body: Center(
-              child: Container(
-                width: double.infinity,
-                height: double.infinity,
-                color: message == "Correct" ? Colors.green : Colors.redAccent,
-                alignment: Alignment.center,
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    fontSize: 60,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                    decoration: TextDecoration.none,
-                  ),
+      builder:
+          (dialogContext) => AlertDialog(
+            title: const Text("Exit Game?"),
+            content: const Text("Your current score will be lost."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(dialogContext).pop(false),
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.redAccent,
+                ),
+                onPressed: () => Navigator.of(dialogContext).pop(true),
+                child: const Text(
+                  "Exit",
+                  style: TextStyle(color: Colors.white),
                 ),
               ),
-            ),
+            ],
           ),
     );
+    if (!mounted) return;
+    if (shouldExit == true) {
+      _setPortraitOrientation();
+      Navigator.of(context).pop();
+    } else {
+      if (wasRunning && !isGamePaused) {
+        gameTimerController.start();
+      }
+    }
+  }
 
-    Future.delayed(const Duration(milliseconds: 300), () {
-      if (!mounted) return;
-      if (Navigator.of(context).canPop()) {
-        Navigator.of(context).pop();
+  void _triggerFeedback(String status) {
+    final isCorrect = status == "Correct";
+    setState(() {
+      _feedbackMessage = status;
+      _feedbackColor =
+          isCorrect
+              ? Colors.green
+              : Colors.redAccent; // Changed Pass color to redAccent
+      _feedbackIcon = isCorrect ? Icons.check_circle : Icons.refresh_rounded;
+    });
+    Future.delayed(const Duration(milliseconds: 800), () {
+      if (mounted) {
+        setState(() {
+          _feedbackMessage = null;
+        });
       }
     });
   }
 
-  void _processAnswer(String status) async {
-    if (currentIndex >= wordsList.length || isGameFinished || !mounted) {
-      return;
-    }
-
+  Future<void> _processAnswer(String status) async {
+    if (currentIndex >= wordsList.length || isGameFinished || !mounted) return;
     final currentWord = wordsList[currentIndex];
     scoreMap[currentWord] = status;
-
     if (status == "Correct") {
       AudioService().playCorrect();
       HapticFeedback.mediumImpact();
@@ -250,93 +233,30 @@ class _GameScreenState extends State<GameScreen> {
       AudioService().playPass();
       HapticFeedback.lightImpact();
     }
-
-    showTiltDialog(status);
-
+    if (mounted) _triggerFeedback(status);
     if (mounted) {
       setState(() {
         currentIndex++;
       });
     }
-
-    await _resetTiltDetection();
-
-    if (!mounted) return;
-
     if (currentIndex >= wordsList.length - 3) {
-      _fetchMoreWords();
+      _fetchMoreWords(); // Fire and forget
     }
+    // Ensure mounted before calling async logic that touches state
+    if (mounted) await _resetTiltDetection();
   }
 
   Future<void> _fetchMoreWords() async {
-    List<String> newWords = [];
-    // Online mode: Only get words from the selected Firestore categories
-    newWords = service.getWordsFromSelectedCategories(
+    final newWords = service.getWordsFromSelectedCategories(
       widget.selectedCategories,
     );
-
-    final existingWords = wordsList.toSet();
-    final filteredNewWords =
-        newWords.where((w) => !existingWords.contains(w)).toList();
-
-    if (filteredNewWords.isNotEmpty && mounted) {
+    final existing = wordsList.toSet();
+    final uniqueNew = newWords.where((w) => !existing.contains(w)).toList();
+    if (uniqueNew.isNotEmpty && mounted) {
       setState(() {
-        wordsList.addAll(filteredNewWords..shuffle());
+        wordsList.addAll(uniqueNew..shuffle());
       });
     }
-  }
-
-  Future<bool> _showExitDialog() async {
-    bool wasRunning = gameTimerController.value.status == TimerStatus.running;
-    if (wasRunning) {
-      gameTimerController.pause();
-    }
-
-    bool? shouldExit = await showDialog<bool>(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (dialogContext) => AlertDialog(
-            title: const Text("Exit Game?"),
-            content: const Text(
-              "Are you sure? Your current score will be lost.",
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  if (mounted) {
-                    if (wasRunning) {
-                      gameTimerController.start();
-                      if (isGamePaused) setState(() => isGamePaused = false);
-                    }
-                  }
-                  Navigator.of(dialogContext).pop(false);
-                },
-                child: const Text("Cancel"),
-              ),
-              ElevatedButton(
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent,
-                  foregroundColor: Colors.white,
-                ),
-                onPressed: () {
-                  _setPortraitOrientation();
-                  Navigator.of(dialogContext).pop(true);
-                },
-                child: const Text("Exit"),
-              ),
-            ],
-          ),
-    );
-
-    if (mounted) {
-      if (shouldExit == null && wasRunning) {
-        gameTimerController.start();
-        if (isGamePaused) setState(() => isGamePaused = false);
-      }
-    }
-
-    return shouldExit ?? false;
   }
 
   @override
@@ -351,20 +271,11 @@ class _GameScreenState extends State<GameScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
-    if (wordsList.isEmpty && !isGameFinished) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
-    }
-
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (bool didPop, dynamic result) async {
+      onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        final shouldExit = await _showExitDialog();
-        if (!mounted) return;
-        if (shouldExit) {
-          Navigator.of(context).pop();
-        }
+        _handleExitGamePressed();
       },
       child: TimerControllerListener(
         controller: gameTimerController,
@@ -374,9 +285,7 @@ class _GameScreenState extends State<GameScreen> {
           }
           if (value.remaining == 0 && !isGameFinished) {
             if (!mounted) return;
-            setState(() {
-              isGameFinished = true;
-            });
+            setState(() => isGameFinished = true);
             _setLandscapeOrientation();
             Navigator.of(context).pushReplacement(
               CupertinoPageRoute(
@@ -394,21 +303,22 @@ class _GameScreenState extends State<GameScreen> {
         child: TimerControllerBuilder(
           controller: gameTimerController,
           builder: (context, value, child) {
-            double timerProgress =
-                (value.remaining > 0 && widget.time > 0)
-                    ? value.remaining / widget.time
-                    : 0.0;
-
+            final timerProgress =
+                (widget.time > 0) ? value.remaining / widget.time : 0.0;
             return Scaffold(
-              body: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Stack(
-                  children: [
-                    Center(child: _buildMainContent(theme)),
-                    Positioned(
-                      top: 10,
-                      left: 10,
-                      right: 10,
+              backgroundColor: theme.scaffoldBackgroundColor,
+              // Removed padding from body
+              body: Stack(
+                children: [
+                  // 1. Main Game Content
+                  Center(child: _buildMainContent(theme)),
+                  // 2. Top Bar (Centered horizontally now, but visually acts as top bar)
+                  Positioned(
+                    top: 20, // Adjusted top spacing
+                    left: 20,
+                    right: 20,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
                       child: GameTopBar(
                         score: score,
                         timerProgress: timerProgress,
@@ -417,14 +327,17 @@ class _GameScreenState extends State<GameScreen> {
                         onPauseToggle: handleGamePauseToggle,
                       ),
                     ),
-                    if (isGamePaused)
-                      GamePauseOverlay(
-                        score: score,
-                        onResumePressed: handleGamePauseToggle,
-                        onExitPressed: _handleExitGamePressed,
-                      ),
-                  ],
-                ),
+                  ),
+                  // 3. Pause Overlay
+                  if (isGamePaused)
+                    GamePauseOverlay(
+                      score: score,
+                      onResumePressed: handleGamePauseToggle,
+                      onExitPressed: _handleExitGamePressed,
+                    ),
+                  // 4. Feedback Overlay (Correct/Pass) - Replaces Dialog
+                  if (_feedbackMessage != null) _buildFeedbackOverlay(),
+                ],
               ),
             );
           },
@@ -433,7 +346,40 @@ class _GameScreenState extends State<GameScreen> {
     );
   }
 
+  Widget _buildFeedbackOverlay() {
+    return Positioned.fill(
+      child: Container(
+        decoration: BoxDecoration(
+          color: _feedbackColor?.withAlpha(225),
+          // No borderRadius for fullscreen overlay
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(_feedbackIcon, size: 100, color: Colors.white),
+              const SizedBox(height: 20),
+              Text(
+                _feedbackMessage?.toUpperCase() ?? "",
+                style: const TextStyle(
+                  fontSize: 50,
+                  fontWeight: FontWeight.w900,
+                  color: Colors.white,
+                  letterSpacing: 4,
+                  decoration: TextDecoration.none,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildMainContent(ThemeData theme) {
+    if (isLoadingWords) {
+      return const CircularProgressIndicator();
+    }
     if (!isPlacedOnForehead) {
       return Padding(
         padding: const EdgeInsets.all(16.0),
@@ -443,7 +389,7 @@ class _GameScreenState extends State<GameScreen> {
             Icon(
               Icons.phone_android_outlined,
               size: 60,
-              color: theme.colorScheme.secondary,
+              color: theme.colorScheme.primary,
             ),
             const SizedBox(height: 16),
             Text(
@@ -483,15 +429,17 @@ class _GameScreenState extends State<GameScreen> {
         child: Text("Finished!", style: theme.textTheme.displayMedium),
       );
     } else {
+      // The Active Game Word - No Card Container
       return TiltDetector(
         isActive: !isGamePaused && !isGameFinished && canDetectTilt,
         onTiltUp: () => _processAnswer("Pass"),
         onTiltDown: () => _processAnswer("Correct"),
         child: Center(
+          // Ensure it's centered
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 200),
             transitionBuilder: (Widget child, Animation<double> animation) {
-              return FadeTransition(opacity: animation, child: child);
+              return ScaleTransition(scale: animation, child: child);
             },
             child: Text(
               (currentIndex < wordsList.length)
@@ -499,9 +447,13 @@ class _GameScreenState extends State<GameScreen> {
                   : "...",
               key: ValueKey<int>(currentIndex),
               textAlign: TextAlign.center,
+              softWrap: true,
               style: theme.textTheme.displayLarge!.copyWith(
                 fontWeight: FontWeight.w900,
-                fontSize: 70,
+                fontSize: 90, // Even Bigger text since no card constraints
+                // Using primary/accent color based on theme for text color directly
+                color: theme.textTheme.displayLarge?.color,
+                letterSpacing: -2.0,
               ),
             ),
           ),

@@ -3,7 +3,6 @@ import 'package:flutter/services.dart' show rootBundle; // For rootBundle
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import
 import 'package:connectivity_plus/connectivity_plus.dart'; // Import connectivity
-import 'package:flutter/foundation.dart' hide Category; // Import for print
 import '../models/category.dart';
 import 'dart:math';
 

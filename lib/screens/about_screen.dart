@@ -12,7 +12,7 @@ class AboutScreen extends StatefulWidget {
 }
 
 class _AboutScreenState extends State<AboutScreen> {
-  String _version = '1.0.0+1'; // Default version from your pubspec.yaml
+  final String _version = '1.0.0+1'; // Default version from your pubspec.yaml
 
   @override
   void initState() {

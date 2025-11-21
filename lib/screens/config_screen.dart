@@ -71,7 +71,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
     // 2. ALWAYS fetch local and custom words (from StorageService)
     try {
       await storage.getWordsFromLocalFile();
-      final customWords = await storage.getCustomWords();
+      final customWords = storage.getCustomWords();
 
       // 3. Create "dummy" categories for them
       if (customWords.isNotEmpty) {
@@ -145,7 +145,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
   @override
   Widget build(BuildContext buildContext) {
     final theme = Theme.of(buildContext);
-    bool _isAllSelected = isAllSelected();
+    bool isAllCategoriesSelected = isAllSelected();
 
     return Scaffold(
       appBar: AppBar(
@@ -199,7 +199,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                                         child: Row(
                                           children: [
                                             Checkbox(
-                                              value: _isAllSelected,
+                                              value: isAllCategoriesSelected,
                                               onChanged: toggleAllCategories,
                                               activeColor:
                                                   theme.colorScheme.primary,
@@ -212,7 +212,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                                             GestureDetector(
                                               onTap:
                                                   () => toggleAllCategories(
-                                                    !_isAllSelected,
+                                                    !isAllCategoriesSelected,
                                                   ),
                                               child: Text(
                                                 "Select All Categories",

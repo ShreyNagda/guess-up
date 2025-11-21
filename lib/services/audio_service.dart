@@ -1,94 +1,93 @@
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import 'package:guess_up/services/storage_service.dart';
 
 class AudioService {
+  // Singleton pattern
   static final AudioService _instance = AudioService._internal();
   factory AudioService() => _instance;
   AudioService._internal();
 
-  bool _initialized = false;
-  double _volume = 1.0; // Default volume
+  final AudioPlayer _musicPlayer = AudioPlayer();
+  final AudioPlayer _sfxPlayer = AudioPlayer();
 
-  // Separate player instances for each sound
-  late final AudioPlayer _startPlayer;
-  late final AudioPlayer _correctPlayer;
-  late final AudioPlayer _passPlayer;
-  late final AudioPlayer _endingPlayer;
+  // We don't need to store the instance if we access the singleton directly,
+  // but keeping a reference is fine if we want to support dependency injection later.
+  // For now, we'll access StorageService() directly to solve your scope issue.
 
-  double get volume => _volume;
-
-  /// Call once (e.g. in initState)
+  // Initialize audio players
   Future<void> init() async {
-    if (_initialized) return;
-    _initialized = true;
+    // Configure players
+    await _musicPlayer.setReleaseMode(ReleaseMode.loop); // Loop music
+    await _sfxPlayer.setReleaseMode(ReleaseMode.stop);
 
-    _startPlayer = AudioPlayer(playerId: 'start');
-    _correctPlayer = AudioPlayer(playerId: 'correct');
-    _passPlayer = AudioPlayer(playerId: 'pass');
-    _endingPlayer = AudioPlayer(playerId: 'ending');
-
-    try {
-      // Preload sources to avoid lag
-      await Future.wait([
-        _startPlayer.setSource(AssetSource('sounds/start_beep.wav')),
-        _correctPlayer.setSource(AssetSource('sounds/correct_sound.wav')),
-        _passPlayer.setSource(AssetSource('sounds/pass_sound.wav')),
-        _endingPlayer.setSource(AssetSource('sounds/end_beep.wav')),
-      ]);
-
-      // Set initial volume
-      _startPlayer.setVolume(_volume);
-      _correctPlayer.setVolume(_volume);
-      _passPlayer.setVolume(_volume);
-      _endingPlayer.setVolume(_volume);
-    } catch (e) {
-      debugPrint('sounds preload error: $e');
+    // Start music if enabled
+    if (StorageService().isMusicEnabled) {
+      await playBackgroundMusic();
     }
   }
 
-  /// Update volume dynamically
-  void setVolume(double value) {
-    _volume = value.clamp(0.0, 1.0);
-    _startPlayer.setVolume(_volume);
-    _correctPlayer.setVolume(_volume);
-    _passPlayer.setVolume(_volume);
-    _endingPlayer.setVolume(_volume);
-    debugPrint('AudioService volume set to $_volume');
-  }
+  // --- Music Control ---
+  Future<void> playBackgroundMusic() async {
+    // Access singleton directly
+    if (!StorageService().isMusicEnabled) return;
 
-  /// Internal safe play wrapper
-  Future<void> _safePlay(AudioPlayer player, AssetSource source) async {
     try {
-      await player.stop();
-      await player.setSource(source);
-      await player.setVolume(_volume); // ensure current volume
-      await player.resume();
+      if (_musicPlayer.state == PlayerState.playing) return;
+
+      // FIX: Remove 'assets/' prefix.
+      // AssetSource automatically adds 'assets/' to the path.
+      await _musicPlayer.play(
+        AssetSource('sounds/background_music.mp3'),
+        volume: 0.3,
+      );
     } catch (e) {
-      debugPrint('sounds playback error: $e');
+      print("Error playing music (Did you add background_music.mp3?): $e");
     }
   }
 
-  // Play methods
-  Future<void> playStartCountdown() async =>
-      _safePlay(_startPlayer, AssetSource('sounds/start_beep.wav'));
-
-  Future<void> playCorrect() async =>
-      _safePlay(_correctPlayer, AssetSource('sounds/correct_sound.wav'));
-
-  Future<void> playPass() async =>
-      _safePlay(_passPlayer, AssetSource('sounds/pass_sound.wav'));
-
-  Future<void> playEndingCountdown() async =>
-      _safePlay(_endingPlayer, AssetSource('sounds/end_beep.wav'));
-
-  /// Dispose all players
-  Future<void> dispose() async {
-    try {
-      await _startPlayer.dispose();
-      await _correctPlayer.dispose();
-      await _passPlayer.dispose();
-      await _endingPlayer.dispose();
-    } catch (_) {}
-    _initialized = false;
+  Future<void> stopBackgroundMusic() async {
+    await _musicPlayer.stop();
   }
+
+  Future<void> toggleMusic(bool isEnabled) async {
+    if (isEnabled) {
+      // We manually call play here because the flag in storage might have just been set
+      // but we want to force start now.
+      await playBackgroundMusic();
+    } else {
+      await stopBackgroundMusic();
+    }
+  }
+
+  // --- SFX Control ---
+  Future<void> _playSfx(String path) async {
+    // Access singleton directly
+    if (!StorageService().isSfxEnabled) return;
+
+    try {
+      if (_sfxPlayer.state == PlayerState.playing) {
+        await _sfxPlayer.stop();
+      }
+      await _sfxPlayer.play(AssetSource(path), volume: 1.0);
+    } catch (e) {
+      print("Error playing SFX: $e");
+    }
+  }
+
+  void playCorrect() => _playSfx('sounds/correct_sound.wav');
+  void playPass() => _playSfx('sounds/pass_sound.wav');
+  void playStartCountdown() => _playSfx('sounds/start_beep.wav');
+  void playEndingCountdown() => _playSfx('sounds/end_beep.wav');
+
+  // --- Haptics Control ---
+  void vibrate(Function() feedbackFunction) {
+    if (StorageService().isHapticsEnabled) {
+      feedbackFunction();
+    }
+  }
+
+  void heavyImpact() => vibrate(HapticFeedback.heavyImpact);
+  void mediumImpact() => vibrate(HapticFeedback.mediumImpact);
+  void lightImpact() => vibrate(HapticFeedback.lightImpact);
 }

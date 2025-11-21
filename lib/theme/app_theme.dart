@@ -1,290 +1,284 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart'; // Import Google Fonts
+import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
-  // Shared color palette
-  static const Color primaryColor = Color(0xFF4DB050); // lively green
-  static const Color accentColor = Color(0xFFFFC107); // bright amber
+  // --- 1. VIBRANT COLOR PALETTE (Yellow & Black) ---
 
-  // Light theme specific
-  static const Color lightScaffoldBackground = Color(0xFFF8F9FA); // Off-white
+  // Light Theme Palette (High Energy)
+  static const Color lightPrimaryColor = Color(0xFFFFD600); // Electric Yellow
+  static const Color lightAccentColor = Color(0xFF212121); // Deep Black
+  static const Color lightScaffoldBackground = Color(
+    0xFFFAFAFA,
+  ); // Crisp White/Grey
   static const Color lightSurfaceColor = Colors.white;
-  static const Color lightTextColor = Colors.black87;
-  static const Color lightHintColor = Colors.grey;
-  static const Color lightBorderColor = Color(0xFFDEE2E6); // Light gray border
+  static const Color lightTextColor = Color(0xFF212121); // Almost Black
 
-  // Dark theme specific
+  // Dark Theme Palette (Toned Down)
+  static const Color darkPrimaryColor = Color(
+    0xFFFFC107,
+  ); // Amber (Duller Yellow)
+  static const Color darkAccentColor = Color(0xFF121212); // Very Dark Grey
   static const Color darkScaffoldBackground = Color(
     0xFF121212,
-  ); // Very dark gray
-  static const Color darkSurfaceColor = Color(
-    0xFF1E1E1E,
-  ); // Slightly lighter dark gray
-  static const Color darkTextColor = Colors.white;
-  static const Color darkHintColor = Colors.grey;
-  static const Color darkBorderColor = Color(0xFF495057); // Darker gray border
+  ); // Deep Dark Grey
+  static const Color darkSurfaceColor = Color(0xFF1E1E1E); // Lighter Dark Grey
+  static const Color darkTextColor = Color(0xFFEEEEEE); // Off-White
 
-  // --- 1. COMMON TEXT TYPESCALE (Sizes & Weights) ---
-  // This is our single source of truth for all font sizes and weights.
-  // It is based on your previous file and uses GoogleFonts.
+  // Shared/Utility Colors
+  static const Color errorColor = Color(0xFFD32F2F);
+  static const Color hintColor = Color(0xFF9E9E9E);
+
+  // --- 2. MODERN TYPESCALE ---
   static final TextTheme _baseTextTheme = GoogleFonts.manropeTextTheme(
     const TextTheme(
-      displayLarge: TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
-      displayMedium: TextStyle(fontSize: 32, fontWeight: FontWeight.w600),
-      displaySmall: TextStyle(fontSize: 28, fontWeight: FontWeight.w500),
-      headlineLarge: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
-      headlineMedium: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
-      headlineSmall: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-      titleLarge: TextStyle(fontSize: 22, fontWeight: FontWeight.w500),
-      titleMedium: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
-      titleSmall: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-      bodyLarge: TextStyle(fontSize: 18),
-      bodyMedium: TextStyle(fontSize: 16),
-      bodySmall: TextStyle(fontSize: 14),
-      labelLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-      labelMedium: TextStyle(fontSize: 12),
-      labelSmall: TextStyle(fontSize: 10),
+      // Massive text for the Game Word
+      displayLarge: TextStyle(
+        fontSize: 56,
+        fontWeight: FontWeight.w900,
+        letterSpacing: -1.5,
+      ),
+      displayMedium: TextStyle(
+        fontSize: 42,
+        fontWeight: FontWeight.w800,
+        letterSpacing: -0.5,
+      ),
+      displaySmall: TextStyle(fontSize: 32, fontWeight: FontWeight.w700),
+
+      // Headlines
+      headlineLarge: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
+      headlineMedium: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
+      headlineSmall: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+
+      // Standard UI text
+      titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+      titleMedium: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+      titleSmall: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+
+      // Body text
+      bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+      bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+      bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+
+      // Buttons & Labels
+      labelLarge: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w900,
+        letterSpacing: 0.5,
+      ),
+      labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+      labelSmall: TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
     ),
   );
 
-  // --- 2. NEW FUNCTION TO APPLY COLORS ---
-  /// Creates the final TextTheme by applying mode-specific colors
-  /// to the base typescale.
-  static TextTheme _buildTextTheme(ThemeMode themeMode) {
-    // Determine which colors to use
-    bool isDark = themeMode == ThemeMode.dark;
+  // --- 3. DYNAMIC TEXT COLORING ---
+  static TextTheme _buildTextTheme(ThemeMode mode) {
+    final isDark = mode == ThemeMode.dark;
+    final textColor = isDark ? darkTextColor : lightTextColor;
+    final primaryColor = isDark ? darkPrimaryColor : lightPrimaryColor;
 
-    Color defaultTextColor = isDark ? darkTextColor : lightTextColor;
-    Color hintColor = isDark ? darkHintColor : lightHintColor;
-    Color headlineColor = accentColor; // Same for both themes in your original
-    // Color labelLargeColor = isDark ? accentColor : primaryColor;
+    return _baseTextTheme.copyWith(
+      displayLarge: _baseTextTheme.displayLarge?.copyWith(
+        color: isDark ? primaryColor : lightAccentColor,
+      ),
+      displayMedium: _baseTextTheme.displayMedium?.copyWith(color: textColor),
+      displaySmall: _baseTextTheme.displaySmall?.copyWith(color: textColor),
 
-    // Apply the colors to the base theme
-    return _baseTextTheme
-        .apply(
-          displayColor: defaultTextColor, // Default for display/headline
-          bodyColor: defaultTextColor, // Default for body/title
-        )
-        .copyWith(
-          headlineLarge: _baseTextTheme.headlineLarge?.copyWith(
-            color: headlineColor,
-          ),
-          headlineMedium: _baseTextTheme.headlineMedium?.copyWith(
-            color: headlineColor,
-          ),
-          headlineSmall: _baseTextTheme.headlineSmall?.copyWith(
-            color: headlineColor,
-          ),
-          labelLarge: _baseTextTheme.labelLarge?.copyWith(color: hintColor),
-          labelSmall: _baseTextTheme.labelSmall?.copyWith(color: hintColor),
-        );
-  }
+      headlineLarge: _baseTextTheme.headlineLarge?.copyWith(color: textColor),
+      headlineMedium: _baseTextTheme.headlineMedium?.copyWith(color: textColor),
+      headlineSmall: _baseTextTheme.headlineSmall?.copyWith(color: textColor),
 
-  // --- 3. Light theme ---
-  static ThemeData get lightTheme {
-    return ThemeData(
-      brightness: Brightness.light,
-      primaryColor: primaryColor,
-      colorScheme: const ColorScheme.light(
-        primary: primaryColor,
-        secondary: accentColor,
-        surface: lightSurfaceColor,
-        onSurface: lightTextColor,
-        onPrimary: Colors.white,
-        onSecondary: Colors.black87,
-        error: Colors.redAccent,
-        onError: Colors.white,
-      ),
-      appBarTheme: const AppBarTheme(
-        backgroundColor: primaryColor,
-        iconTheme: IconThemeData(color: Colors.white),
-        titleTextStyle: TextStyle(
-          color: Colors.white,
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-        ),
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
-        ),
-      ),
-      iconTheme: const IconThemeData(color: accentColor, size: 28),
+      titleLarge: _baseTextTheme.titleLarge?.copyWith(color: textColor),
+      titleMedium: _baseTextTheme.titleMedium?.copyWith(color: textColor),
+      titleSmall: _baseTextTheme.titleSmall?.copyWith(color: textColor),
 
-      // Use the new function to build the TextTheme
-      textTheme: _buildTextTheme(ThemeMode.light),
+      bodyLarge: _baseTextTheme.bodyLarge?.copyWith(color: textColor),
+      bodyMedium: _baseTextTheme.bodyMedium?.copyWith(color: textColor),
+      bodySmall: _baseTextTheme.bodySmall?.copyWith(color: hintColor),
 
-      // (All other theme properties remain)
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-          shape: const StadiumBorder(),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-          elevation: 5,
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: primaryColor,
-          shape: const StadiumBorder(),
-          side: const BorderSide(color: primaryColor, width: 1.5),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          textStyle: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-      ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: primaryColor,
-          textStyle: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
-          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      ),
-      cardTheme: CardThemeData(
-        color: lightSurfaceColor,
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        clipBehavior: Clip.antiAlias,
-      ),
-      chipTheme: ChipThemeData(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        labelStyle: const TextStyle(
-          color: lightTextColor,
-          fontWeight: FontWeight.w600,
-        ),
-        checkmarkColor: primaryColor.withAlpha(250),
-        selectedColor: primaryColor.withAlpha(77),
-        backgroundColor: Colors.black.withAlpha(13),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        side: BorderSide.none,
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: Colors.black.withAlpha(10),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryColor, width: 2.0),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        hintStyle: TextStyle(color: lightHintColor.withAlpha(204)),
-      ),
-      useMaterial3: true,
+      labelLarge: _baseTextTheme.labelLarge?.copyWith(
+        color: isDark ? lightAccentColor : lightAccentColor,
+      ), // Button text is usually black on yellow
     );
   }
 
-  // --- 4. Dark theme ---
-  static ThemeData get darkTheme {
+  // --- 4. LIGHT THEME OBJECT ---
+  static ThemeData get lightTheme {
     return ThemeData(
-      brightness: Brightness.dark,
-      primaryColor: primaryColor,
-      colorScheme: const ColorScheme.dark(
-        primary: primaryColor,
-        secondary: accentColor,
-        surface: darkSurfaceColor,
-        onSurface: darkTextColor,
-        onPrimary: Colors.white,
-        onSecondary: Colors.black87,
-        error: Colors.redAccent,
-        onError: Colors.white,
+      useMaterial3: true,
+      brightness: Brightness.light,
+      primaryColor: lightPrimaryColor,
+      scaffoldBackgroundColor: lightScaffoldBackground,
+
+      colorScheme: const ColorScheme.light(
+        primary: lightPrimaryColor,
+        secondary: lightAccentColor,
+        surface: lightSurfaceColor,
+        onSurface: lightTextColor,
+        onPrimary: lightAccentColor, // Black text on Yellow
+        onSecondary: Colors.white,
+        error: errorColor,
       ),
+
+      textTheme: _buildTextTheme(ThemeMode.light),
       appBarTheme: const AppBarTheme(
-        backgroundColor: primaryColor,
-        iconTheme: IconThemeData(color: darkTextColor),
+        backgroundColor: lightPrimaryColor,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: IconThemeData(color: lightAccentColor),
         titleTextStyle: TextStyle(
-          color: darkTextColor,
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-        ),
-        elevation: 4,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+          color: lightAccentColor,
+          fontSize: 24,
+          fontFamily: 'Manrope',
+          fontWeight: FontWeight.w900,
+          letterSpacing: -0.5,
         ),
       ),
-      iconTheme: const IconThemeData(color: accentColor, size: 28),
 
-      // Use the new function to build the TextTheme
-      textTheme: _buildTextTheme(ThemeMode.dark),
-
-      // (All other theme properties remain)
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
-          backgroundColor: primaryColor,
-          foregroundColor: Colors.white,
-          shape: const StadiumBorder(),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          elevation: 5,
+          backgroundColor: lightPrimaryColor,
+          foregroundColor: lightAccentColor, // Black text
+          elevation: 4,
+          shadowColor: Colors.black.withAlpha(60),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          textStyle: _baseTextTheme.labelLarge,
         ),
       ),
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: primaryColor,
-          shape: const StadiumBorder(),
-          side: const BorderSide(color: primaryColor, width: 1.5),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+          foregroundColor: lightAccentColor,
+          side: const BorderSide(color: lightAccentColor, width: 2.5),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          textStyle: _baseTextTheme.labelLarge?.copyWith(
+            color: lightAccentColor,
+          ),
         ),
       ),
-      textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(
-          foregroundColor: primaryColor,
-          textStyle: const TextStyle(fontSize: 10, fontWeight: FontWeight.w600),
-          padding: const EdgeInsets.symmetric(vertical: 8.0, horizontal: 4.0),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      ),
+
       cardTheme: CardThemeData(
-        color: darkSurfaceColor,
-        elevation: 3,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        clipBehavior: Clip.antiAlias,
+        color: lightSurfaceColor,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: const BorderSide(color: Color(0xFFEEEEEE), width: 2),
+        ),
+      ),
+
+      iconTheme: const IconThemeData(color: lightAccentColor, size: 30),
+
+      dividerTheme: DividerThemeData(
+        color: lightAccentColor.withAlpha(30),
+        thickness: 1.5,
+      ),
+
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: lightAccentColor,
+        foregroundColor: lightPrimaryColor,
+        elevation: 6,
       ),
       chipTheme: ChipThemeData(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        labelStyle: const TextStyle(
-          color: darkTextColor,
-          fontWeight: FontWeight.w600,
+        selectedColor: lightPrimaryColor,
+        checkmarkColor: lightTextColor,
+        labelStyle: TextStyle(color: lightTextColor),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadiusGeometry.circular(15),
         ),
-        checkmarkColor: primaryColor.withAlpha(250),
-        selectedColor: primaryColor.withAlpha(102),
-        backgroundColor: Colors.white.withAlpha(20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        side: BorderSide.none,
       ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: Colors.white.withAlpha(15),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: primaryColor, width: 2.0),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 12,
-        ),
-        hintStyle: TextStyle(color: darkHintColor.withAlpha(204)),
-      ),
+    );
+  }
+
+  // --- 5. DARK THEME OBJECT ---
+  static ThemeData get darkTheme {
+    return ThemeData(
       useMaterial3: true,
+      brightness: Brightness.dark,
+      primaryColor: darkPrimaryColor,
+      scaffoldBackgroundColor: darkScaffoldBackground,
+
+      colorScheme: const ColorScheme.dark(
+        primary: darkPrimaryColor,
+        secondary: darkAccentColor, // Black/Dark Grey
+        surface: darkSurfaceColor,
+        onSurface: darkTextColor,
+        onPrimary: darkAccentColor, // Black text on Amber
+        onSecondary: Colors.white,
+        error: errorColor,
+      ),
+
+      textTheme: _buildTextTheme(ThemeMode.dark),
+
+      appBarTheme: const AppBarTheme(
+        backgroundColor: darkSurfaceColor,
+        elevation: 0,
+        centerTitle: true,
+        iconTheme: IconThemeData(color: darkPrimaryColor), // Amber icons
+        titleTextStyle: TextStyle(
+          color: darkPrimaryColor, // Amber title
+          fontSize: 24,
+          fontFamily: 'Manrope',
+          fontWeight: FontWeight.w900,
+          letterSpacing: -0.5,
+        ),
+      ),
+
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: darkPrimaryColor,
+          foregroundColor: darkAccentColor, // Black text on Amber button
+          elevation: 2,
+          shadowColor: Colors.black.withAlpha(110),
+          padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          textStyle: _baseTextTheme.labelLarge,
+        ),
+      ),
+
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: darkPrimaryColor, // Amber text
+          side: const BorderSide(color: darkPrimaryColor, width: 2.0),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          textStyle: _baseTextTheme.labelLarge?.copyWith(
+            color: darkPrimaryColor,
+          ),
+        ),
+      ),
+
+      cardTheme: CardThemeData(
+        color: darkSurfaceColor,
+        elevation: 4,
+        shadowColor: Colors.black.withAlpha(150),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      ),
+
+      iconTheme: const IconThemeData(color: darkPrimaryColor, size: 30),
+
+      dividerTheme: DividerThemeData(
+        color: Colors.white.withAlpha(30),
+        thickness: 1.5,
+      ),
+
+      floatingActionButtonTheme: const FloatingActionButtonThemeData(
+        backgroundColor: darkPrimaryColor,
+        foregroundColor: darkAccentColor,
+        elevation: 6,
+      ),
+      chipTheme: ChipThemeData(
+        selectedColor: lightPrimaryColor.withAlpha(50),
+        labelStyle: TextStyle(color: darkTextColor),
+      ),
     );
   }
 }

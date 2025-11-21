@@ -19,58 +19,90 @@ class GameTopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Increased width for the timer circle
+    final double timerSize = 70.0;
+
     Color timerColor =
         (remainingTime <= 10) ? Colors.redAccent : theme.colorScheme.primary;
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        // --- Score Display ---
-        Padding(
-          padding: const EdgeInsets.only(left: 8.0),
-          child: Text(
-            "Score: $score",
-            style: theme.textTheme.headlineMedium?.copyWith(
-              fontWeight: FontWeight.w900,
+
+    return SizedBox(
+      height: timerSize, // Ensure the bar has enough height for the timer
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          // --- 1. Timer Display (Perfectly Centered) ---
+          SizedBox(
+            width: timerSize,
+            height: timerSize,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                SizedBox(
+                  width: timerSize,
+                  height: timerSize,
+                  child: CircularProgressIndicator(
+                    value: timerProgress,
+                    strokeWidth: timerSize / 10,
+                    valueColor: AlwaysStoppedAnimation<Color>(timerColor),
+                    backgroundColor: Colors.grey.withAlpha(77),
+                    strokeCap: StrokeCap.round,
+                  ),
+                ),
+                Text(
+                  "$remainingTime",
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 28,
+                    color: timerColor,
+                    height: 1.0, // Remove vertical leading
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
 
-        // --- Timer Display ---
-        SizedBox(
-          width: 55,
-          height: 55,
-          child: Stack(
-            alignment: Alignment.center,
-            children: [
-              CircularProgressIndicator(
-                value: timerProgress,
-                strokeWidth: 5,
-                valueColor: AlwaysStoppedAnimation<Color>(timerColor),
-                // I noticed your snippet had 77, but the original file had 100.
-                // I'll use 100 to match the file, but 77 is fine too.
-                backgroundColor: Colors.grey.withAlpha(77),
-              ),
-              Text(
-                "$remainingTime",
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
+          // --- 2. Score Display (Left Aligned) ---
+          Align(
+            alignment: Alignment.centerLeft,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "SCORE",
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.hintColor,
+                    letterSpacing: 1.5,
+                  ),
                 ),
-              ),
-            ],
+                Text(
+                  "$score",
+                  style: theme.textTheme.headlineMedium?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    fontSize: 40,
+                    height: 1.0,
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
 
-        // --- Pause Button ---
-        IconButton(
-          icon: Icon(
-            isGamePaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-            size: 35,
+          // --- 3. Pause Button (Right Aligned) ---
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              icon: Icon(
+                isGamePaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
+                size: 40,
+              ),
+              padding: EdgeInsets.zero,
+              constraints: const BoxConstraints(),
+              onPressed: onPauseToggle,
+            ),
           ),
-          padding: const EdgeInsets.all(12),
-          onPressed: onPauseToggle,
-        ),
-      ],
+        ],
+      ),
     );
   }
 }

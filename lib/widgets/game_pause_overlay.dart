@@ -16,7 +16,6 @@ class GamePauseOverlay extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-
     // This widget now contains the Positioned.fill and all its contents
     return Positioned.fill(
       child: BackdropFilter(
