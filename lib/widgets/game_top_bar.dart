@@ -30,7 +30,6 @@ class GameTopBar extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // --- 1. Timer Display (Perfectly Centered) ---
           SizedBox(
             width: timerSize,
             height: timerSize,
@@ -61,7 +60,6 @@ class GameTopBar extends StatelessWidget {
             ),
           ),
 
-          // --- 2. Score Display (Left Aligned) ---
           Align(
             alignment: Alignment.centerLeft,
             child: Column(
@@ -87,16 +85,14 @@ class GameTopBar extends StatelessWidget {
               ],
             ),
           ),
-
-          // --- 3. Pause Button (Right Aligned) ---
           Align(
             alignment: Alignment.centerRight,
             child: IconButton(
               icon: Icon(
                 isGamePaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-                size: 40,
+                size: 50,
               ),
-              padding: EdgeInsets.zero,
+              padding: EdgeInsets.all(10),
               constraints: const BoxConstraints(),
               onPressed: onPauseToggle,
             ),

@@ -124,6 +124,12 @@ class AppTheme {
         backgroundColor: lightPrimaryColor,
         elevation: 0,
         centerTitle: true,
+        toolbarHeight: 80,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadiusGeometry.vertical(
+            bottom: Radius.circular(20),
+          ),
+        ),
         iconTheme: IconThemeData(color: lightAccentColor),
         titleTextStyle: TextStyle(
           color: lightAccentColor,
@@ -218,6 +224,12 @@ class AppTheme {
         backgroundColor: darkSurfaceColor,
         elevation: 0,
         centerTitle: true,
+        toolbarHeight: 80,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadiusGeometry.vertical(
+            bottom: Radius.circular(20),
+          ),
+        ),
         iconTheme: IconThemeData(color: darkPrimaryColor), // Amber icons
         titleTextStyle: TextStyle(
           color: darkPrimaryColor, // Amber title

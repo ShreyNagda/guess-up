@@ -18,6 +18,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool isMusicOn = true;
   bool isSfxOn = true;
   bool isHapticsOn = true;
+  // [NEW] Local state for time
+  int selectedDuration = 60;
   List<String> customWords = [];
   final TextEditingController multiWordController = TextEditingController();
 
@@ -33,7 +35,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _loadSettings() async {
-    // Access the singleton directly for consistency with AudioService usage
     final storage = StorageService();
     final currentThemeMode =
         Provider.of<ThemeService>(context, listen: false).themeMode;
@@ -42,46 +43,47 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (mounted) {
       setState(() {
         _selectedThemeMode = currentThemeMode;
-        // Use specific getters from StorageService
         isMusicOn = storage.isMusicEnabled;
         isSfxOn = storage.isSfxEnabled;
         isHapticsOn = storage.isHapticsEnabled;
         customWords = words;
+        // [NEW] Load duration
+        selectedDuration = storage.gameDuration;
       });
     }
+  }
+
+  // [NEW] Helper to update duration
+  Future<void> _updateDuration(int seconds) async {
+    if (mounted) setState(() => selectedDuration = seconds);
+    await StorageService().setGameDuration(seconds);
   }
 
   void _updateTheme(ThemeMode newMode) {
     if (mounted) setState(() => _selectedThemeMode = newMode);
     Provider.of<ThemeService>(context, listen: false).setThemeMode(newMode);
-    // Update StorageService singleton directly
     StorageService().setThemeMode(newMode);
   }
 
   Future<void> _toggleMusic() async {
     final newValue = !isMusicOn;
     if (mounted) setState(() => isMusicOn = newValue);
-
     final storage = StorageService();
-    await storage.setMusicEnabled(newValue); // Use specific method
+    await storage.setMusicEnabled(newValue);
     await AudioService().toggleMusic(newValue);
   }
 
   Future<void> _toggleSfx() async {
     final newValue = !isSfxOn;
     if (mounted) setState(() => isSfxOn = newValue);
-
     final storage = StorageService();
-    await storage.setSfxEnabled(newValue); // Use specific method
-    if (newValue) {
-      AudioService().playCorrect(); // Play a sound to confirm it works
-    }
+    await storage.setSfxEnabled(newValue);
+    if (newValue) AudioService().playCorrect();
   }
 
   Future<void> _toggleHaptics() async {
     final newValue = !isHapticsOn;
     if (mounted) setState(() => isHapticsOn = newValue);
-
     final storage = StorageService();
     await storage.setHapticsEnabled(newValue);
     if (newValue) AudioService().mediumImpact();
@@ -95,7 +97,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             .map((w) => w.trim())
             .where((w) => w.isNotEmpty)
             .toList();
-
     if (mounted) {
       setState(() {
         customWords.addAll(
@@ -117,7 +118,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
 
-    // Consistent Theme Colors
     final primaryColor =
         isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
     final accentColor =
@@ -131,7 +131,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         leading: IconButton(
-          icon: Icon(Icons.arrow_back_ios_new_rounded),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
@@ -186,7 +186,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 32),
 
-          // --- 2. Controls Section (Music, SFX, Haptics) ---
+          // --- [NEW] 2. Game Duration Section ---
+          _buildSectionTitle("ROUND DURATION", textColor),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              border: Border.all(color: borderColor, width: 2),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children:
+                  [45, 60, 90, 120].map((time) {
+                    return Expanded(
+                      child: _buildDurationButton(
+                        time,
+                        isSelected: selectedDuration == time,
+                        isDark: isDark,
+                      ),
+                    );
+                  }).toList(),
+            ),
+          ),
+
+          const SizedBox(height: 32),
+
+          // --- 3. Controls Section ---
           _buildSectionTitle("CONTROLS", textColor),
           Row(
             children: [
@@ -234,10 +258,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 32),
 
-          // --- 3. Custom Words Section ---
+          // --- 4. Custom Words Section ---
           _buildSectionTitle("CUSTOM WORDS", textColor),
-
-          // Input Field
           Container(
             decoration: BoxDecoration(
               color: isDark ? AppTheme.darkSurfaceColor : Colors.white,
@@ -257,10 +279,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               maxLines: 3,
             ),
           ),
-
           const SizedBox(height: 12),
-
-          // Add Button
           SizedBox(
             width: double.infinity,
             height: 50,
@@ -269,8 +288,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   () => _addMultipleWords(multiWordController.text.trim()),
               style: ElevatedButton.styleFrom(
                 backgroundColor: primaryColor,
-                foregroundColor:
-                    isDark ? accentColor : Colors.white, // Text color
+                foregroundColor: isDark ? accentColor : Colors.white,
                 elevation: 0,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
@@ -289,10 +307,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // Words List
           if (customWords.isNotEmpty) ...[
             Text(
               "${customWords.length} WORDS ADDED",
@@ -346,8 +361,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   }).toList(),
             ),
           ],
-
-          const SizedBox(height: 40), // Bottom padding
+          const SizedBox(height: 40),
         ],
       ),
     );
@@ -379,7 +393,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         isDark
             ? AppTheme.darkTextColor.withAlpha(125)
             : AppTheme.lightAccentColor.withAlpha(100);
-
     return InkWell(
       onTap: () => _updateTheme(mode),
       borderRadius: BorderRadius.circular(12),
@@ -426,6 +439,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  // [NEW] Helper for Duration Buttons
+  Widget _buildDurationButton(
+    int time, {
+    required bool isSelected,
+    required bool isDark,
+  }) {
+    final primaryColor =
+        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
+    final accentColor =
+        isDark ? AppTheme.darkAccentColor : AppTheme.lightAccentColor;
+    final textColor =
+        isDark ? AppTheme.darkTextColor : AppTheme.lightAccentColor;
+
+    return InkWell(
+      onTap: () => _updateDuration(time),
+      borderRadius: BorderRadius.circular(12),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: isSelected ? primaryColor : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Center(
+          child: Text(
+            "${time}s",
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: isSelected ? accentColor : textColor.withAlpha(150),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildToggleButton(
     String label,
     IconData icon,
@@ -435,26 +484,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
     Color accentColor,
     bool isDark,
   ) {
-    // Active State: Filled with Primary Color (Yellow/Amber)
-    // Inactive State: Outline with faint border
-
     final bgColor =
         isActive
             ? primaryColor
             : (isDark ? AppTheme.darkSurfaceColor : Colors.white);
-
     final iconColor =
         isActive
             ? (isDark ? AppTheme.darkAccentColor : AppTheme.lightAccentColor)
             : (isDark
                 ? AppTheme.darkTextColor.withAlpha(75)
                 : AppTheme.lightAccentColor.withAlpha(75));
-
     final borderColor =
         isActive
             ? Colors.transparent
             : (isDark ? primaryColor.withAlpha(50) : accentColor.withAlpha(25));
-
     return GestureDetector(
       onTap: () {
         HapticFeedback.lightImpact();
@@ -489,7 +532,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               style: TextStyle(
                 color: iconColor,
                 fontWeight: FontWeight.w900,
-                fontSize: 12, // Slightly smaller to fit 3 buttons
+                fontSize: 12,
                 letterSpacing: 1,
               ),
             ),

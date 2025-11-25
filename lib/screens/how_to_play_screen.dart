@@ -59,15 +59,14 @@ class _HowToPlayScreenState extends State<HowToPlayScreen> {
             context,
             icon: Icons.settings_suggest, // Icon for setup
             title: "1. Get Ready!",
-            content:
-                "Go to 'Play' > 'Configure Game'. Choose fun categories and set your desired time limit.",
+            content: "Go to 'Play Now' > 'Configure Game'. Choose fun decks",
           ),
           _buildSection(
             context,
             icon: Icons.phone_android_outlined, // Icon for placement
             title: "2. Place the Phone",
             content:
-                "Hold the phone flat facing the ceiling, then place it securely on your forehead. Don't peek!",
+                "Hold the phone flat facing the group, then place it securely on your forehead. Don't peek!",
           ),
           _buildSection(
             context,

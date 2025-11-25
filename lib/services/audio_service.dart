@@ -1,22 +1,46 @@
 import 'package:audioplayers/audioplayers.dart';
-import 'package:flutter/services.dart';
+import 'package:flutter/material.dart';
 import 'package:guess_up/services/storage_service.dart';
+import 'package:vibration/vibration.dart';
 
-class AudioService {
+class AudioService with WidgetsBindingObserver {
   // Singleton pattern
   static final AudioService _instance = AudioService._internal();
   factory AudioService() => _instance;
-  AudioService._internal();
+
+  AudioService._internal() {
+    // Register lifecycle observer to handle background/foreground changes
+    WidgetsBinding.instance.addObserver(this);
+  }
 
   final AudioPlayer _musicPlayer = AudioPlayer();
   final AudioPlayer _sfxPlayer = AudioPlayer();
 
-  // We don't need to store the instance if we access the singleton directly,
-  // but keeping a reference is fine if we want to support dependency injection later.
-  // For now, we'll access StorageService() directly to solve your scope issue.
-
   // Initialize audio players
   Future<void> init() async {
+    // --- 1. Configure Audio Context (The Fix) ---
+    // This tells the OS: "Mix my sounds together, don't stop music for SFX"
+    final AudioContext audioContext = AudioContext(
+      iOS: AudioContextIOS(
+        category:
+            AVAudioSessionCategory.multiRoute, // Ambient = Mix with others
+        options: {
+          AVAudioSessionOptions.mixWithOthers, // Crucial for iOS mixing
+        },
+      ),
+      android: AudioContextAndroid(
+        isSpeakerphoneOn: true,
+        stayAwake: true,
+        contentType: AndroidContentType.music,
+        usageType: AndroidUsageType.game,
+        audioFocus:
+            AndroidAudioFocus.none, // 'None' prevents SFX from killing Music
+      ),
+    );
+
+    // Apply this context globally to all players
+    await AudioPlayer.global.setAudioContext(audioContext);
+
     // Configure players
     await _musicPlayer.setReleaseMode(ReleaseMode.loop); // Loop music
     await _sfxPlayer.setReleaseMode(ReleaseMode.stop);
@@ -27,23 +51,39 @@ class AudioService {
     }
   }
 
+  // --- Lifecycle Handling (Pause on Background) ---
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      // App went to background (or screen locked) -> Pause Music
+      _musicPlayer.pause();
+    } else if (state == AppLifecycleState.resumed) {
+      // App came back -> Resume Music (if user wants it)
+      if (StorageService().isMusicEnabled) {
+        _musicPlayer.resume();
+      }
+    }
+  }
+
   // --- Music Control ---
   Future<void> playBackgroundMusic() async {
-    // Access singleton directly
     if (!StorageService().isMusicEnabled) return;
 
     try {
       if (_musicPlayer.state == PlayerState.playing) return;
-
-      // FIX: Remove 'assets/' prefix.
-      // AssetSource automatically adds 'assets/' to the path.
+      if (_musicPlayer.state == PlayerState.paused) _musicPlayer.resume();
       await _musicPlayer.play(
-        AssetSource('sounds/background_music.mp3'),
-        volume: 0.3,
+        AssetSource('sounds/background_music.wav'),
+        volume: 0.5, // Keep low to not distract
       );
     } catch (e) {
-      print("Error playing music (Did you add background_music.mp3?): $e");
+      print("Error playing music: $e");
     }
+  }
+
+  Future<void> pauseBackgroundMusic() async {
+    await _musicPlayer.pause();
   }
 
   Future<void> stopBackgroundMusic() async {
@@ -52,8 +92,6 @@ class AudioService {
 
   Future<void> toggleMusic(bool isEnabled) async {
     if (isEnabled) {
-      // We manually call play here because the flag in storage might have just been set
-      // but we want to force start now.
       await playBackgroundMusic();
     } else {
       await stopBackgroundMusic();
@@ -62,10 +100,11 @@ class AudioService {
 
   // --- SFX Control ---
   Future<void> _playSfx(String path) async {
-    // Access singleton directly
     if (!StorageService().isSfxEnabled) return;
 
     try {
+      // We don't strictly need to stop() for overlapping SFX,
+      // but it keeps it clean.
       if (_sfxPlayer.state == PlayerState.playing) {
         await _sfxPlayer.stop();
       }
@@ -81,13 +120,21 @@ class AudioService {
   void playEndingCountdown() => _playSfx('sounds/end_beep.wav');
 
   // --- Haptics Control ---
-  void vibrate(Function() feedbackFunction) {
-    if (StorageService().isHapticsEnabled) {
-      feedbackFunction();
+  Future<void> vibrate(int duration) async {
+    if (!StorageService().isHapticsEnabled) return;
+
+    bool? hasVibrator = await Vibration.hasVibrator();
+    if (hasVibrator == true) {
+      Vibration.vibrate(duration: duration);
     }
   }
 
-  void heavyImpact() => vibrate(HapticFeedback.heavyImpact);
-  void mediumImpact() => vibrate(HapticFeedback.mediumImpact);
-  void lightImpact() => vibrate(HapticFeedback.lightImpact);
+  void heavyImpact() => vibrate(100);
+  void mediumImpact() => vibrate(50);
+  void lightImpact() => vibrate(20);
+
+  // Dispose observer
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+  }
 }

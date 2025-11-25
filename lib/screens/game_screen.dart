@@ -37,7 +37,7 @@ class _GameScreenState extends State<GameScreen> {
   int score = 0;
   int currentIndex = 0;
   List<String> wordsList = [];
-  Map<String, String> scoreMap = {}; // word -> "Correct"/"Pass"
+  Map<String, String> scoreMap = {};
   // --- Feedback Overlay State ---
   String? _feedbackMessage;
   Color? _feedbackColor;
@@ -71,8 +71,6 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   Future<void> _fetchInitialWords() async {
-    // Simulate async fetch if needed, or just process
-    // In a real scenario, this might await a DB cal
     final initialWords = service.getWordsFromSelectedCategories(
       widget.selectedCategories,
     );
@@ -108,8 +106,9 @@ class _GameScreenState extends State<GameScreen> {
   }
 
   void _startGetReadyCountdown() {
+    AudioService().pauseBackgroundMusic();
     AudioService().playStartCountdown();
-    HapticFeedback.heavyImpact();
+    AudioService().mediumImpact();
     countdownTimer?.cancel();
     countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
@@ -226,12 +225,12 @@ class _GameScreenState extends State<GameScreen> {
     final currentWord = wordsList[currentIndex];
     scoreMap[currentWord] = status;
     if (status == "Correct") {
+      AudioService().mediumImpact();
       AudioService().playCorrect();
-      HapticFeedback.mediumImpact();
       if (mounted) setState(() => score++);
     } else {
+      AudioService().heavyImpact();
       AudioService().playPass();
-      HapticFeedback.lightImpact();
     }
     if (mounted) _triggerFeedback(status);
     if (mounted) {
@@ -240,7 +239,7 @@ class _GameScreenState extends State<GameScreen> {
       });
     }
     if (currentIndex >= wordsList.length - 3) {
-      _fetchMoreWords(); // Fire and forget
+      _fetchMoreWords();
     }
     // Ensure mounted before calling async logic that touches state
     if (mounted) await _resetTiltDetection();
@@ -265,6 +264,7 @@ class _GameScreenState extends State<GameScreen> {
     _subscription?.cancel();
     countdownTimer?.cancel();
     gameTimerController.dispose();
+    AudioService().playBackgroundMusic();
     super.dispose();
   }
 
@@ -305,39 +305,39 @@ class _GameScreenState extends State<GameScreen> {
           builder: (context, value, child) {
             final timerProgress =
                 (widget.time > 0) ? value.remaining / widget.time : 0.0;
-            return Scaffold(
-              backgroundColor: theme.scaffoldBackgroundColor,
-              // Removed padding from body
-              body: Stack(
-                children: [
-                  // 1. Main Game Content
-                  Center(child: _buildMainContent(theme)),
-                  // 2. Top Bar (Centered horizontally now, but visually acts as top bar)
-                  Positioned(
-                    top: 20, // Adjusted top spacing
-                    left: 20,
-                    right: 20,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: GameTopBar(
-                        score: score,
-                        timerProgress: timerProgress,
-                        remainingTime: value.remaining,
-                        isGamePaused: isGamePaused,
-                        onPauseToggle: handleGamePauseToggle,
+            return SafeArea(
+              child: Scaffold(
+                body: Stack(
+                  children: [
+                    // 1. Main Game Content
+                    Center(child: _buildMainContent(theme)),
+                    // 2. Top Bar (Centered horizontally now, but visually acts as top bar)
+                    Positioned(
+                      top: 10, // Adjusted top spacing
+                      left: 20,
+                      right: 20,
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: GameTopBar(
+                          score: score,
+                          timerProgress: timerProgress,
+                          remainingTime: value.remaining,
+                          isGamePaused: isGamePaused,
+                          onPauseToggle: handleGamePauseToggle,
+                        ),
                       ),
                     ),
-                  ),
-                  // 3. Pause Overlay
-                  if (isGamePaused)
-                    GamePauseOverlay(
-                      score: score,
-                      onResumePressed: handleGamePauseToggle,
-                      onExitPressed: _handleExitGamePressed,
-                    ),
-                  // 4. Feedback Overlay (Correct/Pass) - Replaces Dialog
-                  if (_feedbackMessage != null) _buildFeedbackOverlay(),
-                ],
+                    // 3. Pause Overlay
+                    if (isGamePaused)
+                      GamePauseOverlay(
+                        score: score,
+                        onResumePressed: handleGamePauseToggle,
+                        onExitPressed: _handleExitGamePressed,
+                      ),
+                    // 4. Feedback Overlay (Correct/Pass) - Replaces Dialog
+                    if (_feedbackMessage != null) _buildFeedbackOverlay(),
+                  ],
+                ),
               ),
             );
           },
@@ -441,19 +441,21 @@ class _GameScreenState extends State<GameScreen> {
             transitionBuilder: (Widget child, Animation<double> animation) {
               return ScaleTransition(scale: animation, child: child);
             },
-            child: Text(
-              (currentIndex < wordsList.length)
-                  ? wordsList[currentIndex]
-                  : "...",
-              key: ValueKey<int>(currentIndex),
-              textAlign: TextAlign.center,
-              softWrap: true,
-              style: theme.textTheme.displayLarge!.copyWith(
-                fontWeight: FontWeight.w900,
-                fontSize: 90, // Even Bigger text since no card constraints
-                // Using primary/accent color based on theme for text color directly
-                color: theme.textTheme.displayLarge?.color,
-                letterSpacing: -2.0,
+            child: SafeArea(
+              child: Text(
+                (currentIndex < wordsList.length)
+                    ? wordsList[currentIndex]
+                    : "...",
+                key: ValueKey<int>(currentIndex),
+                textAlign: TextAlign.center,
+                softWrap: true,
+                style: theme.textTheme.displayLarge!.copyWith(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 90, // Even Bigger text since no card constraints
+                  // Using primary/accent color based on theme for text color directly
+                  color: theme.textTheme.displayLarge?.color,
+                  letterSpacing: -2.0,
+                ),
               ),
             ),
           ),

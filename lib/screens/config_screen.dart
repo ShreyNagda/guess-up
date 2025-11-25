@@ -7,9 +7,6 @@ import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/services/category_service.dart';
 import 'package:guess_up/services/storage_service.dart'; // Import StorageService
 
-// We no longer need connectivity_plus here
-// import 'package:connectivity_plus/connectivity_plus.dart';
-
 class ConfigScreen extends StatefulWidget {
   const ConfigScreen({super.key});
 
@@ -19,65 +16,77 @@ class ConfigScreen extends StatefulWidget {
 
 class _ConfigScreenState extends State<ConfigScreen> {
   final CategoryService service = CategoryService();
-  final StorageService storage = StorageService(); // Instance of StorageService
+  final StorageService storage = StorageService();
 
   List<Category> categories = [];
   List<Category> selectedCategories = [];
 
-  final List<int> timerOptions = [45, 60, 90, 120];
-  int selectedTimer = 60;
+  // [REMOVED] timerOptions and selectedTimer variables are gone.
 
   bool _isLoading = true;
-  // We no longer need _hasInternet
-  // bool _hasInternet = false;
 
   @override
   void initState() {
     super.initState();
-    _setPortrait(); // Keep this screen portrait
-    fetchCategories(); // Just call fetchCategories directly
+    _setPortrait();
+    fetchCategories();
   }
 
   void _setPortrait() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
 
-  // Simplified loading function
   Future<void> fetchCategories() async {
     if (mounted) setState(() => _isLoading = true);
 
     List<Category> allCategories = [];
+    bool usingOfflineFallback = false;
 
-    // 1. ALWAYS try to get categories.
-    // The service will return from cache if offline, or fetch if online.
+    // 1. Try to fetch ONLINE categories (or from Service Cache)
     try {
       final fetched = await service.getAllCategories();
-      allCategories.addAll(fetched); // No more filtering for "-1"
+      if (fetched.isEmpty) throw Exception("No online categories returned");
+      allCategories.addAll(fetched);
     } catch (e) {
-      // This catch block will run if we're offline AND have no cache
-      debugPrint("Firebase/Cache fetching error: $e");
-      if (mounted) {
-        // Inform the user, but we'll still load local words
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text(
-              "Couldn't load online categories. Showing offline words only.",
+      debugPrint("⚠️ Network/Cache error: $e. Switching to Offline Mode.");
+      usingOfflineFallback = true;
+    }
+
+    // 2. If Online failed, load the "Classic Party" deck from Storage
+    if (usingOfflineFallback) {
+      try {
+        final List<String> localWords = await storage.getWordsFromLocalFile();
+        if (localWords.isNotEmpty) {
+          allCategories.add(
+            Category(
+              id: "offline_classic",
+              name: "Classic Party",
+              icon: "🎉",
+              words: localWords,
             ),
-          ),
-        );
+          );
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(
+                content: Text("You are offline. Loaded 'Classic Party' deck!"),
+                duration: Duration(seconds: 3),
+                backgroundColor: Colors.orangeAccent,
+              ),
+            );
+          }
+        }
+      } catch (assetError) {
+        debugPrint("Error loading offline words: $assetError");
       }
     }
 
-    // 2. ALWAYS fetch local and custom words (from StorageService)
+    // 3. ALWAYS load local "My Words"
     try {
-      await storage.getWordsFromLocalFile();
       final customWords = storage.getCustomWords();
-
-      // 3. Create "dummy" categories for them
       if (customWords.isNotEmpty) {
         allCategories.add(
           Category(
-            id: "custom", // New ID
+            id: "custom",
             name: "My Words",
             icon: "✏️",
             words: customWords,
@@ -85,14 +94,13 @@ class _ConfigScreenState extends State<ConfigScreen> {
         );
       }
     } catch (e) {
-      debugPrint("Error loading offline words: $e");
+      debugPrint("Error loading custom words: $e");
     }
 
-    // 4. Update state with all found categories
     if (mounted) {
       setState(() {
         categories = allCategories;
-        _isLoading = false; // Set loading to false here
+        _isLoading = false;
       });
     }
   }
@@ -124,17 +132,20 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
   void handleStartGame() {
     if (selectedCategories.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Select at least one category")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Select at least one deck")));
       return;
     }
+
+    // [NEW] Get the time from storage directly
+    final int gameTime = StorageService().gameDuration;
 
     Navigator.of(context).push(
       CupertinoPageRoute(
         builder:
             (context) => GameScreen(
-              time: selectedTimer,
+              time: gameTime, // Use saved time
               selectedCategories: selectedCategories,
             ),
         fullscreenDialog: true,
@@ -149,7 +160,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Configure Game"),
+        title: const Text("Choose Decks"),
         leading: IconButton(
           icon: const Icon(Icons.chevron_left, size: 36),
           onPressed: () => Navigator.of(buildContext).pop(),
@@ -159,174 +170,144 @@ class _ConfigScreenState extends State<ConfigScreen> {
           _isLoading
               ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
-                onRefresh:
-                    fetchCategories, // Pull to refresh now just calls fetchCategories
+                onRefresh: fetchCategories,
                 child:
                     categories.isEmpty
-                        ? _buildEmptyState(theme) // Show a specific empty state
+                        ? _buildEmptyState(theme)
                         : Padding(
                           padding: const EdgeInsets.all(16.0),
-                          child: ListView(
-                            physics: const BouncingScrollPhysics(
-                              parent: AlwaysScrollableScrollPhysics(),
-                            ),
+                          child: Column(
                             children: [
-                              // --- Categories Section ---
-                              Text(
-                                "Categories",
-                                style: theme.textTheme.headlineMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              // We don't need the _hasInternet check here anymore
-                              const SizedBox(height: 8),
-                              Card(
-                                clipBehavior: Clip.antiAlias,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 2,
-                                child: Padding(
-                                  padding: const EdgeInsets.all(12.0),
-                                  child: Column(
-                                    children: [
-                                      // "Select All" Switch
-                                      Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                          horizontal: 8.0,
-                                          vertical: 4.0,
-                                        ),
-                                        child: Row(
-                                          children: [
-                                            Checkbox(
-                                              value: isAllCategoriesSelected,
-                                              onChanged: toggleAllCategories,
-                                              activeColor:
-                                                  theme.colorScheme.primary,
-                                              visualDensity:
-                                                  VisualDensity.compact,
-                                              materialTapTargetSize:
-                                                  MaterialTapTargetSize
-                                                      .shrinkWrap,
+                              Expanded(
+                                child: ListView(
+                                  physics: const BouncingScrollPhysics(
+                                    parent: AlwaysScrollableScrollPhysics(),
+                                  ),
+                                  children: [
+                                    // Text(
+                                    //   "Decks",
+                                    //   style: theme.textTheme.headlineMedium
+                                    //       ?.copyWith(
+                                    //         fontWeight: FontWeight.bold,
+                                    //       ),
+                                    // ),
+                                    const SizedBox(height: 8),
+                                    Padding(
+                                      padding: const EdgeInsets.all(12.0),
+                                      child: Column(
+                                        children: [
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8.0,
+                                              vertical: 4.0,
                                             ),
-                                            GestureDetector(
-                                              onTap:
-                                                  () => toggleAllCategories(
-                                                    !isAllCategoriesSelected,
+                                            child: Row(
+                                              children: [
+                                                Checkbox(
+                                                  value:
+                                                      isAllCategoriesSelected,
+                                                  onChanged:
+                                                      toggleAllCategories,
+                                                  activeColor:
+                                                      theme.colorScheme.primary,
+                                                  visualDensity:
+                                                      VisualDensity.compact,
+                                                  materialTapTargetSize:
+                                                      MaterialTapTargetSize
+                                                          .shrinkWrap,
+                                                ),
+                                                GestureDetector(
+                                                  onTap:
+                                                      () => toggleAllCategories(
+                                                        !isAllCategoriesSelected,
+                                                      ),
+                                                  child: Text(
+                                                    "Select All Decks",
+                                                    style: theme
+                                                        .textTheme
+                                                        .titleMedium
+                                                        ?.copyWith(
+                                                          fontWeight:
+                                                              FontWeight.w600,
+                                                        ),
                                                   ),
-                                              child: Text(
-                                                "Select All Categories",
-                                                style: theme
-                                                    .textTheme
-                                                    .titleMedium
-                                                    ?.copyWith(
-                                                      fontWeight:
-                                                          FontWeight.w600,
-                                                    ),
-                                              ),
+                                                ),
+                                                const Spacer(),
+                                                if (categories.length > 1)
+                                                  Text(
+                                                    "Mix & Match!",
+                                                    style: theme
+                                                        .textTheme
+                                                        .bodySmall
+                                                        ?.copyWith(
+                                                          color:
+                                                              theme.hintColor,
+                                                          fontStyle:
+                                                              FontStyle.italic,
+                                                        ),
+                                                  ),
+                                              ],
                                             ),
-                                          ],
-                                        ),
+                                          ),
+                                          const SizedBox(height: 12),
+                                          GridView.builder(
+                                            shrinkWrap: true,
+                                            physics:
+                                                const NeverScrollableScrollPhysics(),
+                                            gridDelegate:
+                                                const SliverGridDelegateWithFixedCrossAxisCount(
+                                                  crossAxisCount: 3,
+                                                  crossAxisSpacing: 10,
+                                                  mainAxisSpacing: 10,
+                                                  childAspectRatio: 1,
+                                                ),
+                                            itemCount: categories.length,
+                                            itemBuilder: (context, index) {
+                                              final category =
+                                                  categories[index];
+                                              final isSelected =
+                                                  selectedCategories.contains(
+                                                    category,
+                                                  );
+                                              return _buildAnimatedCategoryCard(
+                                                category,
+                                                isSelected,
+                                                theme,
+                                              );
+                                            },
+                                          ),
+                                        ],
                                       ),
-                                      const SizedBox(height: 12),
-                                      // Category Grid
-                                      GridView.builder(
-                                        shrinkWrap: true,
-                                        physics:
-                                            const NeverScrollableScrollPhysics(),
-                                        gridDelegate:
-                                            const SliverGridDelegateWithFixedCrossAxisCount(
-                                              crossAxisCount: 3,
-                                              crossAxisSpacing: 10,
-                                              mainAxisSpacing: 10,
-                                              childAspectRatio: 1,
-                                            ),
-                                        itemCount: categories.length,
-                                        itemBuilder: (context, index) {
-                                          final category = categories[index];
-                                          final isSelected = selectedCategories
-                                              .contains(category);
-                                          return _buildAnimatedCategoryCard(
-                                            category,
-                                            isSelected,
-                                            theme,
-                                          );
-                                        },
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                  ],
                                 ),
                               ),
-                              const SizedBox(
-                                height: 24,
-                              ), // Space between sections
-                              // --- Timer Section ---
-                              Text(
-                                "Select Time",
-                                style: theme.textTheme.headlineMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Card(
-                                clipBehavior: Clip.antiAlias,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                                elevation: 2,
-                                child: Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 16.0,
-                                    horizontal: 12.0,
+                              // [UPDATED] Start Button is anchored at the bottom
+                              const SizedBox(height: 16),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 60,
+                                child: ElevatedButton.icon(
+                                  onPressed: handleStartGame,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: theme.colorScheme.primary,
+                                    foregroundColor:
+                                        theme.colorScheme.onPrimary,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    elevation: 4,
                                   ),
-                                  child: Wrap(
-                                    spacing: 10,
-                                    runSpacing: 10,
-                                    alignment: WrapAlignment.center,
-                                    children:
-                                        timerOptions.map((time) {
-                                          final isSelected =
-                                              selectedTimer == time;
-                                          return AnimatedScale(
-                                            scale: isSelected ? 1.1 : 1.0,
-                                            duration: const Duration(
-                                              milliseconds: 200,
-                                            ),
-                                            curve: Curves.easeInOut,
-                                            child: ChoiceChip(
-                                              label: Padding(
-                                                padding:
-                                                    const EdgeInsets.symmetric(
-                                                      horizontal: 12,
-                                                      vertical: 8,
-                                                    ),
-                                                child: Text("$time sec"),
-                                              ),
-                                              selected: isSelected,
-                                              onSelected: (_) {
-                                                setState(() {
-                                                  selectedTimer = time;
-                                                });
-                                              },
-                                            ),
-                                          );
-                                        }).toList(),
+                                  icon: const Icon(
+                                    Icons.play_arrow_rounded,
+                                    size: 32,
                                   ),
-                                ),
-                              ),
-                              const SizedBox(height: 32),
-                              // --- Start Button ---
-                              ElevatedButton.icon(
-                                onPressed: handleStartGame,
-                                icon: const Icon(
-                                  Icons.play_arrow_rounded,
-                                  size: 28,
-                                ),
-                                label: const Text(
-                                  "Start Guessing!",
-                                  style: TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold,
+                                  label: const Text(
+                                    "Start Guessing!",
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
@@ -338,13 +319,10 @@ class _ConfigScreenState extends State<ConfigScreen> {
     );
   }
 
-  // Helper widget for empty state
   Widget _buildEmptyState(ThemeData theme) {
-    // This state now means "We're offline AND have no cache AND no local words"
-    String title = "No Categories Found";
+    String title = "No Decks Found";
     String message =
-        "Please connect to the internet and pull to refresh, or add your own custom words in Settings.";
-
+        "Please connect to the internet to load decks, or add your own custom words in Settings.";
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24.0),
@@ -368,7 +346,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
             ElevatedButton.icon(
               icon: const Icon(Icons.refresh),
               label: const Text("Retry"),
-              onPressed: fetchCategories, // Just call fetchCategories
+              onPressed: fetchCategories,
             ),
           ],
         ),
@@ -376,63 +354,79 @@ class _ConfigScreenState extends State<ConfigScreen> {
     );
   }
 
-  // Category Card builder (no changes needed)
   Widget _buildAnimatedCategoryCard(
     Category category,
     bool isSelected,
     ThemeData theme,
   ) {
+    final isDark = theme.brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () => toggleCategory(category),
       child: AnimatedContainer(
-        duration: const Duration(milliseconds: 250),
+        duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
         transform:
             Matrix4.identity()..scaleByDouble(
-              isSelected ? 1.03 : 1.0, // Use 1.03, not 1.02
-              isSelected ? 1.03 : 1.0, // Use 1.03, not 1.02
+              isSelected ? 1.05 : 1.0,
+              isSelected ? 1.05 : 1.0,
               1.0,
               1.0,
             ),
         decoration: BoxDecoration(
           color:
               isSelected
-                  ? theme.colorScheme.primary.withAlpha(50)
-                  : theme.cardColor.withAlpha(100),
-          borderRadius: BorderRadius.circular(16),
+                  // Selected:
+                  // Light Mode: Yellow needs higher opacity (85) to be seen on white
+                  // Dark Mode: Amber looks great at (85) too
+                  ? theme.colorScheme.primary.withAlpha(85)
+                  // Unselected:
+                  // Light Mode: Needs to be nearly opaque (245) to stand out from background
+                  // Dark Mode: Can handle the slight transparency
+                  : theme.cardColor.withAlpha(isDark ? 230 : 250),
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color:
                 isSelected
                     ? theme.colorScheme.primary
-                    : theme.dividerColor.withAlpha(100),
-            width: isSelected ? 2.5 : 1.5,
+                    : theme.dividerColor.withAlpha(50),
+            width: isSelected ? 3 : 1,
           ),
           boxShadow:
               isSelected
                   ? [
                     BoxShadow(
-                      color: theme.colorScheme.primary.withAlpha(50),
+                      color: theme.colorScheme.primary.withAlpha(
+                        60,
+                      ), // Glow effect
+                      blurRadius: 5,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                  : [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(
+                        isDark ? 30 : 10,
+                      ), // Subtle shadow
                       blurRadius: 6,
                       offset: const Offset(0, 2),
                     ),
-                  ]
-                  : [],
+                  ],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(category.icon, style: const TextStyle(fontSize: 28)),
+            Text(category.icon, style: const TextStyle(fontSize: 32)),
             const SizedBox(height: 8),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Text(
                 category.name,
                 textAlign: TextAlign.center,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  // Changed from bodyLarge
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
-                maxLines: 2,
+                maxLines: 1,
                 overflow: TextOverflow.ellipsis,
               ),
             ),

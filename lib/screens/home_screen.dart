@@ -1,4 +1,3 @@
-import 'dart:math';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -17,52 +16,25 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
-  late AnimationController _floatingController;
+  late AnimationController _scrollController;
 
-  // Reduced icon list for cleaner look
-  final List<IconData> _icons = [
-    Icons.sports_cricket,
-    Icons.movie_filter_rounded,
-    Icons.fastfood_rounded,
-    Icons.music_note_rounded,
-    Icons.lightbulb_rounded,
-    Icons.travel_explore,
-  ];
-
-  final List<_FloatingIcon> _backgroundIcons = [];
-  final Random _random = Random();
+  // The pattern sequence (repeated in the grid)
+  final List<String> _deckEmojis = ["🏏", "🎬", "🍔", "🗻", "🎧", "🅰️"];
 
   @override
   void initState() {
     super.initState();
     _setPortraitOnly();
 
-    // Initialize FEWER icons (12 instead of 20) for less clutter
-    for (int i = 0; i < 15; i++) {
-      _backgroundIcons.add(
-        _FloatingIcon(
-          icon: _icons[_random.nextInt(_icons.length)],
-          // Start strictly within bounds (0.1 to 0.9)
-          x: 0.1 + _random.nextDouble() * 0.8,
-          y: 0.1 + _random.nextDouble() * 0.8,
-          // Random velocities
-          dx: (_random.nextDouble() - 0.5) * 0.0005,
-          dy: (_random.nextDouble() - 0.5) * 0.0005,
-          size: 50 + _random.nextDouble() * 50, // Varied sizes
-          opacity: 0.05 + _random.nextDouble() * 0.1, // Very subtle
-        ),
-      );
-    }
-
-    _floatingController = AnimationController(
+    _scrollController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 120), // Long loop for smoothness
+      duration: const Duration(seconds: 30), // Speed of the scroll
     )..repeat();
   }
 
   @override
   void dispose() {
-    _floatingController.dispose();
+    _scrollController.dispose();
     super.dispose();
   }
 
@@ -87,54 +59,31 @@ class _HomeScreenState extends State<HomeScreen>
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // --- 1. Animated Background Layer ---
-          AnimatedBuilder(
-            animation: _floatingController,
-            builder: (context, child) {
-              return Stack(
-                children:
-                    _backgroundIcons.map((iconData) {
-                      // Update position
-                      iconData.x += iconData.dx;
-                      iconData.y += iconData.dy;
-
-                      // Bounce off edges logic
-                      // Check Left/Right edges (allowing for icon size slightly)
-                      if (iconData.x < 0.05 || iconData.x > 0.95) {
-                        iconData.dx = -iconData.dx;
-                        // Clamp to prevent sticking
-                        iconData.x = iconData.x.clamp(0.05, 0.95);
-                      }
-
-                      // Check Top/Bottom edges
-                      if (iconData.y < 0.05 || iconData.y > 0.95) {
-                        iconData.dy = -iconData.dy;
-                        // Clamp to prevent sticking
-                        iconData.y = iconData.y.clamp(0.05, 0.95);
-                      }
-
-                      return Positioned(
-                        left: iconData.x * size.width,
-                        top: iconData.y * size.height,
-                        child: Icon(
-                          iconData.icon,
-                          size: iconData.size,
-                          color: (isDark
-                                  ? AppTheme.darkPrimaryColor
-                                  : AppTheme.lightAccentColor)
-                              .withAlpha((iconData.opacity * 255).round()),
-                        ),
-                      );
-                    }).toList(),
-              );
-            },
+          // --- 1. Structured Pattern Background ---
+          Positioned.fill(
+            child: Opacity(
+              opacity: 0.15, // Subtle background transparency
+              child: AnimatedBuilder(
+                animation: _scrollController,
+                builder: (context, child) {
+                  return CustomPaint(
+                    painter: PatternPainter(
+                      scrollValue: _scrollController.value,
+                      emojis: _deckEmojis,
+                      textColor: textColor, // Use theme color for emojis
+                    ),
+                    size: Size.infinite,
+                  );
+                },
+              ),
+            ),
           ),
 
-          // --- 2. Foreground UI ---
+          // --- 2. Foreground UI (Unchanged) ---
           SafeArea(
             child: Stack(
               children: [
-                // Title Section (Top 1/3)
+                // Title Section
                 Positioned(
                   top: size.height * 0.15,
                   left: 0,
@@ -172,7 +121,7 @@ class _HomeScreenState extends State<HomeScreen>
                   ),
                 ),
 
-                // Actions Section (Bottom 1/3)
+                // Actions Section
                 Positioned(
                   bottom: size.height * 0.1,
                   left: 24,
@@ -335,23 +284,60 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-// Data class for floating icons
-class _FloatingIcon {
-  IconData icon;
-  double x;
-  double y;
-  double dx;
-  double dy;
-  double size;
-  double opacity;
+// --- Custom Painter for the Grid Pattern ---
+class PatternPainter extends CustomPainter {
+  final double scrollValue;
+  final List<String> emojis;
+  final Color textColor;
 
-  _FloatingIcon({
-    required this.icon,
-    required this.x,
-    required this.y,
-    required this.dx,
-    required this.dy,
-    required this.size,
-    required this.opacity,
+  PatternPainter({
+    required this.scrollValue,
+    required this.emojis,
+    required this.textColor,
   });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final textStyle = TextStyle(
+      fontSize: 50, // Fixed size for cleanliness
+      color: textColor, // Monochrome look
+    );
+    final textPainter = TextPainter(textDirection: TextDirection.ltr);
+
+    // Grid Settings
+    const double spacing = 140.0; // Space between icons
+    final int cols = (size.width / spacing).ceil() + 2;
+    final int rows = (size.height / spacing).ceil() + 2;
+
+    // Diagonal Scroll Offset
+    final double offsetX = scrollValue * spacing;
+    final double offsetY = scrollValue * spacing;
+
+    for (int i = 0; i < cols; i++) {
+      for (int j = 0; j < rows; j++) {
+        // Use modulo to pick emoji consistently
+        final int emojiIndex = (i + j) % emojis.length;
+        textPainter.text = TextSpan(text: emojis[emojiIndex], style: textStyle);
+        textPainter.layout();
+
+        // Calculate position with wrap-around
+        // We subtract spacing to start drawing slightly off-screen (top-left)
+        double x = (i * spacing) + offsetX - spacing;
+        double y = (j * spacing) + offsetY - spacing;
+
+        // Wrap logic: If it goes off-screen, move it back to the start
+        // This mimics infinite scrolling
+        x = x % (cols * spacing) - spacing;
+        y = y % (rows * spacing) - spacing;
+
+        textPainter.paint(canvas, Offset(x, y));
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant PatternPainter oldDelegate) {
+    return oldDelegate.scrollValue != scrollValue ||
+        oldDelegate.textColor != textColor;
+  }
 }
