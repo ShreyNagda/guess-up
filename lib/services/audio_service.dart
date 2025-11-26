@@ -72,10 +72,10 @@ class AudioService with WidgetsBindingObserver {
 
     try {
       if (_musicPlayer.state == PlayerState.playing) return;
-      if (_musicPlayer.state == PlayerState.paused) _musicPlayer.resume();
+      if (_musicPlayer.state == PlayerState.paused) await _musicPlayer.resume();
       await _musicPlayer.play(
         AssetSource('sounds/background_music.wav'),
-        volume: 0.5, // Keep low to not distract
+        volume: 0.6, // Keep low to not distract
       );
     } catch (e) {
       print("Error playing music: $e");
@@ -129,9 +129,9 @@ class AudioService with WidgetsBindingObserver {
     }
   }
 
-  void heavyImpact() => vibrate(100);
-  void mediumImpact() => vibrate(50);
-  void lightImpact() => vibrate(20);
+  void heavyImpact() => vibrate(500);
+  void mediumImpact() => vibrate(200);
+  void lightImpact() => vibrate(100);
 
   // Dispose observer
   void dispose() {
