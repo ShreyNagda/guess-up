@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Guess Up - The Ultimate Party Charades Game!</title>
+    <!-- SEO Meta Tags -->
+    <meta
+      name="description"
+      content="Guess Up is a high-energy charades party game designed for Indian audiences. Put your phone on your forehead and guess Bollywood, Cricket, Food, and more from your friends' clues!"
+    />
+    <meta
+      name="keywords"
+      content="charades, party game, indian games, bollywood charades, cricket trivia, heads up, guess up, forehead game"
+    />
+    <!-- Google Fonts - Manrope -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="stylesheet" href="base.css" />
+    <link rel="stylesheet" href="landing.css" />
+  </head>
+  <body style="overflow-x: hidden">
+    <!-- Canvas Background for scrolling geometric shapes -->
+    <canvas id="pattern-canvas"></canvas>
+
+    <!-- Sticky Header Navigation -->
+    <header>
+      <div class="nav-container">
+        <div class="logo-section">
+          <img
+            class="logo-img"
+            src="../assets/images/logo.png"
+            alt="Guess Up Logo"
+          />
+          <h1 class="logo-text">GUESS UP</h1>
+        </div>
+
+        <nav class="nav-links" id="nav-links">
+          <a href="#features" class="nav-link">Features</a>
+          <a href="#how-to-play" class="nav-link">How to Play</a>
+          <a href="#decks" class="nav-link">Decks</a>
+          <button
+            class="theme-toggle"
+            id="theme-toggle"
+            aria-label="Toggle Theme"
+          >
+            Dark
+          </button>
+          <a
+            href="#download"
+            class="btn btn-primary"
+            style="padding: 0.6rem 1.4rem; border-radius: 10px"
+            >Get App</a
+          >
+        </nav>
+
+        <!-- Hamburger Menu Button -->
+        <button class="menu-toggle" id="menu-toggle" aria-label="Toggle Menu">
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero Landing Section -->
+    <section class="hero">
+      <div class="hero-content">
+        <span class="badge">Now Trending in India</span>
+        <h2 class="hero-title">Put it on your <span>FOREHEAD!</span></h2>
+        <p class="hero-tagline">The Ultimate Charades & Party Game</p>
+        <p class="hero-description">
+          Guess Up brings endless laughter to your house parties, get-togethers,
+          and family nights! Designed specifically for Indian youths, guess
+          words from Bollywood, Cricket, Food, Culture, and more while your
+          friends mime, shout, and enact.
+        </p>
+        <div class="hero-ctas">
+          <a href="#download" class="btn btn-primary">Play Now</a>
+          <a href="#features" class="btn btn-secondary">Learn More</a>
+        </div>
+      </div>
+
+      <div class="mockup-container">
+        <div class="phone-glow"></div>
+        <div class="phone-frame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <!-- Default Mockup Image -->
+            <img
+              src="../assets/images/onboarding2.png"
+              alt="Guess Up App Screenshot"
+              id="hero-phone-screen"
+            />
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Key Features Grid -->
+    <section class="features-section" id="features">
+      <div class="section-header">
+        <h2 class="section-title">Packed with Energy</h2>
+        <p class="section-subtitle">
+          Features crafted to ensure your next group hangout is filled with pure
+          chaos and fun.
+        </p>
+      </div>
+
+      <div class="features-grid">
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">IN</div>
+          <h3>Desi Pop-Culture Decks</h3>
+          <p>
+            Curated categories spanning Bollywood movies, Cricket legends,
+            Indian delicacies (Samosa, Chai, Biryani), street-food classics, and
+            regional festivals.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">FH</div>
+          <h3>Forehead Game Design</h3>
+          <p>
+            A classic heads-up party layout. Slide the phone onto your forehead,
+            orient it horizontally, and let your friends guide you to the
+            answers.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">TC</div>
+          <h3>Intuitive Tilt Controls</h3>
+          <p>
+            Built-in motion sensing. Tilt your screen downwards to mark a guess
+            as Correct (+1 Point) or tilt it upwards to Pass. Simple and
+            seamless!
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">MX</div>
+          <h3>Mix & Match Decks</h3>
+          <p>
+            Why limit yourself? Select multiple decks at the same time to create
+            a randomized custom game session that keeps everyone guessing.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">CD</div>
+          <h3>Create Custom Decks</h3>
+          <p>
+            Add your own personal inside jokes, names of friends, or specific
+            categories directly in settings. Save locally and launch
+            immediately.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon-wrapper">OC</div>
+          <h3>Offline Cache & Play</h3>
+          <p>
+            Bad network? No worries. Play anytime with automatic Firestore
+            content caching. Take Guess Up on roadtrips, flights, or remote
+            getaways.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- How to Play Steps -->
+    <section class="gameplay-section" id="how-to-play">
+      <div class="section-header">
+        <h2 class="section-title">How To Play</h2>
+        <p class="section-subtitle">
+          Easy rules to learn in less than 30 seconds. Perfect for players of
+          all ages!
+        </p>
+      </div>
+
+      <div class="steps-container">
+        <div class="step-card">
+          <div class="step-mockup-wrapper">
+            <span class="step-number">1</span>
+            <img
+              src="/assets/images/onboarding2.png"
+              alt="Onboarding Deck Selection"
+            />
+          </div>
+          <h3>1. Select Decks & Align</h3>
+          <p>
+            Pick one or more theme decks. Select your timer duration, then hold
+            the phone up to your forehead facing your friends.
+          </p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-mockup-wrapper">
+            <span class="step-number">2</span>
+            <img
+              src="/assets/images/correct_mockup.png"
+              alt="Correct Guess Screen"
+            />
+          </div>
+          <h3>2. Got it Right? Tilt Down</h3>
+          <p>
+            If you guess the word based on clues, tilt the screen down toward
+            the ground to score 1 point and load the next word.
+          </p>
+        </div>
+
+        <div class="step-card">
+          <div class="step-mockup-wrapper">
+            <span class="step-number">3</span>
+            <img src="/assets/images/pass_mockup.png" alt="Pass Guess Screen" />
+          </div>
+          <h3>3. Unsure? Tilt Up</h3>
+          <p>
+            Stuck on a difficult word? Simply tilt the screen upwards to pass.
+            No penalty is given, saving precious time!
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Explore Decks Showcase -->
+    <section class="decks-section" id="decks">
+      <div class="decks-container">
+        <div class="section-header">
+          <h2 class="section-title">Explore Word Decks</h2>
+          <p class="section-subtitle">
+            Click a deck to preview a sample of the cards you'll be guessing in
+            the game!
+          </p>
+        </div>
+
+        <div class="decks-grid">
+          <div
+            class="deck-item"
+            data-deck="cricket"
+            data-icon="CF"
+            data-words="Cricket, Sachin Tendulkar, Virat Kohli, MS Dhoni, Boundary, Wicket, Cover Drive, Sixer, Lagaan, IPL"
+          >
+            <div class="deck-icon">CF</div>
+            <div class="deck-info">
+              <h4>Cricket Fever</h4>
+              <p>100+ Player names, events, & rules</p>
+            </div>
+          </div>
+
+          <div
+            class="deck-item"
+            data-deck="bollywood"
+            data-icon="BH"
+            data-words="Bollywood, Shah Rukh Khan, Amitabh Bachchan, Sholay, DDLJ, Popcorn, Intermission, Oscar, Item Number, Action Hero"
+          >
+            <div class="deck-icon">BH</div>
+            <div class="deck-info">
+              <h4>Bollywood Hitlist</h4>
+              <p>Blockbusters, superstars, & movie songs</p>
+            </div>
+          </div>
+
+          <div
+            class="deck-item"
+            data-deck="food"
+            data-icon="DC"
+            data-words="Samosa, Biryani, Chai, Dosa, Paneer, Roti, Lassi, Mango, Curry, Masala, Golgappa, Gulab Jamun"
+          >
+            <div class="deck-icon">DC</div>
+            <div class="deck-info">
+              <h4>Desi Cravings</h4>
+              <p>Mouth-watering snacks & local cuisines</p>
+            </div>
+          </div>
+
+          <div
+            class="deck-item"
+            data-deck="places"
+            data-icon="II"
+            data-words="Taj Mahal, Lotus Temple, Gateway of India, Mumbai Local, Kolkata Tram, Rickshaw, Monsoon, Himalayas, Goa Beach"
+          >
+            <div class="deck-icon">II</div>
+            <div class="deck-info">
+              <h4>Incredible India</h4>
+              <p>Historic places, landmarks, & heritage sites</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- App Download CTA -->
+    <section class="cta-banner" id="download">
+      <h2>Ready to Guess Up?</h2>
+      <p>
+        Download now and turn your screen into the ultimate charades scoreboard!
+      </p>
+      <div class="cta-buttons">
+        <a href="#" class="cta-btn-store">Google Play Store</a>
+        <a href="#" class="cta-btn-store">Apple App Store</a>
+      </div>
+    </section>
+
+    <!-- Interactive Deck Words Preview Modal -->
+    <div class="deck-modal" id="deck-modal">
+      <div class="modal-content">
+        <span class="modal-close" id="modal-close">&times;</span>
+        <div class="modal-header">
+          <div class="modal-icon" id="modal-icon">CF</div>
+          <h3 class="modal-title" id="modal-title">Cricket Fever</h3>
+        </div>
+        <p class="modal-label">SAMPLE CARDS:</p>
+        <div class="modal-words-container" id="modal-words">
+          <!-- JS inserts words here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Footers -->
+    <footer>
+      <div class="footer-content">
+        <p>&copy; 2026 Guess Up. All rights reserved.</p>
+        <p style="font-size: 0.75rem; opacity: 0.6">
+          A modern heads-up style mobile app built for party lovers in India.
+        </p>
+        <div class="footer-links">
+          <a href="privacy.html">Privacy Policy</a>
+          <a href="#features">Features</a>
+          <a href="#download">Download App</a>
+        </div>
+      </div>
+    </footer>
+
+    <script>
+      // 1. Theme Toggle Functionality
+      const themeToggleBtn = document.getElementById("theme-toggle");
+      themeToggleBtn.addEventListener("click", () => {
+        document.body.classList.toggle("light-theme");
+        if (document.body.classList.contains("light-theme")) {
+          themeToggleBtn.textContent = "Light";
+        } else {
+          themeToggleBtn.textContent = "Dark";
+        }
+      });
+
+      // 2. Pattern Canvas — Geometric Shapes (replacing emojis)
+      const canvas = document.getElementById("pattern-canvas");
+      const ctx = canvas.getContext("2d");
+
+      let scrollValue = 0;
+
+      function resizeCanvas() {
+        canvas.width = canvas.clientWidth || window.innerWidth;
+        canvas.height = canvas.clientHeight || window.innerHeight;
+      }
+      window.addEventListener("resize", resizeCanvas);
+      resizeCanvas();
+
+      const shapes = [
+        "circle",
+        "diamond",
+        "cross",
+        "ring",
+        "square",
+        "triangle",
+      ];
+
+      function drawShape(ctx, type, x, y, size, color) {
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = 2;
+        const half = size / 2;
+
+        switch (type) {
+          case "circle":
+            ctx.beginPath();
+            ctx.arc(x + half, y + half, half * 0.6, 0, Math.PI * 2);
+            ctx.stroke();
+            break;
+          case "diamond":
+            ctx.beginPath();
+            ctx.moveTo(x + half, y + 4);
+            ctx.lineTo(x + size - 4, y + half);
+            ctx.lineTo(x + half, y + size - 4);
+            ctx.lineTo(x + 4, y + half);
+            ctx.closePath();
+            ctx.stroke();
+            break;
+          case "cross":
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x + half * 0.5, y + half * 0.5);
+            ctx.lineTo(x + half * 1.5, y + half * 1.5);
+            ctx.moveTo(x + half * 1.5, y + half * 0.5);
+            ctx.lineTo(x + half * 0.5, y + half * 1.5);
+            ctx.stroke();
+            break;
+          case "ring":
+            ctx.beginPath();
+            ctx.arc(x + half, y + half, half * 0.7, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(x + half, y + half, half * 0.35, 0, Math.PI * 2);
+            ctx.stroke();
+            break;
+          case "square":
+            ctx.strokeRect(
+              x + half * 0.35,
+              y + half * 0.35,
+              half * 1.3,
+              half * 1.3,
+            );
+            break;
+          case "triangle":
+            ctx.beginPath();
+            ctx.moveTo(x + half, y + 4);
+            ctx.lineTo(x + size - 6, y + size - 6);
+            ctx.lineTo(x + 6, y + size - 6);
+            ctx.closePath();
+            ctx.stroke();
+            break;
+        }
+      }
+
+      function drawPattern() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const themeLight = document.body.classList.contains("light-theme");
+        const color = themeLight ? "#212121" : "#EEEEEE";
+        const shapeSize = 36;
+        const spacing = 120;
+        const cols = Math.ceil(canvas.width / spacing) + 2;
+        const rows = Math.ceil(canvas.height / spacing) + 2;
+
+        const offsetX = (scrollValue * spacing) % (cols * spacing);
+        const offsetY = (scrollValue * spacing) % (rows * spacing);
+
+        for (let i = 0; i < cols; i++) {
+          for (let j = 0; j < rows; j++) {
+            const shapeIdx = (i + j) % shapes.length;
+
+            let x = i * spacing + offsetX - spacing;
+            let y = j * spacing + offsetY - spacing;
+
+            x = x % (cols * spacing);
+            y = y % (rows * spacing);
+
+            drawShape(ctx, shapes[shapeIdx], x, y, shapeSize, color);
+          }
+        }
+
+        scrollValue += 0.001;
+        requestAnimationFrame(drawPattern);
+      }
+      requestAnimationFrame(drawPattern);
+
+      // 3. Decks Sample Modal View
+      const deckItems = document.querySelectorAll(".deck-item");
+      const deckModal = document.getElementById("deck-modal");
+      const modalClose = document.getElementById("modal-close");
+      const modalIcon = document.getElementById("modal-icon");
+      const modalTitle = document.getElementById("modal-title");
+      const modalWordsContainer = document.getElementById("modal-words");
+
+      deckItems.forEach((item) => {
+        item.addEventListener("click", () => {
+          const title = item.querySelector("h4").textContent;
+          const icon = item.getAttribute("data-icon");
+          const wordsStr = item.getAttribute("data-words");
+          const words = wordsStr.split(", ");
+
+          modalTitle.textContent = title;
+          modalIcon.textContent = icon;
+          modalWordsContainer.innerHTML = "";
+
+          words.forEach((word) => {
+            const badge = document.createElement("span");
+            badge.className = "word-badge";
+            badge.textContent = word;
+            modalWordsContainer.appendChild(badge);
+          });
+
+          deckModal.classList.add("active");
+        });
+      });
+
+      modalClose.addEventListener("click", () => {
+        deckModal.classList.remove("active");
+      });
+
+      deckModal.addEventListener("click", (e) => {
+        if (e.target === deckModal) {
+          deckModal.classList.remove("active");
+        }
+      });
+
+      // 4. Phone Screen Mockup Switcher (micro-animation helper)
+      const screens = [
+        "../assets/images/onboarding2.png",
+        "../assets/images/correct_mockup.png",
+        "../assets/images/pass_mockup.png",
+      ];
+      let currentScreenIdx = 0;
+      const heroPhoneScreen = document.getElementById("hero-phone-screen");
+
+      setInterval(() => {
+        currentScreenIdx = (currentScreenIdx + 1) % screens.length;
+        heroPhoneScreen.style.opacity = 0;
+        setTimeout(() => {
+          heroPhoneScreen.src = screens[currentScreenIdx];
+          heroPhoneScreen.style.opacity = 1;
+        }, 350);
+      }, 4000);
+
+      heroPhoneScreen.style.transition = "opacity 0.4s ease";
+
+      // 5. Hamburger Menu Toggle Logic
+      const menuToggle = document.getElementById("menu-toggle");
+      const navLinks = document.getElementById("nav-links");
+
+      menuToggle.addEventListener("click", () => {
+        menuToggle.classList.toggle("active");
+        navLinks.classList.toggle("active");
+      });
+
+      // Close menu when a link is clicked
+      navLinks.querySelectorAll("a").forEach((link) => {
+        link.addEventListener("click", () => {
+          menuToggle.classList.remove("active");
+          navLinks.classList.remove("active");
+        });
+      });
+    </script>
+  </body>
+</html>

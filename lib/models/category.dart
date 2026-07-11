@@ -1,10 +1,6 @@
 // lib/models/category.dart
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:json_annotation/json_annotation.dart'; // Import
 
-part 'category.g.dart'; // Add this line for generated code
-
-@JsonSerializable() // Add annotation
 class Category {
   final String id;
   final String name;
@@ -20,24 +16,50 @@ class Category {
 
   // Keep Firestore factory if needed elsewhere, or adapt fetching logic
   factory Category.fromDocument(DocumentSnapshot doc) {
-    final data = doc.data() as Map<String, dynamic>;
-    // Ensure words list is handled correctly if it might be missing
-    final wordsList =
-        data['words'] != null ? List<String>.from(data['words']) : <String>[];
+    final data = doc.data() as Map<String, dynamic>? ?? {};
+
+    // Robust handling of the 'words' list
+    List<String> wordsList = [];
+    if (data['words'] is List) {
+      wordsList =
+          (data['words'] as List)
+              .map((e) => e?.toString() ?? '')
+              .where((e) => e.isNotEmpty)
+              .toList();
+    }
+
     return Category(
       id: doc.id,
-      name: data['name'] ?? '',
-      icon: data['icon'] ?? '',
+      name: data['name']?.toString() ?? 'Unnamed Category',
+      icon: data['icon']?.toString() ?? '🎮',
       words: wordsList,
     );
   }
 
   // Factory for JSON deserialization
-  factory Category.fromJson(Map<String, dynamic> json) =>
-      _$CategoryFromJson(json);
+  factory Category.fromJson(Map<String, dynamic> json) {
+    return Category(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Unnamed Category',
+      icon: json['icon']?.toString() ?? '🎮',
+      words:
+          (json['words'] as List?)
+              ?.map((e) => e?.toString() ?? '')
+              .where((e) => e.isNotEmpty)
+              .toList() ??
+          [],
+    );
+  }
 
   // Method for JSON serialization
-  Map<String, dynamic> toJson() => _$CategoryToJson(this);
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'icon': icon,
+      'words': words,
+    };
+  }
 
   // Keep toMap if used directly with Firestore set/update,
   // though toJson() might replace it.

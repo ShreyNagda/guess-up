@@ -17,6 +17,7 @@ class StorageService {
   static const String _customWordsKey = 'customWords';
   // [NEW] Key for game duration
   static const String _gameDurationKey = 'gameDuration';
+  static const String _onboardingSeenKey = 'hasSeenOnboarding';
 
   late SharedPreferences _prefs;
   bool _isInitialized = false;
@@ -27,6 +28,7 @@ class StorageService {
   bool _isHapticsEnabled = true;
   int _gameDuration = 60; // Default to 60 seconds
   ThemeMode _themeMode = ThemeMode.system;
+  bool _hasSeenOnboarding = false;
 
   /// Initialize the service and pre-load critical settings
   Future<void> init() async {
@@ -43,7 +45,10 @@ class StorageService {
     // 3. Load Game Duration [NEW]
     _gameDuration = _prefs.getInt(_gameDurationKey) ?? 60;
 
-    // 4. Load Theme
+    // 4. Load Onboarding Seen State
+    _hasSeenOnboarding = _prefs.getBool(_onboardingSeenKey) ?? false;
+
+    // 5. Load Theme
     final themeString = _prefs.getString(_themeModeKey);
     switch (themeString) {
       case 'light':
@@ -120,6 +125,14 @@ class StorageService {
     final current = getCustomWords();
     current.addAll(words.where((word) => !current.contains(word)));
     await setCustomWords(current);
+  }
+
+  // --- Onboarding ---
+  bool get hasSeenOnboarding => _hasSeenOnboarding;
+
+  Future<void> setOnboardingSeen(bool value) async {
+    _hasSeenOnboarding = value;
+    await _prefs.setBool(_onboardingSeenKey, value);
   }
 
   // --- Local File Words ---

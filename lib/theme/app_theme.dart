@@ -120,7 +120,7 @@ class AppTheme {
       ),
 
       textTheme: _buildTextTheme(ThemeMode.light),
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: lightPrimaryColor,
         elevation: 0,
         centerTitle: true,
@@ -134,7 +134,7 @@ class AppTheme {
         titleTextStyle: TextStyle(
           color: lightAccentColor,
           fontSize: 24,
-          fontFamily: 'Manrope',
+          fontFamily: GoogleFonts.manrope().fontFamily,
           fontWeight: FontWeight.w900,
           letterSpacing: -0.5,
         ),
@@ -220,7 +220,7 @@ class AppTheme {
 
       textTheme: _buildTextTheme(ThemeMode.dark),
 
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: darkSurfaceColor,
         elevation: 0,
         centerTitle: true,
@@ -234,7 +234,7 @@ class AppTheme {
         titleTextStyle: TextStyle(
           color: darkPrimaryColor, // Amber title
           fontSize: 24,
-          fontFamily: 'Manrope',
+          fontFamily: GoogleFonts.manrope().fontFamily,
           fontWeight: FontWeight.w900,
           letterSpacing: -0.5,
         ),

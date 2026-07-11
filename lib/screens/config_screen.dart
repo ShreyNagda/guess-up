@@ -2,6 +2,7 @@ import 'dart:async'; // Import for Future
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:guess_up/models/category.dart';
 import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/services/category_service.dart';
@@ -21,35 +22,123 @@ class _ConfigScreenState extends State<ConfigScreen> {
   List<Category> categories = [];
   List<Category> selectedCategories = [];
 
-  // [REMOVED] timerOptions and selectedTimer variables are gone.
-
   bool _isLoading = true;
+  bool _hasFetchedOnce = false;
+  bool _isOffline = false;
+  StreamSubscription<List<ConnectivityResult>>? _connectivitySubscription;
 
   @override
   void initState() {
     super.initState();
     _setPortrait();
-    fetchCategories();
+    _checkInitialConnectivity();
+    _subscribeToConnectivity();
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _checkInitialConnectivity() async {
+    try {
+      final results = await Connectivity().checkConnectivity();
+      final hasInternet = !results.contains(ConnectivityResult.none);
+      if (mounted) {
+        setState(() {
+          _isOffline = !hasInternet;
+        });
+        fetchCategories();
+      }
+    } catch (e) {
+      debugPrint("Error checking connectivity: $e");
+      fetchCategories();
+    }
+  }
+
+  void _subscribeToConnectivity() {
+    _connectivitySubscription = Connectivity().onConnectivityChanged.listen((
+      results,
+    ) {
+      final hasInternet = !results.contains(ConnectivityResult.none);
+      if (mounted) {
+        final wasOffline = _isOffline;
+        setState(() {
+          _isOffline = !hasInternet;
+        });
+        // If connectivity status changed, fetch again to sync decks
+        if (wasOffline != _isOffline) {
+          fetchCategories(forceRefresh: true);
+        }
+      }
+    });
   }
 
   void _setPortrait() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
 
-  Future<void> fetchCategories() async {
+  Future<void> fetchCategories({bool forceRefresh = false}) async {
+    if (_isLoading && _hasFetchedOnce && !forceRefresh)
+      return; // Avoid redundant calls
+    _hasFetchedOnce = true;
     if (mounted) setState(() => _isLoading = true);
 
     List<Category> allCategories = [];
     bool usingOfflineFallback = false;
 
-    // 1. Try to fetch ONLINE categories (or from Service Cache)
+    // Check connectivity first
+    List<ConnectivityResult> connectivityResult;
     try {
-      final fetched = await service.getAllCategories();
-      if (fetched.isEmpty) throw Exception("No online categories returned");
-      allCategories.addAll(fetched);
+      connectivityResult = await Connectivity().checkConnectivity();
     } catch (e) {
-      debugPrint("⚠️ Network/Cache error: $e. Switching to Offline Mode.");
-      usingOfflineFallback = true;
+      connectivityResult = [ConnectivityResult.none];
+    }
+    final bool hasInternet =
+        !connectivityResult.contains(ConnectivityResult.none);
+
+    if (mounted) {
+      setState(() {
+        _isOffline = !hasInternet;
+      });
+    }
+
+    // 1. Try to fetch categories (online or cached)
+    try {
+      final fetched = await service
+          .getAllCategories(forceRefresh: _isOffline ? false : forceRefresh)
+          .timeout(
+            const Duration(milliseconds: 800),
+            onTimeout: () async {
+              debugPrint(
+                "⏱️ Category fetch timeout (800ms). Falling back to direct cache read.",
+              );
+              return await service.getCachedCategories();
+            },
+          );
+      if (fetched.isEmpty) {
+        debugPrint("ℹ️ Firebase/cache returned 0 categories.");
+        // Try fallback to cache directly just in case
+        final cached = await service.getCachedCategories();
+        if (cached.isNotEmpty) {
+          allCategories.addAll(cached);
+        } else {
+          usingOfflineFallback = true;
+        }
+      } else {
+        allCategories.addAll(fetched);
+      }
+    } catch (e) {
+      debugPrint(
+        "⚠️ Network/Cache error: $e. Falling back to direct cache read.",
+      );
+      final cached = await service.getCachedCategories();
+      if (cached.isNotEmpty) {
+        allCategories.addAll(cached);
+      } else {
+        usingOfflineFallback = true;
+      }
     }
 
     // 2. If Online failed, load the "Classic Party" deck from Storage
@@ -65,15 +154,6 @@ class _ConfigScreenState extends State<ConfigScreen> {
               words: localWords,
             ),
           );
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text("You are offline. Loaded 'Classic Party' deck!"),
-                duration: Duration(seconds: 3),
-                backgroundColor: Colors.orangeAccent,
-              ),
-            );
-          }
         }
       } catch (assetError) {
         debugPrint("Error loading offline words: $assetError");
@@ -103,6 +183,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
         _isLoading = false;
       });
     }
+    setState(() {
+      _isLoading = false;
+    }); // Ensure loading state is reset even if not mounted
   }
 
   bool isAllSelected() {
@@ -170,7 +253,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
           _isLoading
               ? const Center(child: CircularProgressIndicator())
               : RefreshIndicator(
-                onRefresh: fetchCategories,
+                onRefresh: () => fetchCategories(forceRefresh: true),
                 child:
                     categories.isEmpty
                         ? _buildEmptyState(theme)
@@ -178,19 +261,13 @@ class _ConfigScreenState extends State<ConfigScreen> {
                           padding: const EdgeInsets.all(16.0),
                           child: Column(
                             children: [
+                              if (_isOffline) _buildOfflineBanner(theme),
                               Expanded(
                                 child: ListView(
                                   physics: const BouncingScrollPhysics(
                                     parent: AlwaysScrollableScrollPhysics(),
                                   ),
                                   children: [
-                                    // Text(
-                                    //   "Decks",
-                                    //   style: theme.textTheme.headlineMedium
-                                    //       ?.copyWith(
-                                    //         fontWeight: FontWeight.bold,
-                                    //       ),
-                                    // ),
                                     const SizedBox(height: 8),
                                     Padding(
                                       padding: const EdgeInsets.all(12.0),
@@ -319,6 +396,37 @@ class _ConfigScreenState extends State<ConfigScreen> {
     );
   }
 
+  Widget _buildOfflineBanner(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 16.0),
+      margin: const EdgeInsets.only(bottom: 16.0),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.errorContainer,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: theme.colorScheme.error, width: 1),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            Icons.cloud_off_outlined,
+            color: theme.colorScheme.error,
+            size: 20,
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              "Offline Mode: Using local decks",
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.error,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildEmptyState(ThemeData theme) {
     String title = "No Decks Found";
     String message =
@@ -366,23 +474,10 @@ class _ConfigScreenState extends State<ConfigScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         curve: Curves.easeInOut,
-        transform:
-            Matrix4.identity()..scaleByDouble(
-              isSelected ? 1.05 : 1.0,
-              isSelected ? 1.05 : 1.0,
-              1.0,
-              1.0,
-            ),
         decoration: BoxDecoration(
           color:
               isSelected
-                  // Selected:
-                  // Light Mode: Yellow needs higher opacity (85) to be seen on white
-                  // Dark Mode: Amber looks great at (85) too
                   ? theme.colorScheme.primary.withAlpha(85)
-                  // Unselected:
-                  // Light Mode: Needs to be nearly opaque (245) to stand out from background
-                  // Dark Mode: Can handle the slight transparency
                   : theme.cardColor.withAlpha(isDark ? 230 : 250),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(

@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:guess_up/screens/about_screen.dart';
 import 'package:guess_up/screens/config_screen.dart';
-import 'package:guess_up/screens/how_to_play_screen.dart';
+import 'package:guess_up/screens/onboarding_screen.dart';
 import 'package:guess_up/screens/settings_screen.dart';
 import 'package:guess_up/theme/app_theme.dart';
 
@@ -19,7 +19,7 @@ class _HomeScreenState extends State<HomeScreen>
   late AnimationController _scrollController;
 
   // The pattern sequence (repeated in the grid)
-  final List<String> _deckEmojis = ["🏏", "🎬", "🍔", "🗻", "🎧", "🅰️"];
+  final List<String> _deckEmojis = ["🏏", "🎬", "🍔", "🗻", "🎧", "🅰️", "📺"];
 
   @override
   void initState() {
@@ -187,7 +187,10 @@ class _HomeScreenState extends State<HomeScreen>
                               Icons.help_outline_rounded,
                               () => Navigator.of(context).push(
                                 CupertinoPageRoute(
-                                  builder: (_) => const HowToPlayScreen(),
+                                  builder:
+                                      (_) => const OnboardingScreen(
+                                        isRevisiting: true,
+                                      ),
                                 ),
                               ),
                               isDark,

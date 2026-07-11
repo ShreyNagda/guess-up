@@ -1,0 +1,1016 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Guess Up - Firestore Database Admin Panel</title>
+    <!-- Google Fonts - Manrope -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Firebase SDKs (Compat version for simple single-file execution) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore-compat.js"></script>
+
+    <link rel="stylesheet" href="base.css" />
+    <link rel="stylesheet" href="db_updater.css" />
+  </head>
+  <body>
+    <!-- Firebase Auth Screen (Gatekeeper) -->
+    <div class="access-wall" id="auth-wall">
+      <div class="wall-card">
+        <div class="wall-logo-container">
+          <h2 class="wall-logo-text">Firebase Login</h2>
+          <p style="font-size: 0.9rem; color: var(--text-muted)">
+            Connect to Firestore to perform secure writes
+          </p>
+        </div>
+
+        <div class="instructions-alert">
+          <strong>Security Notice:</strong>
+          <p>
+            This is a secure area. Log in with your registered administrator
+            account. Unauthorized access attempts are monitored and blocked.
+          </p>
+        </div>
+
+        <div class="input-group">
+          <label for="fb-email">Admin Email</label>
+          <input
+            type="email"
+            class="input-control"
+            id="fb-email"
+            placeholder="admin@guessup.com"
+            value="admin@guessup.com"
+          />
+        </div>
+
+        <div class="input-group">
+          <label for="fb-password">Password</label>
+          <input
+            type="password"
+            class="input-control"
+            id="fb-password"
+            placeholder="Enter admin password"
+          />
+        </div>
+
+        <button class="btn" id="login-btn">Authenticate & Access</button>
+        <div
+          id="login-error"
+          style="
+            color: var(--error-color);
+            font-weight: 800;
+            font-size: 0.9rem;
+            display: none;
+            margin-top: 0.5rem;
+          "
+        ></div>
+      </div>
+    </div>
+
+    <!-- Main Database Manager Dashboard Interface -->
+    <header>
+      <div class="header-container">
+        <div style="display: flex; align-items: center; gap: 0.8rem">
+          <img
+            class="logo-img"
+            src="../assets/images/logo.png"
+            alt="Guess Up Logo"
+          />
+          <h2
+            style="
+              font-weight: 900;
+              letter-spacing: -0.5px;
+              color: var(--primary-color);
+            "
+          >
+            GUESS UP ADMIN
+          </h2>
+        </div>
+
+        <div class="user-info">
+          <span
+            >Logged in as:
+            <span class="user-email" id="current-user-email"
+              >admin@guessup.com</span
+            ></span
+          >
+          <button
+            class="btn btn-secondary"
+            id="logout-btn"
+            style="padding: 0.5rem 1rem; border-radius: 8px; font-size: 0.85rem"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+    </header>
+
+    <div class="dashboard-layout">
+      <!-- Left Pane: Categories List & Add Category -->
+      <div class="pane">
+        <div class="pane-title">
+          <span>Decks</span>
+          <button
+            class="btn"
+            id="new-category-btn"
+            style="
+              padding: 0.4rem 0.8rem;
+              font-size: 0.8rem;
+              border-radius: 8px;
+            "
+          >
+            + Add Deck
+          </button>
+        </div>
+
+        <!-- Add Category Form (Collapsible/Hidden by default) -->
+        <div id="category-form-container" class="category-form-card">
+          <h4 style="font-weight: 800">Create New Deck</h4>
+          <div class="input-group">
+            <label for="cat-id">Deck ID (slug, e.g. cricket-fever)</label>
+            <input
+              type="text"
+              class="input-control"
+              id="cat-id"
+              placeholder="cricket-fever"
+            />
+          </div>
+          <div class="input-group">
+            <label for="cat-name">Deck Name</label>
+            <input
+              type="text"
+              class="input-control"
+              id="cat-name"
+              placeholder="Cricket Fever"
+            />
+          </div>
+          <div class="input-group">
+            <label for="cat-icon">Deck Icon Code</label>
+            <input
+              type="text"
+              class="input-control"
+              id="cat-icon"
+              placeholder="e.g. CF, BH, DC"
+              value="GU"
+            />
+          </div>
+          <div style="display: flex; gap: 0.8rem">
+            <button class="btn" id="save-category-btn" style="flex: 1">
+              Save Deck
+            </button>
+            <button
+              class="btn btn-secondary"
+              id="cancel-category-btn"
+              style="flex: 1"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+
+        <div class="category-list" id="category-list-container">
+          <p
+            style="
+              text-align: center;
+              color: var(--text-muted);
+              padding: 2rem 0;
+            "
+          >
+            Connecting to database...
+          </p>
+        </div>
+      </div>
+
+      <!-- Right Pane: Category Word Manager Detail View -->
+      <div class="pane">
+        <div class="pane-title">
+          <span>Cards Editor</span>
+          <span id="selected-category-badge" class="selected-category-badge"
+            >No selection</span
+          >
+        </div>
+
+        <!-- Active Selection Panel -->
+        <div
+          id="deck-editor-container"
+          style="display: none; flex-direction: column; gap: 1.5rem"
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              flex-wrap: wrap;
+              gap: 1rem;
+            "
+          >
+            <div>
+              <h3
+                id="editor-deck-title"
+                style="font-weight: 900; font-size: 1.6rem"
+              >
+                Cricket Fever
+              </h3>
+              <p
+                id="editor-deck-id"
+                style="
+                  font-size: 0.85rem;
+                  color: var(--text-muted);
+                  font-family: monospace;
+                "
+              >
+                ID: cricket-fever
+              </p>
+            </div>
+            <button
+              class="btn btn-danger"
+              id="delete-category-btn"
+              style="
+                padding: 0.5rem 1rem;
+                border-radius: 8px;
+                font-size: 0.85rem;
+              "
+            >
+              Delete Deck
+            </button>
+          </div>
+
+          <div class="editor-form-card">
+            <h4 style="font-weight: 800">Add Cards to Deck</h4>
+            <div class="input-group">
+              <label for="bulk-words"
+                >Enter Words (Comma-separated) OR Topic Description (for AI
+                generation)</label
+              >
+              <textarea
+                class="input-control"
+                id="bulk-words"
+                rows="3"
+                placeholder="E.g., Virat Kohli, MS Dhoni OR prompt like 'cricket players from India'"
+                style="resize: vertical"
+              ></textarea>
+            </div>
+
+            <div
+              style="
+                display: flex;
+                gap: 0.8rem;
+                align-items: center;
+                flex-wrap: wrap;
+              "
+            >
+              <button
+                class="btn"
+                id="add-words-btn"
+                style="padding: 0.7rem 1.5rem"
+              >
+                Add Word(s)
+              </button>
+
+              <button
+                class="btn btn-secondary"
+                id="generate-ai-btn"
+                style="
+                  padding: 0.7rem 1.5rem;
+                  display: flex;
+                  align-items: center;
+                  gap: 0.5rem;
+                "
+              >
+                Generate with AI
+              </button>
+
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 0.4rem;
+                  margin-left: 0.2rem;
+                "
+              >
+                <label
+                  for="ai-count"
+                  style="
+                    font-size: 0.8rem;
+                    font-weight: 800;
+                    text-transform: uppercase;
+                    color: var(--text-muted);
+                    margin: 0;
+                    white-space: nowrap;
+                  "
+                  >Qty:</label
+                >
+                <select
+                  class="input-control"
+                  id="ai-count"
+                  style="
+                    padding: 0.5rem 0.8rem;
+                    font-size: 0.85rem;
+                    width: auto;
+                    height: auto;
+                    border-radius: 8px;
+                  "
+                >
+                  <option value="10">10</option>
+                  <option value="15" selected>15</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                </select>
+              </div>
+            </div>
+
+            <div id="ai-status" class="ai-status">
+              <span
+                class="spinner"
+                style="width: 18px; height: 18px; border-width: 2.5px"
+              ></span>
+              <span id="ai-status-text" class="ai-status-text"
+                >Gemini is generating words...</span
+              >
+            </div>
+          </div>
+
+          <div>
+            <h4
+              style="
+                font-weight: 800;
+                margin-bottom: 0.8rem;
+                display: flex;
+                justify-content: space-between;
+              "
+            >
+              <span>Current Cards</span>
+              <span id="total-cards-count" style="color: var(--primary-color)"
+                >0</span
+              >
+            </h4>
+            <div class="word-grid" id="word-items-container">
+              <!-- Words list elements -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Empty/Idle View -->
+        <div id="deck-editor-placeholder" class="deck-editor-placeholder">
+          <div class="placeholder-arrow"></div>
+          Select a category deck from the list to view, edit, or add word cards.
+        </div>
+      </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <script>
+      // Environment Config - Paste your Google AI Studio API Key here
+      const GEMINI_API_KEY = "YOUR_GEMINI_API_KEY_HERE";
+
+      // 2. Toast Notification Helper
+      function showToast(message, type = "info") {
+        const container = document.getElementById("toast-container");
+        const toast = document.createElement("div");
+        toast.className = `toast ${type}`;
+
+        toast.innerHTML = `
+        <span>${message}</span>
+        <span class="toast-close" style="cursor:pointer; margin-left: 1rem;">&times;</span>
+      `;
+
+        container.appendChild(toast);
+
+        toast.querySelector(".toast-close").addEventListener("click", () => {
+          toast.remove();
+        });
+
+        setTimeout(() => {
+          toast.remove();
+        }, 5000);
+      }
+
+      // 3. Firebase Configuration and Initialization
+      const firebaseConfig = {
+        apiKey: "AIzaSyDLiAp2sQllxdjuB16-POjt4_ryhwSX438",
+        authDomain: "guess-up-646e0.firebaseapp.com",
+        projectId: "guess-up-646e0",
+        storageBucket: "guess-up-646e0.firebasestorage.app",
+      };
+
+      let db;
+      let selectedCategoryDocId = null;
+      let categoriesData = [];
+
+      function initFirebase() {
+        try {
+          if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+          }
+          db = firebase.firestore();
+
+          // Monitor Firebase Auth state change
+          firebase.auth().onAuthStateChanged((user) => {
+            if (user) {
+              document.getElementById("auth-wall").classList.add("hidden");
+              document.getElementById("current-user-email").textContent =
+                user.email;
+              showToast(`Connected to Firestore as ${user.email}`, "success");
+              loadCategories();
+            } else {
+              document.getElementById("auth-wall").classList.remove("hidden");
+            }
+          });
+        } catch (err) {
+          showToast(`Firebase Init Error: ${err.message}`, "error");
+          console.error(err);
+        }
+      }
+
+      // Initialize Firebase on page load
+      window.addEventListener("DOMContentLoaded", initFirebase);
+
+      // Auth Form Logic
+      const loginBtn = document.getElementById("login-btn");
+      const fbEmailInput = document.getElementById("fb-email");
+      const fbPasswordInput = document.getElementById("fb-password");
+      const loginError = document.getElementById("login-error");
+
+      loginBtn.addEventListener("click", async () => {
+        const email = fbEmailInput.value;
+        const pwd = fbPasswordInput.value;
+        loginError.style.display = "none";
+
+        try {
+          loginBtn.disabled = true;
+          loginBtn.textContent = "Authenticating...";
+          await firebase.auth().signInWithEmailAndPassword(email, pwd);
+        } catch (err) {
+          loginError.textContent = err.message;
+          loginError.style.display = "block";
+          showToast(`Login failed: ${err.message}`, "error");
+        } finally {
+          loginBtn.disabled = false;
+          loginBtn.textContent = "Connect & Authenticate";
+        }
+      });
+
+      document.getElementById("logout-btn").addEventListener("click", () => {
+        firebase
+          .auth()
+          .signOut()
+          .then(() => {
+            showToast("Logged out of Firebase session", "info");
+            selectedCategoryDocId = null;
+            updateDeckEditorView();
+          });
+      });
+
+      // 4. CRUD Operations & Dashboard Panel Controllers
+      const categoryListContainer = document.getElementById(
+        "category-list-container",
+      );
+      const newCategoryBtn = document.getElementById("new-category-btn");
+      const categoryFormContainer = document.getElementById(
+        "category-form-container",
+      );
+      const cancelCategoryBtn = document.getElementById("cancel-category-btn");
+      const saveCategoryBtn = document.getElementById("save-category-btn");
+
+      // Input fields for Category Form
+      const catIdInput = document.getElementById("cat-id");
+      const catNameInput = document.getElementById("cat-name");
+      const catIconInput = document.getElementById("cat-icon");
+
+      // Toggle Category Create Form
+      newCategoryBtn.addEventListener("click", () => {
+        categoryFormContainer.classList.add("visible");
+        catIdInput.focus();
+      });
+
+      cancelCategoryBtn.addEventListener("click", () => {
+        categoryFormContainer.classList.remove("visible");
+        clearCategoryForm();
+      });
+
+      function clearCategoryForm() {
+        catIdInput.value = "";
+        catNameInput.value = "";
+        catIconInput.value = "GU";
+      }
+
+      // Auto-slugify Name input to ID input
+      catNameInput.addEventListener("input", () => {
+        if (!catIdInput.value || catIdInput.value === "") {
+          const slug = catNameInput.value
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, "-")
+            .replace(/(^-|-$)/g, "");
+          catIdInput.value = slug;
+        }
+      });
+
+      // Load categories list from Firestore
+      async function loadCategories() {
+        try {
+          categoryListContainer.innerHTML =
+            '<p style="text-align: center; color: var(--text-muted); padding: 2rem 0;">Fetching categories...</p>';
+
+          db.collection("categories").onSnapshot(
+            (snapshot) => {
+              categoriesData = [];
+              categoryListContainer.innerHTML = "";
+
+              if (snapshot.empty) {
+                categoryListContainer.innerHTML =
+                  '<p style="text-align: center; color: var(--text-muted); padding: 2rem 0;">No categories found in Firestore.</p>';
+                return;
+              }
+
+              snapshot.forEach((doc) => {
+                const data = doc.data();
+                const category = {
+                  id: doc.id,
+                  name: data.name || "Unnamed",
+                  icon: data.icon || "GU",
+                  words: data.words || [],
+                };
+                categoriesData.push(category);
+              });
+
+              // Auto-select first deck if none selected
+              if (!selectedCategoryDocId && categoriesData.length > 0) {
+                selectedCategoryDocId = categoriesData[0].id;
+              }
+
+              // Render cards
+              categoriesData.forEach((category) => {
+                const isSelected = selectedCategoryDocId === category.id;
+                const card = document.createElement("div");
+                card.className = `category-card ${isSelected ? "selected" : ""}`;
+                card.onclick = () => selectCategory(category.id);
+
+                card.innerHTML = `
+                  <div class="category-meta">
+                    <div class="category-icon">${category.icon}</div>
+                    <div>
+                      <div class="category-name">${category.name}</div>
+                      <div class="category-count">${category.words.length} words</div>
+                    </div>
+                  </div>
+                  <div class="category-chevron"></div>
+                `;
+                categoryListContainer.appendChild(card);
+              });
+
+              // Sync the active editor view if a category was loaded
+              if (selectedCategoryDocId) {
+                updateDeckEditorView();
+              }
+            },
+            (err) => {
+              showToast(`Error syncing collection: ${err.message}`, "error");
+            },
+          );
+        } catch (err) {
+          showToast(`Failed to load: ${err.message}`, "error");
+        }
+      }
+
+      // Save/Add category to Firestore
+      saveCategoryBtn.addEventListener("click", async () => {
+        const id = catIdInput.value.trim();
+        const name = catNameInput.value.trim();
+        const icon = catIconInput.value.trim();
+
+        if (!id || !name || !icon) {
+          showToast("All category fields are required", "error");
+          return;
+        }
+
+        try {
+          saveCategoryBtn.disabled = true;
+          saveCategoryBtn.textContent = "Saving...";
+
+          // Write to Firestore document
+          await db.collection("categories").doc(id).set({
+            name: name,
+            icon: icon,
+            words: [],
+          });
+
+          showToast(`Deck "${name}" created successfully!`, "success");
+          categoryFormContainer.classList.remove("visible");
+          clearCategoryForm();
+          selectCategory(id);
+        } catch (err) {
+          showToast(`Save failed: ${err.message}`, "error");
+        } finally {
+          saveCategoryBtn.disabled = false;
+          saveCategoryBtn.textContent = "Save Deck";
+        }
+      });
+
+      // Delete a category completely
+      const deleteCategoryBtn = document.getElementById("delete-category-btn");
+      deleteCategoryBtn.addEventListener("click", async () => {
+        if (!selectedCategoryDocId) return;
+
+        const category = categoriesData.find(
+          (c) => c.id === selectedCategoryDocId,
+        );
+        if (!category) return;
+
+        const confirmDelete = confirm(
+          `Are you absolutely sure you want to delete the entire deck "${category.name}"? This action cannot be undone!`,
+        );
+        if (!confirmDelete) return;
+
+        try {
+          deleteCategoryBtn.disabled = true;
+          deleteCategoryBtn.textContent = "Deleting...";
+
+          await db.collection("categories").doc(selectedCategoryDocId).delete();
+
+          showToast(`Deck "${category.name}" deleted.`, "success");
+          selectedCategoryDocId = null;
+          updateDeckEditorView();
+        } catch (err) {
+          showToast(`Delete failed: ${err.message}`, "error");
+        } finally {
+          deleteCategoryBtn.disabled = false;
+          deleteCategoryBtn.textContent = "Delete Deck";
+        }
+      });
+
+      // Select category to load detailed word list
+      function selectCategory(id) {
+        selectedCategoryDocId = id;
+
+        // Update selected class in left pane
+        const cards = categoryListContainer.querySelectorAll(".category-card");
+        cards.forEach((card, index) => {
+          if (categoriesData[index] && categoriesData[index].id === id) {
+            card.classList.add("selected");
+          } else {
+            card.classList.remove("selected");
+          }
+        });
+
+        updateDeckEditorView();
+      }
+
+      const deckEditorPlaceholder = document.getElementById(
+        "deck-editor-placeholder",
+      );
+      const deckEditorContainer = document.getElementById(
+        "deck-editor-container",
+      );
+      const selectedCategoryBadge = document.getElementById(
+        "selected-category-badge",
+      );
+
+      const editorDeckTitle = document.getElementById("editor-deck-title");
+      const editorDeckId = document.getElementById("editor-deck-id");
+      const totalCardsCount = document.getElementById("total-cards-count");
+      const wordItemsContainer = document.getElementById(
+        "word-items-container",
+      );
+
+      // Update active editing interface on the right pane
+      function updateDeckEditorView() {
+        if (!selectedCategoryDocId) {
+          deckEditorPlaceholder.style.display = "flex";
+          deckEditorContainer.style.display = "none";
+          selectedCategoryBadge.classList.remove("visible");
+          return;
+        }
+
+        const category = categoriesData.find(
+          (c) => c.id === selectedCategoryDocId,
+        );
+        if (!category) {
+          deckEditorPlaceholder.style.display = "flex";
+          deckEditorContainer.style.display = "none";
+          selectedCategoryBadge.classList.remove("visible");
+          return;
+        }
+
+        deckEditorPlaceholder.style.display = "none";
+        deckEditorContainer.style.display = "flex";
+        selectedCategoryBadge.classList.add("visible");
+        selectedCategoryBadge.textContent = `${category.icon} ${category.name}`;
+
+        editorDeckTitle.textContent = `${category.icon} ${category.name}`;
+        editorDeckId.textContent = `ID: ${category.id}`;
+        totalCardsCount.textContent = category.words.length;
+
+        // Populate word cards grid
+        wordItemsContainer.innerHTML = "";
+        if (category.words.length === 0) {
+          wordItemsContainer.innerHTML =
+            '<p style="color: var(--text-muted); padding: 1rem 0;">No words in this deck. Add some below!</p>';
+          return;
+        }
+
+        category.words.forEach((word) => {
+          const item = document.createElement("div");
+          item.className = "word-item";
+          item.innerHTML = `
+          <span>${word}</span>
+          <span class="word-delete" onclick="deleteWord('${word}')">&times;</span>
+        `;
+          wordItemsContainer.appendChild(item);
+        });
+      }
+
+      // Add new word(s) (bulk support)
+      const addWordsBtn = document.getElementById("add-words-btn");
+      const bulkWordsTextarea = document.getElementById("bulk-words");
+
+      addWordsBtn.addEventListener("click", async () => {
+        if (!selectedCategoryDocId) return;
+
+        const bulkInput = bulkWordsTextarea.value.trim();
+        if (!bulkInput || bulkInput === "") {
+          showToast("Please enter at least one word.", "error");
+          return;
+        }
+
+        // Parse comma/newline-separated words
+        const newWordsList = bulkInput
+          .split(/[,\n]+/)
+          .map((w) => w.trim())
+          .filter((w) => w.length > 0);
+
+        if (newWordsList.length === 0) {
+          showToast("No valid words found.", "error");
+          return;
+        }
+
+        try {
+          addWordsBtn.disabled = true;
+          addWordsBtn.textContent = "Adding...";
+
+          const categoryRef = db
+            .collection("categories")
+            .doc(selectedCategoryDocId);
+
+          // Retrieve the freshest document state from local categoriesData
+          const category = categoriesData.find(
+            (c) => c.id === selectedCategoryDocId,
+          );
+          const currentWords = category ? category.words || [] : [];
+
+          // Combine existing and new words
+          const combinedList = [...currentWords, ...newWordsList];
+
+          // Deduplicate the combined list case-insensitively
+          const finalUniqueList = [];
+          const seenLower = new Set();
+          for (const word of combinedList) {
+            const lower = word.toLowerCase();
+            if (!seenLower.has(lower)) {
+              seenLower.add(lower);
+              finalUniqueList.push(word);
+            }
+          }
+
+          // Compare lengths to find additions vs duplicates skipped
+          const addedCount = finalUniqueList.length - currentWords.length;
+          const totalSkipped =
+            currentWords.length + newWordsList.length - finalUniqueList.length;
+
+          // Check if there are no changes to write
+          const isIdentical =
+            currentWords.length === finalUniqueList.length &&
+            currentWords.every((val, index) => val === finalUniqueList[index]);
+
+          if (isIdentical) {
+            showToast("All entered words already exist in this deck.", "info");
+            addWordsBtn.disabled = false;
+            addWordsBtn.textContent = "Add Word(s)";
+            return;
+          }
+
+          // Overwrite Firestore document with the cleaned array
+          await categoryRef.update({
+            words: finalUniqueList,
+          });
+
+          if (addedCount > 0) {
+            showToast(
+              `Successfully added ${addedCount} new word(s) to deck!${totalSkipped > 0 ? ` Skipped ${totalSkipped} duplicate(s).` : ""}`,
+              "success",
+            );
+          } else {
+            showToast(
+              `Cleaned up database: removed ${currentWords.length - finalUniqueList.length} duplicate(s) from the deck.`,
+              "success",
+            );
+          }
+
+          bulkWordsTextarea.value = "";
+        } catch (err) {
+          showToast(`Add failed: ${err.message}`, "error");
+        } finally {
+          addWordsBtn.disabled = false;
+          addWordsBtn.textContent = "Add Word(s)";
+        }
+      });
+
+      // AI Card Generator Logic (Gemini API Integration)
+      const generateAiBtn = document.getElementById("generate-ai-btn");
+      const aiCountSelect = document.getElementById("ai-count");
+      const aiStatusDiv = document.getElementById("ai-status");
+      const aiStatusText = document.getElementById("ai-status-text");
+
+      generateAiBtn.addEventListener("click", async () => {
+        if (!selectedCategoryDocId) {
+          showToast("Please select a deck first.", "error");
+          return;
+        }
+
+        if (
+          !GEMINI_API_KEY ||
+          GEMINI_API_KEY === "YOUR_GEMINI_API_KEY_HERE" ||
+          GEMINI_API_KEY.trim() === ""
+        ) {
+          showToast("Gemini API Key is not configured.", "error");
+          return;
+        }
+
+        const promptVal = bulkWordsTextarea.value.trim();
+        if (!promptVal) {
+          showToast(
+            "Please enter a topic or theme description in the textbox first (e.g. 'cricket players from India').",
+            "error",
+          );
+          return;
+        }
+
+        const count = parseInt(aiCountSelect.value) || 15;
+        const category = categoriesData.find(
+          (c) => c.id === selectedCategoryDocId,
+        );
+        const deckName = category ? category.name : "Selected Deck";
+
+        try {
+          generateAiBtn.disabled = true;
+          aiStatusDiv.classList.add("visible");
+          aiStatusText.textContent = "Connecting to Gemini AI...";
+
+          // 1. Fetch freshest document state from Firestore first
+          aiStatusText.textContent = "Querying live database...";
+          const categoryDoc = await db
+            .collection("categories")
+            .doc(selectedCategoryDocId)
+            .get();
+          const liveData = categoryDoc.data();
+          const currentWords = liveData ? liveData.words || [] : [];
+
+          // 2. Query Gemini API
+          aiStatusText.textContent = "Generating words with Gemini...";
+          const promptText = `
+            You are a word list generator for a charades/forehead party game called Guess Up.
+            The user wants to generate game card words for a deck named "${deckName}".
+            Prompt theme instruction: "${promptVal}"
+            Generate exactly ${count} unique words, names, or short phrases matching this topic.
+
+            OUTPUT MUST BE ONLY A VALID JSON ARRAY OF STRINGS, like this:
+            ["Word 1", "Word 2", "Word 3"]
+            Do NOT include any markdown code blocks (e.g. no \`\`\`json), do NOT include text explanations, introduction, or conversational filler. Return only the raw JSON array.
+          `;
+
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+          const response = await fetch(url, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: promptText }] }],
+            }),
+          });
+
+          if (!response.ok) {
+            const errData = await response.json();
+            throw new Error(
+              errData.error?.message || `HTTP error ${response.status}`,
+            );
+          }
+
+          const resData = await response.json();
+          if (!resData.candidates || resData.candidates.length === 0) {
+            throw new Error(
+              "No response candidates received from Gemini. Please check your prompt or API status.",
+            );
+          }
+
+          let rawText = resData.candidates[0].content.parts[0].text.trim();
+
+          // Clean markdown fence codeblocks if Gemini wrapped the JSON
+          if (rawText.startsWith("```")) {
+            rawText = rawText
+              .replace(/^```(json)?/, "")
+              .replace(/```$/, "")
+              .trim();
+          }
+
+          let generatedList = [];
+          try {
+            generatedList = JSON.parse(rawText);
+          } catch (jsonErr) {
+            console.error("Raw AI text:", rawText);
+            throw new Error(
+              "AI returned malformed data. Try re-generating or adjusting your prompt.",
+            );
+          }
+
+          if (!Array.isArray(generatedList)) {
+            throw new Error("AI did not return a valid list of strings.");
+          }
+
+          // 3. Deduplicate AI words case-insensitively against current database cards
+          aiStatusText.textContent = "Filtering duplicates...";
+          const currentLower = new Set(
+            currentWords.map((w) => w.toLowerCase()),
+          );
+          const newUniqueWords = [];
+          const duplicatesSkipped = [];
+
+          for (const word of generatedList) {
+            const cleaned = word.trim();
+            if (cleaned.length === 0) continue;
+            const lower = cleaned.toLowerCase();
+            if (!currentLower.has(lower)) {
+              currentLower.add(lower);
+              newUniqueWords.push(cleaned);
+            } else {
+              duplicatesSkipped.push(cleaned);
+            }
+          }
+
+          if (newUniqueWords.length === 0) {
+            showToast(
+              `All ${generatedList.length} AI generated words already exist in this deck!`,
+              "info",
+            );
+            return;
+          }
+
+          // 4. Overwrite/update Firestore with the merged list
+          aiStatusText.textContent = "Writing latest cards to database...";
+          const finalMergedList = [...currentWords, ...newUniqueWords];
+
+          await db.collection("categories").doc(selectedCategoryDocId).update({
+            words: finalMergedList,
+          });
+
+          const msg =
+            `Successfully generated and added ${newUniqueWords.length} new card(s)!` +
+            (duplicatesSkipped.length > 0
+              ? ` Skipped ${duplicatesSkipped.length} duplicates.`
+              : "");
+          showToast(msg, "success");
+          bulkWordsTextarea.value = "";
+        } catch (err) {
+          console.error(err);
+          showToast(`AI generation failed: ${err.message}`, "error");
+        } finally {
+          generateAiBtn.disabled = false;
+          aiStatusDiv.classList.remove("visible");
+        }
+      });
+
+      // Delete a single word card from the list
+      async function deleteWord(word) {
+        if (!selectedCategoryDocId) return;
+
+        const confirmDel = confirm(
+          `Are you sure you want to remove the word "${word}"?`,
+        );
+        if (!confirmDel) return;
+
+        try {
+          const categoryRef = db
+            .collection("categories")
+            .doc(selectedCategoryDocId);
+
+          // Atomically remove word from the Firestore document
+          await categoryRef.update({
+            words: firebase.firestore.FieldValue.arrayRemove(word),
+          });
+
+          showToast(`Removed word: "${word}"`, "success");
+        } catch (err) {
+          showToast(`Remove failed: ${err.message}`, "error");
+        }
+      }
+    </script>
+  </body>
+</html>

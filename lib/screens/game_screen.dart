@@ -150,11 +150,13 @@ class _GameScreenState extends State<GameScreen> {
   void handleGamePauseToggle() {
     if (isGameFinished || !mounted || isCountdownRunning) return;
     if (isGamePaused) {
-      // Resume
+      // Resume game → pause music
       gameTimerController.start();
+      AudioService().pauseBackgroundMusic();
     } else {
-      // Pause
+      // Pause game → resume music
       gameTimerController.pause();
+      AudioService().playBackgroundMusic();
     }
     setState(() {
       isGamePaused = !isGamePaused;

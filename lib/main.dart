@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:guess_up/screens/home_screen.dart';
+import 'package:guess_up/screens/onboarding_screen.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/category_service.dart';
 import 'package:guess_up/services/storage_service.dart';
@@ -20,6 +22,12 @@ void main() async {
 
   final audioService = AudioService();
   await audioService.init();
+
+  FirebaseFirestore.instance.settings = const Settings(
+    persistenceEnabled:
+        true, // Cache data locally so network checks don't block boot
+    sslEnabled: true,
+  );
 
   runApp(
     MultiProvider(
@@ -41,6 +49,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     // Listen to ThemeService changes
     final themeService = Provider.of<ThemeService>(context);
+    final storage = Provider.of<StorageService>(context, listen: false);
 
     return MaterialApp(
       title: 'Guess Up',
@@ -48,7 +57,10 @@ class MyApp extends StatelessWidget {
       themeMode: themeService.themeMode, // Use the dynamic mode
       theme: AppTheme.lightTheme, // Light theme config
       darkTheme: AppTheme.darkTheme, // Dark theme config
-      home: const HomeScreen(),
+      home:
+          storage.hasSeenOnboarding
+              ? const HomeScreen()
+              : const OnboardingScreen(),
     );
   }
 }
