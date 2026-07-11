@@ -14,8 +14,8 @@ export const PatternCanvas = () => {
     let animationFrameId;
 
     const resizeCanvas = () => {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
+      canvas.width = document.documentElement.clientWidth;
+      canvas.height = document.documentElement.clientHeight;
     };
 
     window.addEventListener("resize", resizeCanvas);
@@ -65,7 +65,7 @@ export const PatternCanvas = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full z-[-1] opacity-8 dark:opacity-12 pointer-events-none transition-opacity duration-300"
+      className="fixed top-0 left-0 w-full h-full block z-[-1] opacity-8 dark:opacity-12 pointer-events-none transition-opacity duration-300"
     />
   );
 };

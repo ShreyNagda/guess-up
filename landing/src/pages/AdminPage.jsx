@@ -22,6 +22,19 @@ import { useInactivityLogout } from "../hooks/useInactivityLogout";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 
+const DECK_EMOJI_MAPPING = {
+  CF: "🏏",
+  BH: "🎬",
+  DC: "🍔",
+  II: "🗻",
+  HP: "🎧",
+  GU: "📺"
+};
+
+const getDeckEmoji = (icon) => {
+  return DECK_EMOJI_MAPPING[icon] || icon;
+};
+
 export const AdminPage = () => {
   const { showToast } = useToast();
 
@@ -42,7 +55,7 @@ export const AdminPage = () => {
   const [isNewDeckOpen, setIsNewDeckOpen] = useState(false);
   const [newDeckId, setNewDeckId] = useState("");
   const [newDeckName, setNewDeckName] = useState("");
-  const [newDeckIcon, setNewDeckIcon] = useState("GU");
+  const [newDeckIcon, setNewDeckIcon] = useState("📺");
   const [saveDeckLoading, setSaveDeckLoading] = useState(false);
 
   // Words / AI states
@@ -81,7 +94,7 @@ export const AdminPage = () => {
           categoriesList.push({
             id: docSnap.id,
             name: data.name || "Unnamed",
-            icon: data.icon || "GU",
+            icon: getDeckEmoji(data.icon || "📺"),
             words: data.words || [],
           });
         });
@@ -174,7 +187,7 @@ export const AdminPage = () => {
       setIsNewDeckOpen(false);
       setNewDeckId("");
       setNewDeckName("");
-      setNewDeckIcon("GU");
+      setNewDeckIcon("📺");
       setSelectedDeckId(id);
     } catch (err) {
       showToast(`Save failed: ${err.message}`, "error");
@@ -540,12 +553,12 @@ export const AdminPage = () => {
                         />
                       </div>
                       <div className="input-group">
-                        <label htmlFor="cat-icon">Deck Icon Code</label>
+                        <label htmlFor="cat-icon">Deck Icon (Emoji)</label>
                         <input
                           type="text"
                           className="input-control"
                           id="cat-icon"
-                          placeholder="e.g. CF, BH, DC"
+                          placeholder="e.g. 🏏, 🎬, 🍔"
                           value={newDeckIcon}
                           onChange={(e) => setNewDeckIcon(e.target.value)}
                           required
