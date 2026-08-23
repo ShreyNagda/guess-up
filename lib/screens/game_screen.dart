@@ -336,41 +336,39 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
           builder: (context, value, child) {
             final timerProgress =
                 (widget.time > 0) ? value.remaining / widget.time : 0.0;
-            return SafeArea(
-              child: Scaffold(
-                body: Stack(
-                  children: [
-                    // 1. Main Game Content (Isolated with RepaintBoundary)
-                    RepaintBoundary(
-                      child: Center(child: _buildMainContent(theme)),
-                    ),
-                    // 2. Top Bar (Centered horizontally now, but visually acts as top bar)
-                    Positioned(
-                      top: 10, // Adjusted top spacing
-                      left: 20,
-                      right: 20,
-                      child: Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: GameTopBar(
-                          score: score,
-                          timerProgress: timerProgress,
-                          remainingTime: value.remaining,
-                          isGamePaused: isGamePaused,
-                          onPauseToggle: handleGamePauseToggle,
-                        ),
-                      ),
-                    ),
-                    // 3. Pause Overlay
-                    if (isGamePaused)
-                      GamePauseOverlay(
+            return Scaffold(
+              body: Stack(
+                children: [
+                  // 1. Main Game Content (Isolated with RepaintBoundary)
+                  RepaintBoundary(
+                    child: Center(child: _buildMainContent(theme)),
+                  ),
+                  // 2. Top Bar (Centered horizontally now, but visually acts as top bar)
+                  Positioned(
+                    top: 10, // Adjusted top spacing
+                    left: 20,
+                    right: 20,
+                    child: Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: GameTopBar(
                         score: score,
-                        onResumePressed: handleGamePauseToggle,
-                        onExitPressed: _handleExitGamePressed,
+                        timerProgress: timerProgress,
+                        remainingTime: value.remaining,
+                        isGamePaused: isGamePaused,
+                        onPauseToggle: handleGamePauseToggle,
                       ),
-                    // 4. Feedback Overlay (Correct/Pass) - Replaces Dialog
-                    if (_feedbackMessage != null) _buildFeedbackOverlay(),
-                  ],
-                ),
+                    ),
+                  ),
+                  // 3. Pause Overlay
+                  if (isGamePaused)
+                    GamePauseOverlay(
+                      score: score,
+                      onResumePressed: handleGamePauseToggle,
+                      onExitPressed: _handleExitGamePressed,
+                    ),
+                  // 4. Feedback Overlay (Correct/Pass) - Replaces Dialog
+                  if (_feedbackMessage != null) _buildFeedbackOverlay(),
+                ],
               ),
             );
           },

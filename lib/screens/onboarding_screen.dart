@@ -3,6 +3,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:guess_up/models/category.dart';
+import 'package:guess_up/screens/config_screen.dart';
 import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/screens/home_screen.dart';
 import 'package:guess_up/services/category_service.dart';
@@ -206,7 +207,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                       child: Text(
                         _currentPage == 4
                             ? widget.isRevisiting
-                                ? "START"
+                                ? "START GUESSING"
                                 : "START FIRST GAME NOW"
                             : "NEXT",
                         style: const TextStyle(
@@ -321,10 +322,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           // Transparent Vector Illustration Container
           Container(
             height: 220,
+            width: 300,
             padding: const EdgeInsets.all(8),
             child: Image.asset(
               'assets/images/onboarding/3.webp',
-              fit: BoxFit.contain,
+              fit: BoxFit.cover,
             ),
           ),
           const SizedBox(height: 24),
@@ -361,10 +363,11 @@ class _OnboardingScreenState extends State<OnboardingScreen>
           // Transparent Vector Illustration Container
           Container(
             height: 220,
+            width: 300,
             padding: const EdgeInsets.all(8),
             child: Image.asset(
               'assets/images/onboarding/4.webp',
-              fit: BoxFit.contain,
+              fit: BoxFit.cover,
             ),
           ),
           const SizedBox(height: 24),
@@ -469,6 +472,14 @@ class _OnboardingScreenState extends State<OnboardingScreen>
                 ),
               ],
             ),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.of(context).pushReplacement(
+                CupertinoPageRoute(builder: (_) => const ConfigScreen()),
+              );
+            },
+            child: Text("Change config"),
           ),
           const Spacer(flex: 2),
         ],
