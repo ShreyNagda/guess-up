@@ -1,10 +1,15 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:guess_up/constants/app_info.dart';
+import 'package:guess_up/models/category.dart';
 import 'package:guess_up/screens/about_screen.dart';
 import 'package:guess_up/screens/config_screen.dart';
+import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/screens/onboarding_screen.dart';
 import 'package:guess_up/screens/settings_screen.dart';
+import 'package:guess_up/services/category_service.dart';
+import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -17,6 +22,7 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _scrollController;
+  bool _isStartingQuickPlay = false;
 
   // The pattern sequence (repeated in the grid)
   final List<String> _deckEmojis = ["🏏", "🎬", "🍔", "🗻", "🎧", "🅰️", "📺"];
@@ -40,6 +46,48 @@ class _HomeScreenState extends State<HomeScreen>
 
   void _setPortraitOnly() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  }
+
+  Future<void> _quickStartGame() async {
+    if (_isStartingQuickPlay) return;
+    setState(() => _isStartingQuickPlay = true);
+
+    try {
+      final allCategories = await CategoryService().getAllCategories();
+      final time = StorageService().gameDuration;
+      final lastCategoryIds = StorageService().getLastCategoryIds();
+
+      List<Category> categoriesToPlay = [];
+      if (lastCategoryIds.isNotEmpty) {
+        categoriesToPlay =
+            allCategories
+                .where((cat) => lastCategoryIds.contains(cat.id))
+                .toList();
+      }
+      if (categoriesToPlay.isEmpty) {
+        categoriesToPlay = allCategories;
+      }
+
+      if (mounted) {
+        setState(() => _isStartingQuickPlay = false);
+        Navigator.of(context).push(
+          CupertinoPageRoute(
+            builder:
+                (_) => GameScreen(
+                  time: time,
+                  selectedCategories: categoriesToPlay,
+                ),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        setState(() => _isStartingQuickPlay = false);
+        Navigator.of(
+          context,
+        ).push(CupertinoPageRoute(builder: (_) => const ConfigScreen()));
+      }
+    }
   }
 
   @override
@@ -109,7 +157,7 @@ class _HomeScreenState extends State<HomeScreen>
                       ),
                       const SizedBox(height: 20),
                       Text(
-                        "The Party Game",
+                        "The Ultimate Party Game",
                         textAlign: TextAlign.center,
                         style: theme.textTheme.titleMedium?.copyWith(
                           letterSpacing: 4,
@@ -130,16 +178,10 @@ class _HomeScreenState extends State<HomeScreen>
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       SizedBox(
-                        height: 80,
+                        height: 70,
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (_) => const ConfigScreen(),
-                              ),
-                            );
-                          },
+                          onPressed: _quickStartGame,
                           style: ElevatedButton.styleFrom(
                             backgroundColor: primaryColor,
                             foregroundColor: buttonTextColor,
@@ -156,34 +198,59 @@ class _HomeScreenState extends State<HomeScreen>
                             ),
                             shadowColor: Colors.transparent,
                           ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                "PLAY NOW",
-                                style: theme.textTheme.headlineMedium?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: buttonTextColor,
-                                  letterSpacing: 1.5,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Icon(
-                                Icons.play_arrow_rounded,
-                                size: 40,
-                                color: buttonTextColor,
-                              ),
-                            ],
-                          ),
+                          child:
+                              _isStartingQuickPlay
+                                  ? const SizedBox(
+                                    height: 28,
+                                    width: 28,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 3,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                  : Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        "QUICK PLAY",
+                                        style: theme.textTheme.headlineMedium
+                                            ?.copyWith(
+                                              fontWeight: FontWeight.w900,
+                                              color: buttonTextColor,
+                                              letterSpacing: 1.5,
+                                            ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Icon(
+                                        Icons.play_arrow_rounded,
+                                        size: 40,
+                                        color: buttonTextColor,
+                                      ),
+                                    ],
+                                  ),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 16),
                       Row(
                         children: [
                           Expanded(
                             child: _buildMenuButton(
                               context,
-                              "How to Play",
+                              "Decks",
+                              Icons.style_outlined,
+                              () => Navigator.of(context).push(
+                                CupertinoPageRoute(
+                                  builder: (_) => const ConfigScreen(),
+                                ),
+                              ),
+                              isDark,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: _buildMenuButton(
+                              context,
+                              "Tutorial",
                               Icons.help_outline_rounded,
                               () => Navigator.of(context).push(
                                 CupertinoPageRoute(
@@ -196,7 +263,7 @@ class _HomeScreenState extends State<HomeScreen>
                               isDark,
                             ),
                           ),
-                          const SizedBox(width: 16),
+                          const SizedBox(width: 12),
                           Expanded(
                             child: _buildMenuButton(
                               context,
@@ -223,7 +290,7 @@ class _HomeScreenState extends State<HomeScreen>
                         child: Padding(
                           padding: const EdgeInsets.all(12.0),
                           child: Text(
-                            "v1.0.0",
+                            AppInfo.displayVersion,
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: textColor.withAlpha(100),
                               fontWeight: FontWeight.bold,

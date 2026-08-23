@@ -3,7 +3,7 @@
     <uses-permission android:name="android.permission.VIBRATE"/>
     <uses-permission android:name="android.permission.MODIFY_AUDIO_SETTINGS"/>
     <application
-        android:label="guesse up"
+        android:label="Guess Up"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

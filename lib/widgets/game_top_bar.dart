@@ -30,33 +30,35 @@ class GameTopBar extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          SizedBox(
-            width: timerSize,
-            height: timerSize,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: timerSize,
-                  height: timerSize,
-                  child: CircularProgressIndicator(
-                    value: timerProgress,
-                    strokeWidth: timerSize / 10,
-                    valueColor: AlwaysStoppedAnimation<Color>(timerColor),
-                    backgroundColor: Colors.grey.withAlpha(77),
-                    strokeCap: StrokeCap.round,
+          RepaintBoundary(
+            child: SizedBox(
+              width: timerSize,
+              height: timerSize,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  SizedBox(
+                    width: timerSize,
+                    height: timerSize,
+                    child: CircularProgressIndicator(
+                      value: timerProgress,
+                      strokeWidth: timerSize / 10,
+                      valueColor: AlwaysStoppedAnimation<Color>(timerColor),
+                      backgroundColor: Colors.grey.withAlpha(77),
+                      strokeCap: StrokeCap.round,
+                    ),
                   ),
-                ),
-                Text(
-                  "$remainingTime",
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 28,
-                    color: timerColor,
-                    height: 1.0, // Remove vertical leading
+                  Text(
+                    "$remainingTime",
+                    style: theme.textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 28,
+                      color: timerColor,
+                      height: 1.0, // Remove vertical leading
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 

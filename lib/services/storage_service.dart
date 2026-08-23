@@ -18,6 +18,7 @@ class StorageService {
   // [NEW] Key for game duration
   static const String _gameDurationKey = 'gameDuration';
   static const String _onboardingSeenKey = 'hasSeenOnboarding';
+  static const String _lastCategoryIdsKey = 'lastCategoryIds';
 
   late SharedPreferences _prefs;
   bool _isInitialized = false;
@@ -110,6 +111,15 @@ class StorageService {
   Future<void> setGameDuration(int seconds) async {
     _gameDuration = seconds;
     await _prefs.setInt(_gameDurationKey, seconds);
+  }
+
+  // --- Last Played Game Preferences ---
+  List<String> getLastCategoryIds() {
+    return _prefs.getStringList(_lastCategoryIdsKey) ?? [];
+  }
+
+  Future<void> setLastCategoryIds(List<String> categoryIds) async {
+    await _prefs.setStringList(_lastCategoryIdsKey, categoryIds);
   }
 
   // --- Custom Words ---

@@ -25,7 +25,7 @@ class GameScreen extends StatefulWidget {
   State<GameScreen> createState() => _GameScreenState();
 }
 
-class _GameScreenState extends State<GameScreen> {
+class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   // --- Game State ---
   bool isGamePaused = false;
   bool isGameFinished = false;
@@ -52,11 +52,37 @@ class _GameScreenState extends State<GameScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WakelockPlus.enable();
     gameTimerController = TimerController.seconds(widget.time);
     _subscription = accelerometerEventStream().listen(_handleAccelerometer);
     _fetchInitialWords();
     _setLandscapeOrientation();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.paused ||
+        state == AppLifecycleState.inactive) {
+      // 1. Pause background music
+      AudioService().pauseBackgroundMusic();
+
+      // 2. Pause game timer & update UI state if actively playing
+      if (gameTimerController.value.status == TimerStatus.running) {
+        gameTimerController.pause();
+        if (mounted) {
+          setState(() {
+            isGamePaused = true;
+          });
+        }
+      }
+
+      // 3. Pause sensor stream while app is in background/call
+      _subscription?.pause();
+    } else if (state == AppLifecycleState.resumed) {
+      // Resume sensor stream when app returns to foreground
+      _subscription?.resume();
+    }
   }
 
   void _setLandscapeOrientation() {
@@ -226,6 +252,7 @@ class _GameScreenState extends State<GameScreen> {
     if (currentIndex >= wordsList.length || isGameFinished || !mounted) return;
     final currentWord = wordsList[currentIndex];
     scoreMap[currentWord] = status;
+    print(scoreMap);
     if (status == "Correct") {
       AudioService().mediumImpact();
       AudioService().playCorrect();
@@ -239,6 +266,7 @@ class _GameScreenState extends State<GameScreen> {
       setState(() {
         currentIndex++;
       });
+      scoreMap[wordsList[currentIndex]] = "Pass";
     }
     if (currentIndex >= wordsList.length - 3) {
       _fetchMoreWords();
@@ -262,6 +290,7 @@ class _GameScreenState extends State<GameScreen> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     WakelockPlus.disable();
     _subscription?.cancel();
     countdownTimer?.cancel();
@@ -282,7 +311,7 @@ class _GameScreenState extends State<GameScreen> {
       child: TimerControllerListener(
         controller: gameTimerController,
         listener: (context, value) {
-          if (value.remaining == 3) {
+          if (value.remaining == 1) {
             AudioService().playEndingCountdown();
           }
           if (value.remaining == 0 && !isGameFinished) {
@@ -311,8 +340,10 @@ class _GameScreenState extends State<GameScreen> {
               child: Scaffold(
                 body: Stack(
                   children: [
-                    // 1. Main Game Content
-                    Center(child: _buildMainContent(theme)),
+                    // 1. Main Game Content (Isolated with RepaintBoundary)
+                    RepaintBoundary(
+                      child: Center(child: _buildMainContent(theme)),
+                    ),
                     // 2. Top Bar (Centered horizontally now, but visually acts as top bar)
                     Positioned(
                       top: 10, // Adjusted top spacing
@@ -444,19 +475,26 @@ class _GameScreenState extends State<GameScreen> {
               return ScaleTransition(scale: animation, child: child);
             },
             child: SafeArea(
-              child: Text(
-                (currentIndex < wordsList.length)
-                    ? wordsList[currentIndex]
-                    : "...",
-                key: ValueKey<int>(currentIndex),
-                textAlign: TextAlign.center,
-                softWrap: true,
-                style: theme.textTheme.displayLarge!.copyWith(
-                  fontWeight: FontWeight.w900,
-                  fontSize: 90, // Even Bigger text since no card constraints
-                  // Using primary/accent color based on theme for text color directly
-                  color: theme.textTheme.displayLarge?.color,
-                  letterSpacing: -2.0,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    (currentIndex < wordsList.length)
+                        ? wordsList[currentIndex]
+                        : "...",
+                    key: ValueKey<int>(currentIndex),
+                    textAlign: TextAlign.center,
+                    softWrap: true,
+                    style: theme.textTheme.displayLarge!.copyWith(
+                      fontWeight: FontWeight.w900,
+                      fontSize:
+                          90, // Even Bigger text since no card constraints
+                      // Using primary/accent color based on theme for text color directly
+                      color: theme.textTheme.displayLarge?.color,
+                      letterSpacing: -2.0,
+                    ),
+                  ),
                 ),
               ),
             ),

@@ -1,5 +1,6 @@
 import 'dart:convert'; // For jsonEncode/Decode
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:guess_up/services/storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import
 import 'package:connectivity_plus/connectivity_plus.dart'; //
 import '../models/category.dart';
@@ -11,7 +12,13 @@ class CategoryService {
   factory CategoryService() => _instance;
   CategoryService._internal();
 
-  final _categoryRef = FirebaseFirestore.instance.collection('categories');
+  CollectionReference<Map<String, dynamic>>? get _categoryRef {
+    try {
+      return FirebaseFirestore.instance.collection('categories');
+    } catch (_) {
+      return null;
+    }
+  }
   static const String _cacheKey =
       'categories_cache'; // Key for shared_preferences
   static const String _cacheTimestampKey =
@@ -117,14 +124,15 @@ class CategoryService {
         "ℹ️ [NETWORK] No valid cache. Fetching from FIRESTORE...",
       ); // Changed
       try {
-        final snapshot = await _categoryRef.get();
-        debugLogCategoryFetch("Firestore fetch successful", {
-          'docCount': snapshot.docs.length,
-          'hasInternet': hasInternet,
-        });
+        final snapshot = await _categoryRef?.get();
+        if (snapshot != null) {
+          debugLogCategoryFetch("Firestore fetch successful", {
+            'docCount': snapshot.docs.length,
+            'hasInternet': hasInternet,
+          });
 
-        final fetchedCategories =
-            snapshot.docs.map((doc) => Category.fromDocument(doc)).toList();
+          final fetchedCategories =
+              snapshot.docs.map((doc) => Category.fromDocument(doc)).toList();
 
         // Update in-memory cache and last fetch time
         _cachedCategories = List<Category>.from(fetchedCategories);
@@ -138,6 +146,7 @@ class CategoryService {
         print("✅ [NETWORK] Categories fetched from FIRESTORE and cached.");
 
         return fetchedCategories; // Return the fresh list
+        }
       } on FirebaseException catch (e) {
         debugLogCategoryFetch("FirebaseException during Firestore fetch", {
           'code': e.code,
@@ -163,54 +172,76 @@ class CategoryService {
       });
     }
 
-    // 5. If we reach here, we couldn't get online data.
-    // Try to return the cached categories from SharedPreferences even if expired
+    // 5. Fallback Level 1: Cached categories in SharedPreferences (even if expired)
     final cachedJsonString = prefs.getString(_cacheKey);
     if (cachedJsonString != null) {
       try {
         final List<dynamic> jsonList = jsonDecode(cachedJsonString);
         final fallbackCategories =
             jsonList.map((json) => Category.fromJson(json)).toList();
-        _cachedCategories = List<Category>.from(fallbackCategories);
-        print("✅ [CACHE-FALLBACK] Returning expired SHARED PREFS cache because network fetch failed/unavailable.");
-        return List<Category>.from(_cachedCategories!);
+        if (fallbackCategories.isNotEmpty) {
+          _cachedCategories = List<Category>.from(fallbackCategories);
+          print(
+            "✅ [CACHE-FALLBACK] Returning SHARED PREFS cache because network fetch failed/unavailable.",
+          );
+          return List<Category>.from(_cachedCategories!);
+        }
       } catch (e) {
         print("⚠️ [CACHE-FALLBACK] Error decoding cached categories: $e");
       }
     }
 
-    print("ℹ️ [FETCH] No categories fetched from Firestore.");
+    // 6. Fallback Level 2: Local assets/data.json when no cache is present
+    try {
+      final localWords = await StorageService().getWordsFromLocalFile();
+      if (localWords.isNotEmpty) {
+        final localCategory = Category(
+          id: "classic_party",
+          name: "Classic Party",
+          icon: "🎉",
+          words: localWords,
+        );
+        _cachedCategories = [localCategory];
+        print(
+          "✅ [LOCAL-FALLBACK] Returning bundled local deck from assets/data.json.",
+        );
+        return [localCategory];
+      }
+    } catch (e) {
+      print("⚠️ [LOCAL-FALLBACK] Error reading local data.json: $e");
+    }
+
+    print(
+      "ℹ️ [FETCH] No categories fetched from Firestore, cache, or local assets.",
+    );
     return [];
   }
 
-  // /// (NEW) Helper to load words from local assets
-  // Future<List<String>> _getWordsFromLocalFile() async {
-  //   try {
-  //     final jsonString = await rootBundle.loadString('assets/data.json');
-  //     final Map<String, dynamic> jsonMap = json.decode(jsonString);
-  //     final List<dynamic> wordsDynamic = jsonMap['words'] ?? [];
-  //     return wordsDynamic.map((e) => e.toString()).toList();
-  //   } catch (e) {
-  //     print("Error loading local words from data.json: $e"); // Changed
-  //     return [];
-  //   }
-  // }
-
-  // --- Other methods (addCategory, getCategoryById, updateCategory, etc.) ---
-
   Future<void> addCategory(Category category) async {
-    await _categoryRef.doc(category.id).set(category.toMap());
-    await clearCache(); // Invalidate cache after adding
+    try {
+      await _categoryRef?.doc(category.id).set(category.toMap());
+    } catch (e) {
+      print("⚠️ Error adding category to Firestore: $e");
+    }
+    await clearCache();
   }
 
   Future<void> updateCategory(Category category) async {
-    await _categoryRef.doc(category.id).update(category.toMap());
-    await clearCache(); // Invalidate cache after updating
+    try {
+      await _categoryRef?.doc(category.id).update(category.toMap());
+    } catch (e) {
+      print("⚠️ Error updating category in Firestore: $e");
+    }
+    await clearCache();
   }
 
   Future<void> deleteCategory(String id) async {
-    await _categoryRef.doc(id).delete();
-    await clearCache(); // Invalidate cache after deleting
+    try {
+      await _categoryRef?.doc(id).delete();
+    } catch (e) {
+      print("⚠️ Error deleting category from Firestore: $e");
+    }
+    await clearCache();
   }
 
   // getWordsFromSelectedCategories remains the same, as it operates on the fetched list
@@ -256,16 +287,24 @@ class CategoryService {
   }
 
   Future<void> addWordToCategory(String categoryId, String word) async {
-    await _categoryRef.doc(categoryId).update({
-      'words': FieldValue.arrayUnion([word]),
-    });
+    try {
+      await _categoryRef?.doc(categoryId).update({
+        'words': FieldValue.arrayUnion([word]),
+      });
+    } catch (e) {
+      print("⚠️ Error adding word to category in Firestore: $e");
+    }
     await clearCache();
   }
 
   Future<void> deleteWordFromCategory(String categoryId, String word) async {
-    await _categoryRef.doc(categoryId).update({
-      'words': FieldValue.arrayRemove([word]),
-    });
+    try {
+      await _categoryRef?.doc(categoryId).update({
+        'words': FieldValue.arrayRemove([word]),
+      });
+    } catch (e) {
+      print("⚠️ Error deleting word from category in Firestore: $e");
+    }
     await clearCache();
   }
 

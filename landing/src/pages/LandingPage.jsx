@@ -78,7 +78,7 @@ const DECKS = [
   },
   {
     deckId: "food",
-    icon: "🍔",
+    icon: "🍕",
     title: "Desi Cravings",
     subtitle: "Mouth-watering snacks & local cuisines",
     words:
@@ -92,7 +92,25 @@ const DECKS = [
     words:
       "Taj Mahal, Lotus Temple, Gateway of India, Mumbai Local, Kolkata Tram, Rickshaw, Monsoon, Himalayas, Goa Beach",
   },
+  {
+    deckId: "harry_potter",
+    icon: "🎧",
+    title: "Harry Potter Magic",
+    subtitle: "Wizarding world, spells, & characters",
+    words:
+      "Hogwarts, Harry Potter, Hermione Granger, Quidditch, Golden Snitch, Dumbledore, Voldemort, Gryffindor, Expelliarmus",
+  },
+  {
+    deckId: "tech_startups",
+    icon: "💻",
+    title: "Tech & Startups",
+    subtitle: "Unicorns, tech terms, & founder stories",
+    words:
+      "Startup, Unicorn, Silicon Valley, Pitch Deck, Algorithm, Artificial Intelligence, Venture Capital, Coding, Hackathon",
+  },
 ];
+
+const playStoreUrl = import.meta.env.VITE_PLAY_STORE_URL || "#";
 
 export const LandingPage = () => {
   const [selectedDeck, setSelectedDeck] = useState(null);
@@ -112,14 +130,18 @@ export const LandingPage = () => {
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.15,
+        staggerChildren: 0.08,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 100 } },
+    hidden: { opacity: 0, y: 20 },
+    show: {
+      opacity: 1,
+      y: 0,
+      transition: { type: "spring", stiffness: 260, damping: 20 },
+    },
   };
 
   return (
@@ -288,7 +310,7 @@ export const LandingPage = () => {
             initial="hidden"
             whileInView="show"
             viewport={{ once: true }}
-            className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
           >
             {DECKS.map((deck, idx) => (
               <motion.div
@@ -335,7 +357,9 @@ export const LandingPage = () => {
         </p>
         <div className="flex flex-col sm:flex-row gap-4 w-full justify-center max-w-xs sm:max-w-none z-10">
           <a
-            href="#"
+            href={playStoreUrl}
+            target="_blank"
+            rel="noopener noreferrer"
             className="bg-accent text-white px-6 py-3.5 rounded-2xl font-black text-sm flex items-center justify-center gap-3 shadow-md hover:scale-105 active:scale-95 hover:bg-black transition-all"
           >
             Google Play Store

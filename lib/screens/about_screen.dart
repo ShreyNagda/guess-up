@@ -1,10 +1,10 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Import for orientation lock
-// Optional: If you want to display the version dynamically (ensure added to pubspec.yaml)
-// import 'package:package_info_plus/package_info_plus.dart';
+import 'package:flutter/services.dart';
+import 'package:guess_up/constants/app_info.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class AboutScreen extends StatefulWidget {
-  // Changed to StatefulWidget for orientation lock & optional version loading
   const AboutScreen({super.key});
 
   @override
@@ -12,156 +12,197 @@ class AboutScreen extends StatefulWidget {
 }
 
 class _AboutScreenState extends State<AboutScreen> {
-  final String _version = '1.0.0+1'; // Default version from your pubspec.yaml
-
   @override
   void initState() {
     super.initState();
-    _setPortraitOnly(); // Lock orientation on entry
-    // Optional: Load version info dynamically
-    // _loadVersionInfo();
+    _setPortraitOnly();
   }
 
-  // Function to set portrait mode
   void _setPortraitOnly() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
 
-  // Optional: Function to load version info dynamically
-  // Future<void> _loadVersionInfo() async {
-  //   try {
-  //     final packageInfo = await PackageInfo.fromPlatform();
-  //     if (mounted) { // Check mounted before setState
-  //       setState(() {
-  //         _version = '${packageInfo.version}+${packageInfo.buildNumber}';
-  //       });
-  //     }
-  //   } catch (e) {
-  //     print("Could not get package info: $e");
-  //     // Keep default version if loading fails
-  //   }
-  // }
-
-  // Optional: Reset orientation if needed when leaving this screen
-  // @override
-  // void dispose() {
-  //   SystemChrome.setPreferredOrientations([
-  //     DeviceOrientation.portraitUp,
-  //     DeviceOrientation.portraitDown,
-  //     DeviceOrientation.landscapeLeft,
-  //     DeviceOrientation.landscapeRight,
-  //   ]);
-  //   super.dispose();
-  // }
+  Future<void> _launchURL(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      debugPrint("Could not launch $url: $e");
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final primaryColor = theme.primaryColor;
+
+    const String alexMorganUrl =
+        "https://pixabay.com/users/alex-morgan-54692529/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=573931";
+    const String pixabayUrl =
+        "https://pixabay.com/music//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=573931";
 
     return Scaffold(
       appBar: AppBar(
-        // Uses themed AppBar
-        title: const Text("About Guess Up"),
-        // No local shape needed
+        title: Text("About ${AppInfo.name}"),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new), // Standard back icon
+          icon: const Icon(Icons.arrow_back_ios_new),
           tooltip: "Back",
           onPressed: () => Navigator.of(context).pop(),
         ),
       ),
       body: SafeArea(
-        // Ensure content avoids system UI
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: Column(
-              mainAxisAlignment:
-                  MainAxisAlignment.center, // Center content vertically
-              crossAxisAlignment:
-                  CrossAxisAlignment.center, // Center content horizontally
-              children: [
-                const Spacer(
-                  flex: 1,
-                ), // Pushes content down slightly from AppBar
-                // Logo (using a circular clip like HomeScreen)
-                Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(
-                      50,
-                    ), // Adjust radius as needed
-                  ),
-                  clipBehavior: Clip.hardEdge,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              const SizedBox(height: 20),
+              // Logo Container
+              Container(
+                width: 100,
+                height: 100,
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF000000) : Colors.white,
+                  shape: BoxShape.circle,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(isDark ? 80 : 20),
+                      blurRadius: 16,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
                   child: Image.asset(
-                    'assets/images/logo.png', // Use your main logo
-                    width: 100,
-                    height: 100,
+                    'assets/images/logo-transparent.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
-                const SizedBox(height: 20),
+              ),
+              const SizedBox(height: 20),
 
-                // App Name
-                Text(
-                  "guesse up", // Match your branding
-                  style: theme.textTheme.displayMedium?.copyWith(
-                    fontWeight:
-                        FontWeight.w900, // Match HomeScreen style if desired
-                    fontSize: 36, // Adjust size
-                    letterSpacing: 1.5,
+              // App Title
+              Text(
+                AppInfo.name.toUpperCase(),
+                style: theme.textTheme.displayMedium?.copyWith(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 34,
+                  letterSpacing: 2.0,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 6),
+
+              // Version
+              Text(
+                "Version ${AppInfo.displayVersion}",
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.textTheme.bodyMedium?.color?.withAlpha(180),
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+
+              // Description
+              Text(
+                AppInfo.description,
+                style: theme.textTheme.bodyLarge,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+
+              // --- Attributions Card ---
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(18.0),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color:
+                        isDark
+                            ? Colors.white.withAlpha(20)
+                            : Colors.black.withAlpha(20),
+                    width: 1.5,
                   ),
-                  textAlign: TextAlign.center,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(isDark ? 50 : 15),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 8),
+                child: Column(
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.music_note_rounded,
+                          color: primaryColor,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Audio & Music Credits",
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w800,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    RichText(
+                      textAlign: TextAlign.center,
+                      text: TextSpan(
+                        style: theme.textTheme.bodyMedium,
+                        children: [
+                          const TextSpan(text: "Music by "),
+                          TextSpan(
+                            text: "Alex Morgan",
+                            style: TextStyle(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer:
+                                TapGestureRecognizer()
+                                  ..onTap = () => _launchURL(alexMorganUrl),
+                          ),
+                          const TextSpan(text: " from "),
+                          TextSpan(
+                            text: "Pixabay",
+                            style: TextStyle(
+                              color: primaryColor,
+                              fontWeight: FontWeight.bold,
+                              decoration: TextDecoration.underline,
+                            ),
+                            recognizer:
+                                TapGestureRecognizer()
+                                  ..onTap = () => _launchURL(pixabayUrl),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
 
-                // Version
-                Text(
-                  "Version $_version",
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    // Use a slightly less prominent color from the theme
-                    color: theme.textTheme.bodyMedium?.color?.withAlpha(
-                      180,
-                    ), // e.g., slightly transparent text color
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 24),
+              const SizedBox(height: 40),
 
-                // Description (from your README)
-                Text(
-                  "A mobile charades game built for Indian youths. Perfect for parties!", // Slightly shortened
-                  style: theme.textTheme.bodyLarge, // Use themed style
-                  textAlign: TextAlign.center,
+              // Footer
+              Text(
+                "© ${DateTime.now().year} Guess Up / Shrey Nagda\nAll rights reserved.",
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.textTheme.bodySmall?.color?.withAlpha(120),
                 ),
-                const SizedBox(height: 32),
-
-                // --- Optional Links Section ---
-                // Example: Link to Privacy Policy or Website
-                // InkWell(
-                //   onTap: () { /* TODO: Implement URL launching */ },
-                //   child: Padding(
-                //     padding: const EdgeInsets.symmetric(vertical: 8.0),
-                //     child: Text(
-                //       "Privacy Policy",
-                //       style: theme.textTheme.bodyMedium?.copyWith(
-                //         color: theme.colorScheme.primary, // Make it look like a link
-                //         decoration: TextDecoration.underline,
-                //         decorationColor: theme.colorScheme.primary,
-                //       ),
-                //     ),
-                //   ),
-                // ),
-                // --- End Optional Links ---
-                const Spacer(flex: 2), // Pushes copyright to bottom
-                // Copyright or Footer
-                Text(
-                  "© 2026 guesse up/Shrey Nagda.\nAll rights reserved.", // TODO: Update year and name
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    // Use a very subtle color
-                    color: theme.textTheme.bodySmall?.color?.withAlpha(100),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 20),
+            ],
           ),
         ),
       ),

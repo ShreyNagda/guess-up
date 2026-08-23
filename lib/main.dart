@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:guess_up/screens/home_screen.dart';
-import 'package:guess_up/screens/onboarding_screen.dart';
+import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:guess_up/constants/app_info.dart';
+import 'package:guess_up/screens/animated_splash_screen.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/category_service.dart';
 import 'package:guess_up/services/storage_service.dart';
@@ -11,23 +10,14 @@ import 'package:guess_up/services/theme_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+void main() {
+  WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
-  await SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   final storageService = StorageService();
-  await storageService.init();
-
   final audioService = AudioService();
-  await audioService.init();
-
-  FirebaseFirestore.instance.settings = const Settings(
-    persistenceEnabled:
-        true, // Cache data locally so network checks don't block boot
-    sslEnabled: true,
-  );
 
   runApp(
     MultiProvider(
@@ -47,20 +37,27 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Listen to ThemeService changes
     final themeService = Provider.of<ThemeService>(context);
-    final storage = Provider.of<StorageService>(context, listen: false);
 
     return MaterialApp(
-      title: 'Guess Up',
+      title: AppInfo.name,
       debugShowCheckedModeBanner: false,
-      themeMode: themeService.themeMode, // Use the dynamic mode
-      theme: AppTheme.lightTheme, // Light theme config
-      darkTheme: AppTheme.darkTheme, // Dark theme config
-      home:
-          storage.hasSeenOnboarding
-              ? const HomeScreen()
-              : const OnboardingScreen(),
+      themeMode: themeService.themeMode,
+      theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      builder: (context, child) {
+        final mediaQuery = MediaQuery.of(context);
+        return MediaQuery(
+          data: mediaQuery.copyWith(
+            textScaler: mediaQuery.textScaler.clamp(
+              minScaleFactor: 0.85,
+              maxScaleFactor: 1.25,
+            ),
+          ),
+          child: child!,
+        );
+      },
+      home: const AnimatedSplashScreen(),
     );
   }
 }

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 class AppTheme {
   // --- 1. VIBRANT COLOR PALETTE (Yellow & Black) ---
@@ -7,20 +6,14 @@ class AppTheme {
   // Light Theme Palette (High Energy)
   static const Color lightPrimaryColor = Color(0xFFFFD600); // Electric Yellow
   static const Color lightAccentColor = Color(0xFF212121); // Deep Black
-  static const Color lightScaffoldBackground = Color(
-    0xFFFAFAFA,
-  ); // Crisp White/Grey
+  static const Color lightScaffoldBackground = Color(0xFFFAFAFA); // Crisp White/Grey
   static const Color lightSurfaceColor = Colors.white;
   static const Color lightTextColor = Color(0xFF212121); // Almost Black
 
   // Dark Theme Palette (Toned Down)
-  static const Color darkPrimaryColor = Color(
-    0xFFFFC107,
-  ); // Amber (Duller Yellow)
+  static const Color darkPrimaryColor = Color(0xFFFFC107); // Amber (Duller Yellow)
   static const Color darkAccentColor = Color(0xFF121212); // Very Dark Grey
-  static const Color darkScaffoldBackground = Color(
-    0xFF121212,
-  ); // Deep Dark Grey
+  static const Color darkScaffoldBackground = Color(0xFF121212); // Deep Dark Grey
   static const Color darkSurfaceColor = Color(0xFF1E1E1E); // Lighter Dark Grey
   static const Color darkTextColor = Color(0xFFEEEEEE); // Off-White
 
@@ -29,44 +22,95 @@ class AppTheme {
   static const Color hintColor = Color(0xFF9E9E9E);
 
   // --- 2. MODERN TYPESCALE ---
-  static final TextTheme _baseTextTheme = GoogleFonts.manropeTextTheme(
-    const TextTheme(
-      // Massive text for the Game Word
-      displayLarge: TextStyle(
-        fontSize: 56,
-        fontWeight: FontWeight.w900,
-        letterSpacing: -1.5,
-      ),
-      displayMedium: TextStyle(
-        fontSize: 42,
-        fontWeight: FontWeight.w800,
-        letterSpacing: -0.5,
-      ),
-      displaySmall: TextStyle(fontSize: 32, fontWeight: FontWeight.w700),
+  static const String fontFamily = 'Manrope';
 
-      // Headlines
-      headlineLarge: TextStyle(fontSize: 30, fontWeight: FontWeight.w900),
-      headlineMedium: TextStyle(fontSize: 26, fontWeight: FontWeight.w800),
-      headlineSmall: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+  static final TextTheme _baseTextTheme = const TextTheme(
+    // Massive text for the Game Word
+    displayLarge: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 56,
+      fontWeight: FontWeight.w900,
+      letterSpacing: -1.5,
+    ),
+    displayMedium: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 42,
+      fontWeight: FontWeight.w800,
+      letterSpacing: -0.5,
+    ),
+    displaySmall: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 32,
+      fontWeight: FontWeight.w700,
+    ),
 
-      // Standard UI text
-      titleLarge: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
-      titleMedium: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-      titleSmall: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+    // Headlines
+    headlineLarge: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 30,
+      fontWeight: FontWeight.w900,
+    ),
+    headlineMedium: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 26,
+      fontWeight: FontWeight.w800,
+    ),
+    headlineSmall: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 22,
+      fontWeight: FontWeight.w700,
+    ),
 
-      // Body text
-      bodyLarge: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
-      bodyMedium: TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-      bodySmall: TextStyle(fontSize: 12, fontWeight: FontWeight.w500),
+    // Standard UI text
+    titleLarge: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 20,
+      fontWeight: FontWeight.w700,
+    ),
+    titleMedium: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+    ),
+    titleSmall: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+    ),
 
-      // Buttons & Labels
-      labelLarge: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w900,
-        letterSpacing: 0.5,
-      ),
-      labelMedium: TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
-      labelSmall: TextStyle(fontSize: 10, fontWeight: FontWeight.w800),
+    // Body text
+    bodyLarge: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 16,
+      fontWeight: FontWeight.w600,
+    ),
+    bodyMedium: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 14,
+      fontWeight: FontWeight.w500,
+    ),
+    bodySmall: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 12,
+      fontWeight: FontWeight.w500,
+    ),
+
+    // Buttons & Labels
+    labelLarge: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 16,
+      fontWeight: FontWeight.w900,
+      letterSpacing: 0.5,
+    ),
+    labelMedium: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 12,
+      fontWeight: FontWeight.w800,
+    ),
+    labelSmall: TextStyle(
+      fontFamily: fontFamily,
+      fontSize: 10,
+      fontWeight: FontWeight.w800,
     ),
   );
 
@@ -105,6 +149,7 @@ class AppTheme {
   static ThemeData get lightTheme {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: fontFamily,
       brightness: Brightness.light,
       primaryColor: lightPrimaryColor,
       scaffoldBackgroundColor: lightScaffoldBackground,
@@ -134,7 +179,7 @@ class AppTheme {
         titleTextStyle: TextStyle(
           color: lightAccentColor,
           fontSize: 24,
-          fontFamily: GoogleFonts.manrope().fontFamily,
+          fontFamily: fontFamily,
           fontWeight: FontWeight.w900,
           letterSpacing: -0.5,
         ),
@@ -204,6 +249,7 @@ class AppTheme {
   static ThemeData get darkTheme {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: fontFamily,
       brightness: Brightness.dark,
       primaryColor: darkPrimaryColor,
       scaffoldBackgroundColor: darkScaffoldBackground,
@@ -234,7 +280,7 @@ class AppTheme {
         titleTextStyle: TextStyle(
           color: darkPrimaryColor, // Amber title
           fontSize: 24,
-          fontFamily: GoogleFonts.manrope().fontFamily,
+          fontFamily: fontFamily,
           fontWeight: FontWeight.w900,
           letterSpacing: -0.5,
         ),

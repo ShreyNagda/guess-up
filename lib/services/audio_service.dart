@@ -74,8 +74,8 @@ class AudioService with WidgetsBindingObserver {
       if (_musicPlayer.state == PlayerState.playing) return;
       if (_musicPlayer.state == PlayerState.paused) await _musicPlayer.resume();
       await _musicPlayer.play(
-        AssetSource('sounds/background_music.wav'),
-        volume: 0.6, // Keep low to not distract
+        AssetSource('sounds/background.mp3'),
+        volume: 0.4, // Keep low to not distract
       );
     } catch (e) {
       print("Error playing music: $e");

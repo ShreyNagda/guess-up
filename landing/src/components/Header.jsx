@@ -106,8 +106,8 @@ export const Header = () => {
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-3">
             <img
-              className="w-9 h-9 md:w-11 md:h-11 rounded-full shadow-md"
-              src="/images/logo.png"
+              className="w-9 h-9 md:w-11 md:h-11 rounded-full shadow-md object-contain bg-black/5 dark:bg-white/5 p-1"
+              src="/images/logo-transparent.png"
               alt="Guess Up Logo"
             />
             <h1

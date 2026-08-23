@@ -80,8 +80,9 @@ class _ConfigScreenState extends State<ConfigScreen> {
   }
 
   Future<void> fetchCategories({bool forceRefresh = false}) async {
-    if (_isLoading && _hasFetchedOnce && !forceRefresh)
+    if (_isLoading && _hasFetchedOnce && !forceRefresh) {
       return; // Avoid redundant calls
+    }
     _hasFetchedOnce = true;
     if (mounted) setState(() => _isLoading = true);
 
@@ -180,12 +181,14 @@ class _ConfigScreenState extends State<ConfigScreen> {
     if (mounted) {
       setState(() {
         categories = allCategories;
+        if (selectedCategories.isEmpty) {
+          selectedCategories = List.from(allCategories);
+        }
         _isLoading = false;
       });
-    }
-    setState(() {
+    } else {
       _isLoading = false;
-    }); // Ensure loading state is reset even if not mounted
+    }
   }
 
   bool isAllSelected() {
@@ -221,7 +224,12 @@ class _ConfigScreenState extends State<ConfigScreen> {
       return;
     }
 
-    // [NEW] Get the time from storage directly
+    // Save last game preferences
+    StorageService().setLastCategoryIds(
+      selectedCategories.map((c) => c.id).toList(),
+    );
+
+    // Get the time from storage directly
     final int gameTime = StorageService().gameDuration;
 
     Navigator.of(context).push(
@@ -336,7 +344,7 @@ class _ConfigScreenState extends State<ConfigScreen> {
                                                   crossAxisCount: 3,
                                                   crossAxisSpacing: 10,
                                                   mainAxisSpacing: 10,
-                                                  childAspectRatio: 1,
+                                                  childAspectRatio: 0.92,
                                                 ),
                                             itemCount: categories.length,
                                             itemBuilder: (context, index) {
@@ -410,15 +418,15 @@ class _ConfigScreenState extends State<ConfigScreen> {
           Icon(
             Icons.cloud_off_outlined,
             color: theme.colorScheme.error,
-            size: 20,
+            size: 22,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              "Offline Mode: Using local decks",
+              "Offline Mode: Initial setup requires internet for full online decks. Playing with cached/local decks.",
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.error,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.w600,
               ),
             ),
           ),
@@ -511,18 +519,25 @@ class _ConfigScreenState extends State<ConfigScreen> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Text(category.icon, style: const TextStyle(fontSize: 32)),
-            const SizedBox(height: 8),
+            Text(category.icon, style: const TextStyle(fontSize: 30)),
+            const SizedBox(height: 4),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text(
-                category.name,
-                textAlign: TextAlign.center,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
+              padding: const EdgeInsets.symmetric(horizontal: 6.0),
+              child: SizedBox(
+                height: 36,
+                child: Center(
+                  child: Text(
+                    category.name,
+                    textAlign: TextAlign.center,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 12,
+                      height: 1.15,
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
               ),
             ),
           ],
