@@ -15,6 +15,13 @@ if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
 
+val storePass = keystoreProperties.getProperty("storePassword")
+val keyPass = keystoreProperties.getProperty("keyPassword")
+val hasValidReleaseKeystore = keystorePropertiesFile.exists() &&
+    keystoreProperties.getProperty("storeFile")?.let { file(it).exists() } == true &&
+    !storePass.isNullOrEmpty() && storePass != "THE_PASSWORD_YOU_CHOSE" &&
+    !keyPass.isNullOrEmpty() && keyPass != "THE_PASSWORD_YOU_CHOSE"
+
 android {
     namespace = "com.shreynagda.guess_up"
     compileSdk = flutter.compileSdkVersion
@@ -30,11 +37,13 @@ android {
     }
 
     signingConfigs {
-        create("release") {
-            keyAlias = keystoreProperties.getProperty("keyAlias")
-            keyPassword = keystoreProperties.getProperty("keyPassword")
-            storeFile = keystoreProperties.getProperty("storeFile")?.let { file(it) }
-            storePassword = keystoreProperties.getProperty("storePassword")
+        if (hasValidReleaseKeystore) {
+            create("release") {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keyPass
+                storeFile = file(keystoreProperties.getProperty("storeFile"))
+                storePassword = storePass
+            }
         }
     }
 
@@ -47,16 +56,24 @@ android {
     }
 
     buildTypes {
+        debug {
+            packaging {
+                jniLibs {
+                    keepDebugSymbols.add("**/*.so")
+                }
+            }
+        }
         release {
-            signingConfig = signingConfigs.getByName("release")
+            signingConfig = if (hasValidReleaseKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             isMinifyEnabled = false
             isShrinkResources = false
-        }
-    }
-
-    packaging {
-        jniLibs {
-            keepDebugSymbols.add("**/*.so")
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
     }
 }
@@ -76,4 +93,5 @@ configurations.all {
         force("androidx.core:core-ktx:1.15.0")
     }
 }
+
 
