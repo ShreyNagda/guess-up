@@ -63,68 +63,49 @@ const STEPS = [
 
 const DECKS = [
   {
-    deckId: "cricket",
+    deckId: "bollywood_blockbusters",
+    icon: "🎬",
+    title: "Bollywood Blockbusters",
+    subtitle: "Iconic movies, dialogues, & superstars",
+    category: "movies",
+    words:
+      "Sholay, Dilwale Dulhania Le Jayenge, 3 Idiots, KGF, Pathaan, Lagaan, Dangal, Gadar, Bahubali, Kabir Singh, Om Shanti Om, ZNMD, Pushpa, Jawan, Stree 2",
+  },
+  {
+    deckId: "cricket_mania",
     icon: "🏏",
-    title: "Cricket Fever",
-    subtitle: "100+ Player names, events, & rules",
+    title: "Cricket Mania",
+    subtitle: "Legends, IPL moments, & iconic shots",
     category: "sports",
     words:
-      "Cricket, Sachin Tendulkar, Virat Kohli, MS Dhoni, Boundary, Wicket, Cover Drive, Sixer, Lagaan, IPL",
+      "Virat Kohli, MS Dhoni, Sachin Tendulkar, IPL Trophy, Yorker, Super Over, Wankhede, Helicopter Shot, Bouncer, Rohit Sharma, Jasprit Bumrah, World Cup",
   },
   {
-    deckId: "bollywood",
-    icon: "🎬",
-    title: "Bollywood Hitlist",
-    subtitle: "Blockbusters, superstars, & movie songs",
-    category: "movies",
-    words:
-      "Bollywood, Shah Rukh Khan, Amitabh Bachchan, Sholay, DDLJ, Popcorn, Intermission, Oscar, Item Number, Action Hero",
-  },
-  {
-    deckId: "food",
-    icon: "🍕",
-    title: "Desi Cravings",
-    subtitle: "Mouth-watering snacks & local cuisines",
+    deckId: "desi_foodies",
+    icon: "🍔",
+    title: "Desi Foodies",
+    subtitle: "Street snacks, delicacies, & cravings",
     category: "food",
     words:
-      "Samosa, Biryani, Chai, Dosa, Paneer, Roti, Lassi, Mango, Curry, Masala, Golgappa, Gulab Jamun",
+      "Butter Chicken, Pani Puri, Biryani, Samosa, Pav Bhaji, Gulab Jamun, Chole Bhature, Dosa, Vada Pav, Jalebi, Tapri Chai, Momos",
   },
   {
-    deckId: "places",
-    icon: "🗻",
-    title: "Incredible India",
-    subtitle: "Historic places, landmarks, & heritage sites",
-    category: "trending",
+    deckId: "desi_youth_vibes",
+    icon: "😎",
+    title: "Desi Youth & Vibes",
+    subtitle: "College life, memes, & hostel moments",
+    category: "youth",
     words:
-      "Taj Mahal, Lotus Temple, Gateway of India, Mumbai Local, Kolkata Tram, Rickshaw, Monsoon, Himalayas, Goa Beach",
-  },
-  {
-    deckId: "harry_potter",
-    icon: "🎧",
-    title: "Harry Potter Magic",
-    subtitle: "Wizarding world, spells, & characters",
-    category: "movies",
-    words:
-      "Hogwarts, Harry Potter, Hermione Granger, Quidditch, Golden Snitch, Dumbledore, Voldemort, Gryffindor, Expelliarmus",
-  },
-  {
-    deckId: "classic_party",
-    icon: "🎉",
-    title: "Classic Party Charades",
-    subtitle: "Funny actions, memes, & viral trends",
-    category: "party",
-    words:
-      "Moonwalk, Selfie Queen, TikTok Dance, Air Guitar, Breakdancing, Sumo Wrestler, Robot Dance, Zombie Walk",
+      "Bunking Class, Maggi at 2 AM, Auto Rickshaw, Goa Trip Plan, Tapri Chai, Backbenchers, Reel Creator, Jugaad, Shaadi Dance, Street Shopping, Canteen Gossip",
   },
 ];
 
 const CATEGORY_FILTERS = [
   { id: "all", label: "All Decks" },
-  { id: "trending", label: "Trending" },
-  { id: "movies", label: "Movies & TV" },
-  { id: "sports", label: "Sports" },
+  { id: "movies", label: "Bollywood" },
+  { id: "sports", label: "Cricket" },
   { id: "food", label: "Desi Food" },
-  { id: "party", label: "Party Fun" },
+  { id: "youth", label: "Youth Vibes" },
 ];
 
 const playStoreUrl = import.meta.env.VITE_PLAY_STORE_URL || "#";
@@ -151,13 +132,14 @@ export const LandingPage = () => {
             title: data.name || docSnap.id,
             subtitle: `${data.words?.length || 0} cards in deck`,
             words: data.words || [],
-            category: nameLower.includes("movie") || nameLower.includes("bollywood")
-              ? "movies"
-              : nameLower.includes("cricket") || nameLower.includes("sport")
-                ? "sports"
-                : nameLower.includes("food") || nameLower.includes("snack")
-                  ? "food"
-                  : "trending",
+            category:
+              nameLower.includes("movie") || nameLower.includes("bollywood")
+                ? "movies"
+                : nameLower.includes("cricket") || nameLower.includes("sport")
+                  ? "sports"
+                  : nameLower.includes("food") || nameLower.includes("snack")
+                    ? "food"
+                    : "trending",
           });
         });
         if (list.length > 0) {

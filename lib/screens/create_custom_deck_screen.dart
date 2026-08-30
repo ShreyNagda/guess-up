@@ -4,6 +4,7 @@ import 'package:guess_up/models/category.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
+import 'package:guess_up/widgets/ambient_background.dart';
 
 class CreateCustomDeckScreen extends StatefulWidget {
   final Category? existingDeck;
@@ -360,9 +361,11 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
           ),
         ],
       ),
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
+      body: AmbientBackground(
+        ambientColor: primaryColor,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
           child: Column(
             children: [
               Expanded(
@@ -723,6 +726,7 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

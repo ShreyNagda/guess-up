@@ -7,8 +7,10 @@ import 'package:guess_up/models/team_match_state.dart';
 import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/screens/home_screen.dart';
 import 'package:guess_up/screens/team_pass_screen.dart';
+import 'package:guess_up/screens/team_winner_screen.dart';
 import 'package:guess_up/services/word_history_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
+import 'package:guess_up/widgets/ambient_background.dart';
 
 class ResultScreen extends StatefulWidget {
   final int score;
@@ -39,15 +41,25 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   void initState() {
     super.initState();
-    _setLandscapeOrientation();
+    _setPortraitOrientation();
     _confettiController = ConfettiController(
       duration: const Duration(seconds: 4),
     );
 
     _calculateStatsAndSaveHistory();
 
-    if (widget.score >= 3 || (widget.teamMatchState?.isMatchFinished == true)) {
-      _confettiController.play();
+    final isTeam = widget.teamMatchState != null;
+    final shouldPlayConfetti =
+        isTeam ? (widget.teamMatchState!.isMatchFinished) : (widget.score >= 3);
+
+    if (shouldPlayConfetti) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Future.delayed(const Duration(milliseconds: 250), () {
+          if (mounted) {
+            _confettiController.play();
+          }
+        });
+      });
     }
   }
 
@@ -103,23 +115,23 @@ class _ResultScreenState extends State<ResultScreen> {
   @override
   void dispose() {
     _confettiController.dispose();
-    _setPortraitOrientation();
+    _setLandscapeOrientation();
     super.dispose();
   }
 
-  void _handleStartTiebreaker() {
+  void _handleShowWinnerScreen() {
     final teamState = widget.teamMatchState;
     if (teamState == null) return;
-    teamState.startTiebreaker();
     _setPortraitOrientation();
     Navigator.of(context).pushReplacement(
       CupertinoPageRoute(
         builder:
-            (_) => TeamPassScreen(
+            (_) => TeamWinnerScreen(
               teamState: teamState,
-              lastRoundScore: widget.score,
-              time: 30, // 30-second rapid sudden death showdown!
               selectedCategories: widget.selectedCategories ?? [],
+              time: widget.time,
+              lastRoundScoreMap: widget.scoreMap,
+              lastRoundScore: widget.score,
             ),
       ),
     );
@@ -128,19 +140,23 @@ class _ResultScreenState extends State<ResultScreen> {
   void _handleNextAction() {
     final teamState = widget.teamMatchState;
 
-    if (teamState != null && !teamState.isMatchFinished) {
-      _setPortraitOrientation();
-      Navigator.of(context).pushReplacement(
-        CupertinoPageRoute(
-          builder:
-              (_) => TeamPassScreen(
-                teamState: teamState,
-                lastRoundScore: widget.score,
-                time: widget.time,
-                selectedCategories: widget.selectedCategories ?? [],
-              ),
-        ),
-      );
+    if (teamState != null) {
+      if (teamState.isMatchFinished) {
+        _handleShowWinnerScreen();
+      } else {
+        _setPortraitOrientation();
+        Navigator.of(context).pushReplacement(
+          CupertinoPageRoute(
+            builder:
+                (_) => TeamPassScreen(
+                  teamState: teamState,
+                  lastRoundScore: widget.score,
+                  time: widget.time,
+                  selectedCategories: widget.selectedCategories ?? [],
+                ),
+          ),
+        );
+      }
     } else {
       _setLandscapeOrientation();
       Navigator.of(context).pushReplacement(
@@ -149,10 +165,7 @@ class _ResultScreenState extends State<ResultScreen> {
               (_) => GameScreen(
                 time: widget.time,
                 selectedCategories: widget.selectedCategories ?? [],
-                teamMatchState:
-                    teamState?.isTeamMode == true
-                        ? TeamMatchState(isTeamMode: true)
-                        : null,
+                teamMatchState: null,
               ),
         ),
       );
@@ -171,30 +184,26 @@ class _ResultScreenState extends State<ResultScreen> {
             .where((e) => e.value == "Correct" || e.value == "Pass")
             .toList();
 
-    String titleText = "GREAT JOB! 🎉";
+    String titleText = "GREAT JOB!";
     if (isTeamMatchComplete && teamState != null) {
-      if (teamState.isTie) {
-        titleText = "IT'S A TIE! 🤝";
-      } else {
-        final winName =
-            teamState.winningTeam == TeamColor.cyan
-                ? "${AppTheme.teamAName.toUpperCase()} ${AppTheme.teamAEmoji}"
-                : "${AppTheme.teamBName.toUpperCase()} ${AppTheme.teamBEmoji}";
-        titleText = "$winName WINS! 🎉";
-      }
+      titleText = "FINAL ROUND COMPLETE!";
+    } else if (teamState != null) {
+      titleText = "ROUND ${teamState.currentRound} COMPLETE!";
     } else if (widget.score <= 3) {
       titleText = "GAME OVER";
     }
 
     return Scaffold(
-      body: Stack(
-        children: [
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 20.0,
-                vertical: 12.0,
-              ),
+      body: AmbientBackground(
+        ambientColor: isDark ? Colors.amber : theme.colorScheme.primary,
+        child: Stack(
+          children: [
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20.0,
+                  vertical: 12.0,
+                ),
               child: Column(
                 children: [
                   // ==========================================
@@ -445,22 +454,24 @@ class _ResultScreenState extends State<ResultScreen> {
                         child: SizedBox(
                           height: 52,
                           child: ElevatedButton.icon(
-                            onPressed:
-                                isTeamMatchComplete && teamState!.isTie
-                                    ? _handleStartTiebreaker
-                                    : _handleNextAction,
+                            onPressed: _handleNextAction,
                             style: ElevatedButton.styleFrom(
                               backgroundColor:
-                                  isTeamMatchComplete &&
-                                          teamState?.isTie == true
-                                      ? Colors.deepOrangeAccent
+                                  isTeamMatchComplete && teamState != null
+                                      ? (teamState.isTie
+                                          ? Colors.deepOrangeAccent
+                                          : (teamState.winningTeam ==
+                                                  TeamColor.cyan
+                                              ? AppTheme.teamAColor
+                                              : AppTheme.teamBColor))
                                       : (isDark
                                           ? Colors.amber
                                           : theme.colorScheme.primary),
                               foregroundColor:
-                                  isTeamMatchComplete &&
-                                          teamState?.isTie == true
-                                      ? Colors.white
+                                  isTeamMatchComplete && teamState != null
+                                      ? (teamState.isTie
+                                          ? Colors.white
+                                          : Colors.black87)
                                       : (isDark ? Colors.black : Colors.white),
                               elevation: 2,
                               shape: RoundedRectangleBorder(
@@ -468,8 +479,8 @@ class _ResultScreenState extends State<ResultScreen> {
                               ),
                             ),
                             icon: Icon(
-                              isTeamMatchComplete && teamState?.isTie == true
-                                  ? Icons.bolt_rounded
+                              isTeamMatchComplete
+                                  ? Icons.emoji_events_rounded
                                   : (teamState != null &&
                                           !teamState.isMatchFinished
                                       ? Icons.phone_forwarded_rounded
@@ -477,8 +488,8 @@ class _ResultScreenState extends State<ResultScreen> {
                               size: 22,
                             ),
                             label: Text(
-                              isTeamMatchComplete && teamState?.isTie == true
-                                  ? "TIEBREAKER (30s) ⚔️"
+                              isTeamMatchComplete
+                                  ? "ANNOUNCE WINNER"
                                   : (teamState != null &&
                                           !teamState.isMatchFinished
                                       ? "PASS PHONE"
@@ -497,7 +508,7 @@ class _ResultScreenState extends State<ResultScreen> {
                         flex: 2,
                         child: SizedBox(
                           height: 52,
-                          child: OutlinedButton.icon(
+                          child: OutlinedButton(
                             onPressed: () {
                               _setPortraitOrientation();
                               Navigator.of(context).pushReplacement(
@@ -518,15 +529,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                 borderRadius: BorderRadius.circular(16),
                               ),
                             ),
-                            icon: const Icon(Icons.home_rounded, size: 22),
-                            label: const Text(
-                              "HOME",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 16,
-                                letterSpacing: 1,
-                              ),
-                            ),
+                            child: const Icon(Icons.home_rounded, size: 22),
                           ),
                         ),
                       ),
@@ -550,6 +553,7 @@ class _ResultScreenState extends State<ResultScreen> {
           ),
         ],
       ),
+    ),
     );
   }
 }

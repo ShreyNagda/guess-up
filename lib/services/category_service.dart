@@ -1,7 +1,7 @@
 import 'dart:convert'; // For jsonEncode/Decode
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
-import 'package:guess_up/services/storage_service.dart';
+import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart'; // Import
 import 'package:connectivity_plus/connectivity_plus.dart'; //
 import '../models/category.dart';
@@ -46,8 +46,61 @@ class CategoryService {
     print("Category cache cleared.");
   }
 
-  /// Fetches categories from cache or Firestore.
-  /// Set [forceRefresh] to true to bypass cache and fetch fresh from Firestore.
+  /// Load offline fallback categories directly from assets/data.json
+  Future<List<Category>> loadCategoriesFromDataJson() async {
+    try {
+      final jsonString = await rootBundle.loadString('assets/data.json');
+      final Map<String, dynamic> jsonMap = json.decode(jsonString);
+
+      if (jsonMap.containsKey('categories') && jsonMap['categories'] is List) {
+        final List<dynamic> catList = jsonMap['categories'];
+        return catList
+            .map((c) => Category.fromJson(c as Map<String, dynamic>))
+            .toList();
+      } else if (jsonMap.containsKey('words') && jsonMap['words'] is List) {
+        final List<dynamic> words = jsonMap['words'];
+        return [
+          Category(
+            id: 'classic_party',
+            name: 'Classic Party',
+            icon: '🎉',
+            words: words.map((e) => e.toString()).toList(),
+          ),
+        ];
+      }
+    } catch (e) {
+      debugPrint("⚠️ Error reading offline fallback from data.json: $e");
+    }
+    return [];
+  }
+
+  /// Live real-time stream of categories/decks from Firestore 'categories' or offline data.json
+  Stream<List<Category>> streamDecks() {
+    try {
+      if (_categoryRef == null) {
+        return Stream.fromFuture(loadCategoriesFromDataJson());
+      }
+      return _categoryRef!
+          .snapshots()
+          .asyncMap((snapshot) async {
+            if (snapshot.docs.isNotEmpty) {
+              return snapshot.docs
+                  .map((doc) => Category.fromDocument(doc))
+                  .where((d) => d.isAvailable)
+                  .toList();
+            }
+            return await loadCategoriesFromDataJson();
+          })
+          .handleError((e) async {
+            debugPrint("Error streaming categories from Firestore: $e");
+            return await loadCategoriesFromDataJson();
+          });
+    } catch (e) {
+      debugPrint("Firestore initialization error in streamDecks: $e");
+      return Stream.fromFuture(loadCategoriesFromDataJson());
+    }
+  }
+
   Future<List<Category>> getAllCategories({bool forceRefresh = false}) async {
     // 1. Check in-memory cache (only if not forcing refresh)
     if (_cachedCategories != null && !forceRefresh) {
@@ -185,19 +238,13 @@ class CategoryService {
 
     // 6. Fallback Level 2: Local assets/data.json when no cache is present
     try {
-      final localWords = await StorageService().getWordsFromLocalFile();
-      if (localWords.isNotEmpty) {
-        final localCategory = Category(
-          id: "classic_party",
-          name: "Classic Party",
-          icon: "🎉",
-          words: localWords,
-        );
-        _cachedCategories = [localCategory];
+      final offlineCategories = await loadCategoriesFromDataJson();
+      if (offlineCategories.isNotEmpty) {
+        _cachedCategories = List<Category>.from(offlineCategories);
         print(
-          "✅ [LOCAL-FALLBACK] Returning bundled local deck from assets/data.json.",
+          "✅ [LOCAL-FALLBACK] Returning categories parsed from assets/data.json.",
         );
-        return [localCategory];
+        return List<Category>.from(_cachedCategories!);
       }
     } catch (e) {
       print("⚠️ [LOCAL-FALLBACK] Error reading local data.json: $e");

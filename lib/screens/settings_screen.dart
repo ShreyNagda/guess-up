@@ -6,6 +6,7 @@ import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/services/theme_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
+import 'package:guess_up/widgets/ambient_background.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
@@ -21,7 +22,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool isMusicOn = true;
   bool isSfxOn = true;
   bool isHapticsOn = true;
-  int selectedDuration = 60;
+  String _tiltSensitivity = 'Normal';
 
   @override
   void initState() {
@@ -45,9 +46,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
         isMusicOn = storage.isMusicEnabled;
         isSfxOn = storage.isSfxEnabled;
         isHapticsOn = storage.isHapticsEnabled;
-        selectedDuration = storage.gameDuration;
+        _tiltSensitivity = storage.tiltSensitivity;
       });
     }
+  }
+
+  Future<void> _updateTiltSensitivity(String mode) async {
+    if (mounted) setState(() => _tiltSensitivity = mode);
+    await StorageService().setTiltSensitivity(mode);
+    AudioService().extraLightImpact();
   }
 
   Future<void> _launchURL(String url) async {
@@ -57,12 +64,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       debugPrint("Could not launch $url: $e");
     }
-  }
-
-  // [NEW] Helper to update duration
-  Future<void> _updateDuration(int seconds) async {
-    if (mounted) setState(() => selectedDuration = seconds);
-    await StorageService().setGameDuration(seconds);
   }
 
   void _updateTheme(ThemeMode newMode) {
@@ -122,7 +123,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          "SETTINGS & ABOUT",
+          "SETTINGS",
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
             letterSpacing: 2,
@@ -130,255 +131,275 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ),
-      body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-        children: [
-          // --- 1. Appearance Section ---
-          _buildSectionTitle("APPEARANCE", textColor),
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              border: Border.all(color: borderColor, width: 2),
-              borderRadius: BorderRadius.circular(16),
+      body: AmbientBackground(
+        ambientColor: primaryColor,
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          children: [
+            // --- 1. Appearance Section ---
+            _buildSectionTitle("APPEARANCE", textColor),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                border: Border.all(color: borderColor, width: 2),
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildThemeButton(
+                      ThemeMode.light,
+                      "Light",
+                      Icons.wb_sunny_rounded,
+                      isDark,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildThemeButton(
+                      ThemeMode.dark,
+                      "Dark",
+                      Icons.nights_stay_rounded,
+                      isDark,
+                    ),
+                  ),
+                  Expanded(
+                    child: _buildThemeButton(
+                      ThemeMode.system,
+                      "System",
+                      Icons.settings_brightness_rounded,
+                      isDark,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            child: Row(
+
+            const SizedBox(height: 32),
+
+            _buildSectionTitle("CONTROLS", textColor),
+            Row(
               children: [
                 Expanded(
-                  child: _buildThemeButton(
-                    ThemeMode.light,
-                    "Light",
-                    Icons.wb_sunny_rounded,
+                  child: _buildToggleButton(
+                    "Music",
+                    isMusicOn
+                        ? Icons.music_note_rounded
+                        : Icons.music_off_rounded,
+                    isMusicOn,
+                    _toggleMusic,
+                    primaryColor,
+                    accentColor,
                     isDark,
                   ),
                 ),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: _buildThemeButton(
-                    ThemeMode.dark,
-                    "Dark",
-                    Icons.nights_stay_rounded,
+                  child: _buildToggleButton(
+                    "Sounds",
+                    isSfxOn
+                        ? Icons.volume_up_rounded
+                        : Icons.volume_off_rounded,
+                    isSfxOn,
+                    _toggleSfx,
+                    primaryColor,
+                    accentColor,
                     isDark,
                   ),
                 ),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: _buildThemeButton(
-                    ThemeMode.system,
-                    "System",
-                    Icons.settings_brightness_rounded,
+                  child: _buildToggleButton(
+                    "Haptics",
+                    isHapticsOn
+                        ? Icons.vibration_rounded
+                        : Icons.smartphone_rounded,
+                    isHapticsOn,
+                    _toggleHaptics,
+                    primaryColor,
+                    accentColor,
                     isDark,
                   ),
                 ),
               ],
             ),
-          ),
 
-          const SizedBox(height: 32),
+            const SizedBox(height: 32),
 
-          // --- 2. Game Duration Section ---
-          _buildSectionTitle("ROUND DURATION", textColor),
-          Container(
-            padding: const EdgeInsets.all(6),
-            decoration: BoxDecoration(
-              border: Border.all(color: borderColor, width: 2),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              children:
-                  [45, 60, 90, 120].map((time) {
-                    return Expanded(
-                      child: _buildDurationButton(
-                        time,
-                        isSelected: selectedDuration == time,
-                        isDark: isDark,
-                      ),
-                    );
-                  }).toList(),
-            ),
-          ),
-
-          const SizedBox(height: 32),
-
-          // --- 3. Controls Section ---
-          _buildSectionTitle("CONTROLS", textColor),
-          Row(
-            children: [
-              Expanded(
-                child: _buildToggleButton(
-                  "Music",
-                  isMusicOn
-                      ? Icons.music_note_rounded
-                      : Icons.music_off_rounded,
-                  isMusicOn,
-                  _toggleMusic,
-                  primaryColor,
-                  accentColor,
-                  isDark,
-                ),
+            // --- 3. Tilt Sensitivity Section ---
+            _buildSectionTitle("FOREHEAD TILT SENSITIVITY", textColor),
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                border: Border.all(color: borderColor, width: 2),
+                borderRadius: BorderRadius.circular(16),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildToggleButton(
-                  "Sounds",
-                  isSfxOn ? Icons.volume_up_rounded : Icons.volume_off_rounded,
-                  isSfxOn,
-                  _toggleSfx,
-                  primaryColor,
-                  accentColor,
-                  isDark,
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: _buildToggleButton(
-                  "Haptics",
-                  isHapticsOn
-                      ? Icons.vibration_rounded
-                      : Icons.smartphone_rounded,
-                  isHapticsOn,
-                  _toggleHaptics,
-                  primaryColor,
-                  accentColor,
-                  isDark,
-                ),
-              ),
-            ],
-          ),
-
-          const SizedBox(height: 36),
-
-          // --- 4. About & Credits Section ---
-          _buildSectionTitle("ABOUT & CREDITS", textColor),
-          Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: isDark ? AppTheme.darkSurfaceColor : Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: borderColor, width: 2),
-            ),
-            child: Column(
-              children: [
-                // App Logo
-                Container(
-                  width: 72,
-                  height: 72,
-                  decoration: BoxDecoration(
-                    color: isDark ? const Color(0xFF000000) : Colors.white,
-                    shape: BoxShape.circle,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withAlpha(isDark ? 80 : 20),
-                        blurRadius: 12,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(10.0),
-                    child: Image.asset(
-                      'assets/images/logo-transparent.png',
-                      fit: BoxFit.contain,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _buildSensitivityButton(
+                      'Low',
+                      'Low',
+                      Icons.screen_rotation_rounded,
+                      isDark,
                     ),
                   ),
-                ),
-                const SizedBox(height: 12),
-
-                Text(
-                  AppInfo.name.toUpperCase(),
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: 2.0,
-                    color: textColor,
-                  ),
-                ),
-                Text(
-                  "Version ${AppInfo.displayVersion}",
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    color: textColor.withAlpha(140),
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 12),
-
-                Text(
-                  AppInfo.description,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: textColor.withAlpha(200),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 18),
-                const Divider(height: 1),
-                const SizedBox(height: 16),
-
-                // Audio credits
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.music_note_rounded,
-                      color: primaryColor,
-                      size: 20,
+                  Expanded(
+                    child: _buildSensitivityButton(
+                      'Normal',
+                      'Normal',
+                      Icons.stay_current_portrait_rounded,
+                      isDark,
                     ),
-                    const SizedBox(width: 6),
-                    Text(
-                      "Audio & Music Credits",
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w800,
-                        color: textColor,
+                  ),
+                  Expanded(
+                    child: _buildSensitivityButton(
+                      'High',
+                      'High',
+                      Icons.bolt_rounded,
+                      isDark,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 36),
+
+            // --- 4. About & Credits Section ---
+            _buildSectionTitle("ABOUT & CREDITS", textColor),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: isDark ? AppTheme.darkSurfaceColor : Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: borderColor, width: 2),
+              ),
+              child: Column(
+                children: [
+                  // App Logo
+                  Container(
+                    width: 72,
+                    height: 72,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF000000) : Colors.white,
+                      shape: BoxShape.circle,
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withAlpha(isDark ? 80 : 20),
+                          blurRadius: 12,
+                          offset: const Offset(0, 4),
+                        ),
+                      ],
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: Image.asset(
+                        'assets/images/logo-transparent.png',
+                        fit: BoxFit.contain,
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                RichText(
-                  textAlign: TextAlign.center,
-                  text: TextSpan(
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: textColor.withAlpha(180),
+                  ),
+                  const SizedBox(height: 12),
+
+                  Text(
+                    AppInfo.name.toUpperCase(),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 2.0,
+                      color: textColor,
                     ),
+                  ),
+                  Text(
+                    "Version ${AppInfo.displayVersion}",
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: textColor.withAlpha(140),
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  Text(
+                    AppInfo.description,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: textColor.withAlpha(200),
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                  const SizedBox(height: 18),
+                  const Divider(height: 1),
+                  const SizedBox(height: 16),
+
+                  // Audio credits
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const TextSpan(text: "Music by "),
-                      TextSpan(
-                        text: "Alex Morgan",
-                        style: TextStyle(
-                          color: primaryColor,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
-                        ),
-                        recognizer:
-                            TapGestureRecognizer()
-                              ..onTap = () => _launchURL(alexMorganUrl),
+                      Icon(
+                        Icons.music_note_rounded,
+                        color: primaryColor,
+                        size: 20,
                       ),
-                      const TextSpan(text: " from "),
-                      TextSpan(
-                        text: "Pixabay",
-                        style: TextStyle(
-                          color: primaryColor,
-                          fontWeight: FontWeight.bold,
-                          decoration: TextDecoration.underline,
+                      const SizedBox(width: 6),
+                      Text(
+                        "Audio & Music Credits",
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: textColor,
                         ),
-                        recognizer:
-                            TapGestureRecognizer()
-                              ..onTap = () => _launchURL(pixabayUrl),
                       ),
                     ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 8),
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: textColor.withAlpha(180),
+                      ),
+                      children: [
+                        const TextSpan(text: "Music by "),
+                        TextSpan(
+                          text: "Alex Morgan",
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                          ),
+                          recognizer:
+                              TapGestureRecognizer()
+                                ..onTap = () => _launchURL(alexMorganUrl),
+                        ),
+                        const TextSpan(text: " from "),
+                        TextSpan(
+                          text: "Pixabay",
+                          style: TextStyle(
+                            color: primaryColor,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                          ),
+                          recognizer:
+                              TapGestureRecognizer()
+                                ..onTap = () => _launchURL(pixabayUrl),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          const SizedBox(height: 24),
+            const SizedBox(height: 24),
 
-          // Copyright Footer
-          Text(
-            "© ${DateTime.now().year} Guess Up / Shrey Nagda\nAll rights reserved.",
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: textColor.withAlpha(110),
+            // Copyright Footer
+            Text(
+              "© ${DateTime.now().year} Guess Up / Shrey Nagda\nAll rights reserved.",
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: textColor.withAlpha(110),
+              ),
+              textAlign: TextAlign.center,
             ),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 30),
-        ],
+            const SizedBox(height: 30),
+          ],
+        ),
       ),
     );
   }
@@ -455,42 +476,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  // [NEW] Helper for Duration Buttons
-  Widget _buildDurationButton(
-    int time, {
-    required bool isSelected,
-    required bool isDark,
-  }) {
-    final primaryColor =
-        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
-    final accentColor =
-        isDark ? AppTheme.darkAccentColor : AppTheme.lightAccentColor;
-    final textColor =
-        isDark ? AppTheme.darkTextColor : AppTheme.lightAccentColor;
-
-    return InkWell(
-      onTap: () => _updateDuration(time),
-      borderRadius: BorderRadius.circular(12),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected ? primaryColor : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: Center(
-          child: Text(
-            "${time}s",
-            style: TextStyle(
-              fontWeight: FontWeight.bold,
-              color: isSelected ? accentColor : textColor.withAlpha(150),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildToggleButton(
     String label,
     IconData icon,
@@ -558,6 +543,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 color: iconColor.withAlpha(150),
                 fontWeight: FontWeight.w700,
                 fontSize: 10,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSensitivityButton(
+    String mode,
+    String label,
+    IconData icon,
+    bool isDark,
+  ) {
+    final isSelected = _tiltSensitivity == mode;
+    final inactiveColor =
+        isDark
+            ? AppTheme.darkTextColor.withAlpha(125)
+            : AppTheme.lightAccentColor.withAlpha(100);
+    return InkWell(
+      onTap: () => _updateTiltSensitivity(mode),
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color:
+              isSelected
+                  ? (isDark
+                      ? AppTheme.darkPrimaryColor
+                      : AppTheme.lightPrimaryColor)
+                  : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              icon,
+              color:
+                  isSelected
+                      ? (isDark
+                          ? AppTheme.darkAccentColor
+                          : AppTheme.lightAccentColor)
+                      : inactiveColor,
+              size: 22,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              label,
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                color:
+                    isSelected
+                        ? (isDark
+                            ? AppTheme.darkAccentColor
+                            : AppTheme.lightAccentColor)
+                        : inactiveColor,
               ),
             ),
           ],

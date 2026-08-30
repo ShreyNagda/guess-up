@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
+import 'package:guess_up/services/storage_service.dart';
+
 class TiltDetector extends StatefulWidget {
   final bool isActive;
   final VoidCallback onTiltUp;
@@ -21,8 +23,30 @@ class TiltDetector extends StatefulWidget {
 class _TiltDetectorState extends State<TiltDetector> {
   StreamSubscription<AccelerometerEvent>? _subscription;
   bool isTiltAllowed = true;
-  static const double passThreshold = 8.5;
-  static const double correctThreshold = 7.0;
+
+  double get passThreshold {
+    switch (StorageService().tiltSensitivity) {
+      case 'Low':
+        return 9.5;
+      case 'High':
+        return 7.0;
+      case 'Normal':
+      default:
+        return 8.5;
+    }
+  }
+
+  double get correctThreshold {
+    switch (StorageService().tiltSensitivity) {
+      case 'Low':
+        return 8.5;
+      case 'High':
+        return 5.5;
+      case 'Normal':
+      default:
+        return 7.0;
+    }
+  }
 
   @override
   void initState() {

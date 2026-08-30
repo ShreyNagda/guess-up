@@ -6,6 +6,7 @@ import 'package:guess_up/models/team_match_state.dart';
 import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
+import 'package:guess_up/widgets/ambient_background.dart';
 
 class TeamPassScreen extends StatefulWidget {
   final TeamMatchState teamState;
@@ -62,40 +63,42 @@ class _TeamPassScreenState extends State<TeamPassScreen> {
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Spacer(),
+      body: AmbientBackground(
+        ambientColor: nextTeamColor,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 20.0),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(),
 
-              // Round End Header
-              Text(
-                state.isTiebreaker
-                    ? "⚡ SUDDEN DEATH TIEBREAKER! ⚡"
-                    : "ROUND ${state.currentRound} COMPLETE!",
-                style: theme.textTheme.labelMedium?.copyWith(
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 2,
-                  color:
-                      state.isTiebreaker
-                          ? Colors.deepOrangeAccent
-                          : theme.hintColor,
-                ),
-              ),
-              const SizedBox(height: 10),
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  "+${widget.lastRoundScore} POINTS! 💥",
-                  style: theme.textTheme.headlineMedium?.copyWith(
+                // Round End Header
+                Text(
+                  state.isTiebreaker
+                      ? "SUDDEN DEATH TIEBREAKER!"
+                      : "ROUND ${state.currentRound} COMPLETE!",
+                  style: theme.textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.w900,
-                    fontSize: 36,
-                    color: Colors.amber,
+                    letterSpacing: 2,
+                    color:
+                        state.isTiebreaker
+                            ? Colors.deepOrangeAccent
+                            : theme.hintColor,
                   ),
                 ),
-              ),
+                const SizedBox(height: 10),
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    "+${widget.lastRoundScore} POINTS!",
+                    style: theme.textTheme.headlineMedium?.copyWith(
+                      fontWeight: FontWeight.w900,
+                      fontSize: 36,
+                      color: Colors.amber,
+                    ),
+                  ),
+                ),
 
               const SizedBox(height: 24),
 
@@ -156,7 +159,7 @@ class _TeamPassScreenState extends State<TeamPassScreen> {
                                 const SizedBox(height: 6),
                                 Text(
                                   "${state.teamCyanScore}",
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w900,
                                     fontSize: 32,
                                     color: AppTheme.teamAColor,
@@ -193,7 +196,7 @@ class _TeamPassScreenState extends State<TeamPassScreen> {
                                 const SizedBox(height: 6),
                                 Text(
                                   "${state.teamMagentaScore}",
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w900,
                                     fontSize: 32,
                                     color: AppTheme.teamBColor,
@@ -271,6 +274,7 @@ class _TeamPassScreenState extends State<TeamPassScreen> {
           ),
         ),
       ),
+    ),
     );
   }
 }

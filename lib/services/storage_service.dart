@@ -23,6 +23,8 @@ class StorageService {
   static const String _lastCategoryIdsKey = 'lastCategoryIds';
   static const String _isTeamModeKey = 'isTeamMode';
   static const String _teamRoundsKey = 'teamRounds';
+  static const String _lastDeckIdKey = 'lastDeckId';
+  static const String _tiltSensitivityKey = 'tiltSensitivity';
 
   late SharedPreferences _prefs;
   bool _isInitialized = false;
@@ -33,10 +35,12 @@ class StorageService {
   bool _isHapticsEnabled = true;
   int _gameDuration = 60; // Default to 60 seconds
   int _teamRounds = 3; // Default to 3 rounds
-  ThemeMode _themeMode = ThemeMode.dark;
+  ThemeMode _themeMode = ThemeMode.system;
   bool _hasSeenOnboarding = false;
   bool _dontShowHowToPlay = false;
   bool _isTeamMode = false;
+  String? _lastDeckId;
+  String _tiltSensitivity = 'Normal';
 
   /// Initialize the service and pre-load critical settings
   Future<void> init() async {
@@ -58,6 +62,8 @@ class StorageService {
     _dontShowHowToPlay = _prefs.getBool(_dontShowHowToPlayKey) ?? false;
     _isTeamMode = _prefs.getBool(_isTeamModeKey) ?? false;
     _teamRounds = _prefs.getInt(_teamRoundsKey) ?? 3;
+    _lastDeckId = _prefs.getString(_lastDeckIdKey);
+    _tiltSensitivity = _prefs.getString(_tiltSensitivityKey) ?? 'Normal';
 
     // 5. Load Theme (Defaults to Dark Theme across all screens)
     final themeString = _prefs.getString(_themeModeKey);
@@ -97,6 +103,13 @@ class StorageService {
     await _prefs.setBool(_hapticsKey, value);
   }
 
+  // --- Tilt Sensitivity Setting ---
+  String get tiltSensitivity => _tiltSensitivity;
+  Future<void> setTiltSensitivity(String sensitivity) async {
+    _tiltSensitivity = sensitivity;
+    await _prefs.setString(_tiltSensitivityKey, sensitivity);
+  }
+
   // --- Theme Mode ---
   ThemeMode get themeMode => _themeMode;
   Future<void> setThemeMode(ThemeMode mode) async {
@@ -125,6 +138,13 @@ class StorageService {
   }
 
   // --- Last Played Game Preferences ---
+  String? get lastDeckId => _lastDeckId ?? (_prefs.getString(_lastDeckIdKey));
+
+  Future<void> setLastDeckId(String deckId) async {
+    _lastDeckId = deckId;
+    await _prefs.setString(_lastDeckIdKey, deckId);
+  }
+
   List<String> getLastCategoryIds() {
     return _prefs.getStringList(_lastCategoryIdsKey) ?? [];
   }

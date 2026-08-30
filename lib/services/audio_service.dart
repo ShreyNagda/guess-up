@@ -68,8 +68,8 @@ class AudioService with WidgetsBindingObserver {
       if (_musicPlayer.state == PlayerState.playing && !forceRestart) return;
 
       await _musicPlayer.setReleaseMode(ReleaseMode.loop);
-      await _musicPlayer.setVolume(0.35);
-      await _musicPlayer.play(AssetSource('sounds/background.mp3'));
+      await _musicPlayer.setVolume(0.4);
+      await _musicPlayer.play(AssetSource('sounds/background.ogg'));
     } catch (e) {
       debugPrint("Error playing background music: $e");
     }
@@ -107,12 +107,12 @@ class AudioService with WidgetsBindingObserver {
     }
   }
 
-  void playCorrect() => _playSfx('sounds/correct_sound.wav');
-  void playPass() => _playSfx('sounds/pass_sound.wav');
-  void playStartCountdown() => _playSfx('sounds/start_beep.wav');
-  void playEndingCountdown() => _playSfx('sounds/end_beep.wav');
+  void playCorrect() => _playSfx('sounds/correct_sound.ogg');
+  void playPass() => _playSfx('sounds/pass_sound.ogg');
+  void playStartCountdown() => _playSfx('sounds/start_beep.ogg');
+  void playEndingCountdown() => _playSfx('sounds/end_beep.ogg');
   void playStreakSound() {
-    _playSfx('sounds/correct_sound.wav');
+    _playSfx('sounds/correct_sound.ogg');
     heavyImpact();
   }
 

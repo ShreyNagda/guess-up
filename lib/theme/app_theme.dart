@@ -28,19 +28,34 @@ class AppTheme {
   static const Color hintColor = Color(0xFF9E9E9E);
 
   // --- Soothing Team Mode Palette (Cyan & Magenta) ---
-  static const Color teamAColor = Color(
-    0xFF00E5FF,
-  ); // Soothing luminous Cyan (Team A)
-  static const Color teamBColor = Color(
-    0xFFFF2A85,
-  ); // Soothing vivid Magenta/Pink (Team B)
+  static Color teamAColor = Colors.cyan.shade200;
+  static Color teamBColor = Colors.pink.shade200;
   static const String teamAName = "Team A";
   static const String teamBName = "Team B";
   static const String teamAEmoji = "🩵";
   static const String teamBEmoji = "🩷";
 
-  // --- 2. MODERN TYPESCALE ---
+  // --- 2. MODERN TYPESCALE & EMOJI FONT ---
   static const String fontFamily = 'Manrope';
+  static const String emojiFontFamily = 'NotoEmoji';
+
+  /// Helper to get a TextStyle specifically formatted for NotoEmoji font
+  /// (Renders white in dark mode and black in light mode by default)
+  static TextStyle emojiStyle({
+    required BuildContext context,
+    double? fontSize,
+    Color? color,
+    FontWeight? fontWeight,
+  }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final defaultColor = isDark ? Colors.white : Colors.black;
+    return TextStyle(
+      fontFamily: emojiFontFamily,
+      fontSize: fontSize,
+      fontWeight: fontWeight,
+      color: color ?? defaultColor,
+    );
+  }
 
   static final TextTheme _baseTextTheme = const TextTheme(
     // Massive text for the Game Word

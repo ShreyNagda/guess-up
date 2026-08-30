@@ -5,3 +5,4 @@ analyzer:
     - landing/**
     - build/**
     - .dart_tool/**
+    - android/**

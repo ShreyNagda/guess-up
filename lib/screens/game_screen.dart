@@ -388,7 +388,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
             AudioService().playEndingCountdown();
             AudioService().heavyImpact();
             setState(() => isGameFinished = true);
-            _setLandscapeOrientation();
+            _setPortraitOrientation();
             Navigator.of(context).pushReplacement(
               CupertinoPageRoute(
                 builder:
@@ -434,7 +434,6 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                       child: Center(child: _buildMainContent(theme)),
                     ),
 
-                    // 2. Fallback Split-Screen Touch Controls (Left half = Pass, Right half = Correct)
                     if (!isGamePaused &&
                         !isGameFinished &&
                         isPlacedOnForehead &&
@@ -490,7 +489,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                           child: IconButton(
                             icon: const Icon(
                               Icons.arrow_back_ios_new_rounded,
-                              color: Colors.white70,
+                              color: Colors.white,
                               size: 22,
                             ),
                             onPressed: _handleExitGamePressed,
@@ -607,17 +606,36 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 if (isTeamMode) ...[
-                  Text(
-                    "${teamState!.currentTeamName.toUpperCase()} PLAYS  •  ROUND ${teamState.currentRound}/${teamState.maxRounds}",
-                    style: TextStyle(
-                      fontWeight: FontWeight.w900,
-                      fontSize: 16,
-                      color: teamColor,
-                      letterSpacing: 2,
-                      shadows: [
-                        Shadow(
-                          color: Colors.black.withAlpha(180),
-                          blurRadius: 8,
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    // decoration: BoxDecoration(
+                    //   color: Colors.black.withAlpha(220),
+                    //   borderRadius: BorderRadius.circular(20),
+                    //   border: Border.all(color: teamColor, width: 2),
+                    //   boxShadow: [
+                    //     BoxShadow(
+                    //       color: teamColor.withAlpha(140),
+                    //       blurRadius: 16,
+                    //       spreadRadius: 1,
+                    //     ),
+                    //   ],
+                    // ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.groups_rounded, color: teamColor, size: 22),
+                        const SizedBox(width: 10),
+                        Text(
+                          "${teamState!.currentTeamName.toUpperCase()} PLAYS  •  ROUND ${teamState.currentRound}/${teamState.maxRounds}",
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            color: Colors.white,
+                            letterSpacing: 1.5,
+                          ),
                         ),
                       ],
                     ),
@@ -632,25 +650,25 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                     vertical: 20,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black45,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(color: Colors.white24, width: 1.5),
+                    // color: Colors.black45,
+                    // borderRadius: BorderRadius.circular(28),
+                    // border: Border.all(color: Colors.white24, width: 1.5),
                   ),
                   child: Column(
                     children: [
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: const [
+                        children: [
                           Icon(
                             Icons.phone_android_rounded,
                             size: 48,
-                            color: Colors.amber,
+                            color: isTeamMode ? Colors.white : Colors.amber,
                           ),
                           SizedBox(width: 12),
                           Icon(
                             Icons.face_rounded,
                             size: 48,
-                            color: Colors.amber,
+                            color: isTeamMode ? Colors.white : Colors.amber,
                           ),
                         ],
                       ),
@@ -660,7 +678,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                         textAlign: TextAlign.center,
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w900,
-                          color: Colors.amber,
+                          color: isTeamMode ? Colors.white : Colors.amber,
                           letterSpacing: 1.5,
                           fontSize: 24,
                         ),
@@ -733,7 +751,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     final isTimerRunning =
         gameTimerController.value.status == TimerStatus.running;
 
-    // --- State 3: Active Gameplay Word Screen with Protected TiltDetector ---
+    // --- State 3: Active Gameplay Word Screen with Wrapped Text Box Container ---
     return Container(
       width: double.infinity,
       height: double.infinity,
@@ -749,20 +767,44 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         onTiltDown: () => _processAnswer("Correct"),
         onTiltUp: () => _processAnswer("Pass"),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 32.0),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            alignment: Alignment.center,
-            child: Text(
-              currentWord,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              softWrap: true,
-              style: theme.textTheme.displayMedium?.copyWith(
-                fontSize: 100,
-                fontWeight: FontWeight.w900,
-                color: theme.textTheme.displayMedium?.color,
-                height: 1.1,
+          padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+          child: Container(
+            constraints: const BoxConstraints(maxWidth: 720, maxHeight: 280),
+            padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+            // decoration: BoxDecoration(
+            //   color: Colors.black.withAlpha(170),
+            //   borderRadius: BorderRadius.circular(28),
+            //   border: Border.all(
+            //     color: isTeamMode ? teamColor.withAlpha(180) : Colors.white24,
+            //     width: isTeamMode ? 3 : 2,
+            //   ),
+            //   boxShadow: [
+            //     BoxShadow(
+            //       color:
+            //           isTeamMode
+            //               ? teamColor.withAlpha(90)
+            //               : Colors.black.withAlpha(100),
+            //       blurRadius: 20,
+            //       spreadRadius: 2,
+            //     ),
+            //   ],
+            // ),
+            child: Center(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.center,
+                child: Text(
+                  currentWord,
+                  textAlign: TextAlign.center,
+                  maxLines: 3,
+                  softWrap: true,
+                  style: theme.textTheme.displayMedium?.copyWith(
+                    fontSize: 84,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    height: 1.15,
+                  ),
+                ),
               ),
             ),
           ),
