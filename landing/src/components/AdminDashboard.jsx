@@ -60,6 +60,8 @@ const EMOJI_PALETTE = [
   "🎯",
 ];
 
+const ADMIN_SECRET_KEY = import.meta.env.VITE_ADMIN_SECRET || "admin123";
+
 export const AdminDashboard = () => {
   const { isAdminLoggedIn, logout, openAuthModal } = useAdminAuth();
   const navigate = useNavigate();
@@ -273,12 +275,27 @@ export const AdminDashboard = () => {
   // --- QUICK INLINE VISIBILITY TOGGLE ---
   const handleInlineToggleAvailable = async (deck) => {
     try {
-      await updateDoc(doc(db, "categories", deck.id), {
-        isAvailable: !deck.isAvailable,
-        updatedAt: serverTimestamp(),
-      });
+      await setDoc(
+        doc(db, "categories", deck.id),
+        {
+          isAvailable: !deck.isAvailable,
+          adminSecret: ADMIN_SECRET_KEY,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
     } catch (err) {
       console.error("Error toggling deck visibility:", err);
+      if (
+        err.message?.includes("permission") ||
+        err.code === "permission-denied"
+      ) {
+        alert(
+          "Firestore Permission Error: Please update Rules in Firebase Console for guess-up-646e0 to allow writes with adminSecret:\n\nmatch /categories/{document=**} {\n  allow read: if true;\n  allow write: if request.resource.data.adminSecret == '" +
+            ADMIN_SECRET_KEY +
+            "';\n}",
+        );
+      }
     }
   };
 
@@ -344,6 +361,8 @@ export const AdminDashboard = () => {
       .map((w) => w.trim())
       .filter((w) => w.length > 0);
 
+    const targetDocId = editingDeck ? editingDeck.id : slugId;
+
     const payload = {
       name: deckName.trim(),
       title: deckName.trim(),
@@ -358,20 +377,33 @@ export const AdminDashboard = () => {
       sortOrder: Number(deckSortOrder) || 0,
       words: parsedWords,
       wordsCount: parsedWords.length,
+      adminSecret: ADMIN_SECRET_KEY,
       updatedAt: serverTimestamp(),
     };
 
+    if (!editingDeck) {
+      payload.createdAt = serverTimestamp();
+    }
+
     try {
-      if (editingDeck) {
-        await updateDoc(doc(db, "categories", editingDeck.id), payload);
-      } else {
-        payload.createdAt = serverTimestamp();
-        await setDoc(doc(db, "categories", slugId), payload);
-      }
+      await setDoc(doc(db, "categories", targetDocId), payload, {
+        merge: true,
+      });
       setIsDeckModalOpen(false);
     } catch (err) {
       console.error("Error saving deck to Firestore:", err);
-      alert("Failed to save deck: " + err.message);
+      if (
+        err.message?.includes("permission") ||
+        err.code === "permission-denied"
+      ) {
+        alert(
+          "Firestore Permission Error: Please update Firestore Rules in Firebase Console for project guess-up-646e0 to check adminSecret:\n\nmatch /categories/{document=**} {\n  allow read: if true;\n  allow write: if request.resource.data.adminSecret == '" +
+            ADMIN_SECRET_KEY +
+            "';\n}",
+        );
+      } else {
+        alert("Failed to save deck: " + err.message);
+      }
     } finally {
       setSavingDeck(false);
     }
@@ -405,16 +437,32 @@ export const AdminDashboard = () => {
     });
 
     try {
-      await updateDoc(doc(db, "categories", editingDeck.id), {
-        words: mergedWords,
-        wordsCount: mergedWords.length,
-        updatedAt: serverTimestamp(),
-      });
+      await setDoc(
+        doc(db, "categories", editingDeck.id),
+        {
+          words: mergedWords,
+          wordsCount: mergedWords.length,
+          adminSecret: ADMIN_SECRET_KEY,
+          updatedAt: serverTimestamp(),
+        },
+        { merge: true },
+      );
       setIsAddWordsModalOpen(false);
       setDeckWordsInput(mergedWords.join(", "));
     } catch (err) {
       console.error("Error adding new words:", err);
-      alert("Failed to add words: " + err.message);
+      if (
+        err.message?.includes("permission") ||
+        err.code === "permission-denied"
+      ) {
+        alert(
+          "Firestore Permission Error: Please update Firestore Rules in Firebase Console for project guess-up-646e0 to check adminSecret:\n\nmatch /categories/{document=**} {\n  allow read: if true;\n  allow write: if request.resource.data.adminSecret == '" +
+            ADMIN_SECRET_KEY +
+            "';\n}",
+        );
+      } else {
+        alert("Failed to add words: " + err.message);
+      }
     } finally {
       setSavingNewWords(false);
     }
@@ -1445,7 +1493,7 @@ export const AdminDashboard = () => {
                   <button
                     type="submit"
                     disabled={savingNewWords || parsedNewWordsList.length === 0}
-                    className="px-6 py-3 rounded-xl bg-primary text-accent font-black text-xs hover:scale-105 active:scale-95 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                    className="px-6 py-3 rounded-xl bg-primary text-accent font-black text-xs hover:scale-105 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
                   >
                     <Plus className="w-4 h-4" />{" "}
                     {savingNewWords
