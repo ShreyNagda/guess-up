@@ -21,7 +21,8 @@ class TiltDetector extends StatefulWidget {
 class _TiltDetectorState extends State<TiltDetector> {
   StreamSubscription<AccelerometerEvent>? _subscription;
   bool isTiltAllowed = true;
-  static const double threshold = 7.0;
+  static const double passThreshold = 8.5;
+  static const double correctThreshold = 7.0;
 
   @override
   void initState() {
@@ -45,33 +46,40 @@ class _TiltDetectorState extends State<TiltDetector> {
 
   void _startListening() {
     _stopListening();
+    // Start with tilt disallowed until the device is level/flat after activation
+    isTiltAllowed = false;
     _subscription = accelerometerEventStream().listen((event) {
       if (!mounted) return;
       final currentZ = event.z;
-      // If tilt is not allowed (cooling down), wait for phone to be relatively flat (reset)
+      // If tilt is not allowed (cooling down or initial setup), wait for phone to be relatively flat (reset)
       if (!isTiltAllowed) {
         // "Flat" is roughly close to 0 on Z-axis (plumb line is Y-axis in landscape)
-        // Allowing a small range like < 2.5 to consider it "reset"
-        if (currentZ.abs() < 2.5) {
-          setState(() {
-            isTiltAllowed = true;
-          });
+        if (currentZ.abs() < 3.0) {
+          if (mounted && !isTiltAllowed) {
+            setState(() {
+              isTiltAllowed = true;
+            });
+          }
         }
         return;
       }
       // Trigger tilt events and disable further tilt until reset
-      if (currentZ > threshold) {
-        // Tilted towards user (Screen up/back towards head) -> Usually "Pass"
+      if (currentZ > passThreshold) {
+        // Tilted towards user (Screen up/back towards head) -> Pass
         widget.onTiltUp();
-        setState(() {
-          isTiltAllowed = false;
-        });
-      } else if (currentZ < -threshold) {
-        // Tilted away from user (Screen down/forehead down) -> Usually "Correct"
+        if (mounted) {
+          setState(() {
+            isTiltAllowed = false;
+          });
+        }
+      } else if (currentZ < -correctThreshold) {
+        // Tilted away from user (Screen down/forehead down) -> Correct
         widget.onTiltDown();
-        setState(() {
-          isTiltAllowed = false;
-        });
+        if (mounted) {
+          setState(() {
+            isTiltAllowed = false;
+          });
+        }
       }
     });
   }

@@ -1,5 +1,6 @@
 import 'dart:convert'; // For jsonEncode/Decode
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:guess_up/services/storage_service.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import
 import 'package:connectivity_plus/connectivity_plus.dart'; //
@@ -19,6 +20,7 @@ class CategoryService {
       return null;
     }
   }
+
   static const String _cacheKey =
       'categories_cache'; // Key for shared_preferences
   static const String _cacheTimestampKey =
@@ -29,9 +31,6 @@ class CategoryService {
   // In-memory cache
   List<Category>? _cachedCategories;
   DateTime? _lastFirestoreFetch; // Track last successful fetch
-  static const Duration _refreshCooldown = Duration(
-    minutes: 10,
-  ); // Cooldown for forceRefresh
 
   // Helper to get SharedPreferences instance
   Future<SharedPreferences> get _prefs async =>
@@ -59,19 +58,12 @@ class CategoryService {
     final prefs = await _prefs;
     final now = DateTime.now();
 
-    // 2. Check refresh cooldown if forcing refresh
-    if (forceRefresh && _lastFirestoreFetch != null) {
-      final timeSinceLastFetch = now.difference(_lastFirestoreFetch!);
-      if (timeSinceLastFetch < _refreshCooldown) {
-        print(
-          "ℹ️ [FETCH] Cooldown active (${_refreshCooldown.inMinutes - timeSinceLastFetch.inMinutes}m left). Returning cache to save reads.",
-        );
-        if (_cachedCategories != null) {
-          return List<Category>.from(_cachedCategories!);
-        }
-        // If in-memory is null, try SharedPreferences before hitting Firestore
-        forceRefresh = false;
-      }
+    // If forceRefresh is requested, clear in-memory cache to force fresh Firestore fetch
+    if (forceRefresh) {
+      print(
+        "ℹ️ [FETCH] User requested force refresh. Clearing cache & querying Firestore.",
+      );
+      _cachedCategories = null;
     }
 
     // 3. Check SharedPreferences cache validity (only if not forcing refresh)
@@ -134,18 +126,18 @@ class CategoryService {
           final fetchedCategories =
               snapshot.docs.map((doc) => Category.fromDocument(doc)).toList();
 
-        // Update in-memory cache and last fetch time
-        _cachedCategories = List<Category>.from(fetchedCategories);
-        _lastFirestoreFetch = now;
+          // Update in-memory cache and last fetch time
+          _cachedCategories = List<Category>.from(fetchedCategories);
+          _lastFirestoreFetch = now;
 
-        // Save to SharedPreferences
-        final List<Map<String, dynamic>> jsonList =
-            fetchedCategories.map((category) => category.toJson()).toList();
-        await prefs.setString(_cacheKey, jsonEncode(jsonList));
-        await prefs.setInt(_cacheTimestampKey, now.millisecondsSinceEpoch);
-        print("✅ [NETWORK] Categories fetched from FIRESTORE and cached.");
+          // Save to SharedPreferences
+          final List<Map<String, dynamic>> jsonList =
+              fetchedCategories.map((category) => category.toJson()).toList();
+          await prefs.setString(_cacheKey, jsonEncode(jsonList));
+          await prefs.setInt(_cacheTimestampKey, now.millisecondsSinceEpoch);
+          print("✅ [NETWORK] Categories fetched from FIRESTORE and cached.");
 
-        return fetchedCategories; // Return the fresh list
+          return fetchedCategories; // Return the fresh list
         }
       } on FirebaseException catch (e) {
         debugLogCategoryFetch("FirebaseException during Firestore fetch", {
@@ -231,6 +223,31 @@ class CategoryService {
       await _categoryRef?.doc(category.id).update(category.toMap());
     } catch (e) {
       print("⚠️ Error updating category in Firestore: $e");
+    }
+    await clearCache();
+  }
+
+  /// Admin method to update category status (active/inactive) and hex color in Firestore
+  Future<void> updateCategoryStatusAndColor(
+    String categoryId, {
+    bool? isAvailable,
+    String? colorHex,
+  }) async {
+    try {
+      final updates = <String, dynamic>{};
+      if (isAvailable != null) {
+        updates['isAvailable'] = isAvailable;
+        updates['status'] = isAvailable ? 'active' : 'inactive';
+      }
+      if (colorHex != null) {
+        updates['color'] = colorHex;
+        updates['colorHex'] = colorHex;
+      }
+      if (updates.isNotEmpty) {
+        await _categoryRef?.doc(categoryId).update(updates);
+      }
+    } catch (e) {
+      debugPrint("⚠️ Error updating category status/color in Firestore: $e");
     }
     await clearCache();
   }

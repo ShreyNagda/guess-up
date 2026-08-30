@@ -10,14 +10,17 @@ import 'package:guess_up/services/theme_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:provider/provider.dart';
 
-void main() {
+void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
 
   final storageService = StorageService();
+  await storageService.init();
+
   final audioService = AudioService();
+  await audioService.init();
 
   runApp(
     MultiProvider(

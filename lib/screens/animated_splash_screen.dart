@@ -119,8 +119,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
         isDark ? const Color(0xFF000000) : const Color(0xFFFFFFFF);
     const logoAsset = "assets/images/logo-transparent.png";
     final titleColor = isDark ? Colors.white : const Color(0xFF212121);
-    final subtitleColor =
-        isDark ? Colors.white70 : const Color(0xFF64748B);
+    final subtitleColor = isDark ? Colors.white70 : const Color(0xFF64748B);
     final progressColor =
         isDark ? const Color(0xFFFFD600) : const Color(0xFFFFC107);
 
@@ -149,10 +148,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
                       ),
                     ],
                   ),
-                  child: Image.asset(
-                    logoAsset,
-                    fit: BoxFit.contain,
-                  ),
+                  child: Image.asset(logoAsset, fit: BoxFit.contain),
                 ),
                 const SizedBox(height: 32),
                 Text(
@@ -162,15 +158,16 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
                     fontWeight: FontWeight.w900,
                     color: titleColor,
                     letterSpacing: 3,
-                    shadows: isDark
-                        ? const [
-                            Shadow(
-                              color: Colors.black45,
-                              offset: Offset(3, 3),
-                              blurRadius: 4,
-                            ),
-                          ]
-                        : null,
+                    shadows:
+                        isDark
+                            ? const [
+                              Shadow(
+                                color: Colors.black45,
+                                offset: Offset(3, 3),
+                                blurRadius: 4,
+                              ),
+                            ]
+                            : null,
                   ),
                 ),
                 const SizedBox(height: 8),

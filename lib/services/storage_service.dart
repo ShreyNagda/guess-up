@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/material.dart'; // For ThemeMode
 import 'package:flutter/services.dart'; // For rootBundle
+import 'package:guess_up/models/category.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class StorageService {
@@ -18,7 +19,10 @@ class StorageService {
   // [NEW] Key for game duration
   static const String _gameDurationKey = 'gameDuration';
   static const String _onboardingSeenKey = 'hasSeenOnboarding';
+  static const String _dontShowHowToPlayKey = 'dontShowHowToPlay';
   static const String _lastCategoryIdsKey = 'lastCategoryIds';
+  static const String _isTeamModeKey = 'isTeamMode';
+  static const String _teamRoundsKey = 'teamRounds';
 
   late SharedPreferences _prefs;
   bool _isInitialized = false;
@@ -28,8 +32,11 @@ class StorageService {
   bool _isSfxEnabled = true;
   bool _isHapticsEnabled = true;
   int _gameDuration = 60; // Default to 60 seconds
-  ThemeMode _themeMode = ThemeMode.system;
+  int _teamRounds = 3; // Default to 3 rounds
+  ThemeMode _themeMode = ThemeMode.dark;
   bool _hasSeenOnboarding = false;
+  bool _dontShowHowToPlay = false;
+  bool _isTeamMode = false;
 
   /// Initialize the service and pre-load critical settings
   Future<void> init() async {
@@ -48,18 +55,22 @@ class StorageService {
 
     // 4. Load Onboarding Seen State
     _hasSeenOnboarding = _prefs.getBool(_onboardingSeenKey) ?? false;
+    _dontShowHowToPlay = _prefs.getBool(_dontShowHowToPlayKey) ?? false;
+    _isTeamMode = _prefs.getBool(_isTeamModeKey) ?? false;
+    _teamRounds = _prefs.getInt(_teamRoundsKey) ?? 3;
 
-    // 5. Load Theme
+    // 5. Load Theme (Defaults to Dark Theme across all screens)
     final themeString = _prefs.getString(_themeModeKey);
     switch (themeString) {
       case 'light':
         _themeMode = ThemeMode.light;
         break;
-      case 'dark':
-        _themeMode = ThemeMode.dark;
-        break;
-      default:
+      case 'system':
         _themeMode = ThemeMode.system;
+        break;
+      case 'dark':
+      default:
+        _themeMode = ThemeMode.dark;
     }
 
     _isInitialized = true;
@@ -122,6 +133,52 @@ class StorageService {
     await _prefs.setStringList(_lastCategoryIdsKey, categoryIds);
   }
 
+  static const String _customDecksKey = 'customDecks_v2';
+
+  // --- Custom Decks ---
+  List<Category> getCustomDecks() {
+    final String? jsonStr = _prefs.getString(_customDecksKey);
+    if (jsonStr == null || jsonStr.isEmpty) {
+      // Migrate legacy customWords list if available
+      final legacyWords = getCustomWords();
+      if (legacyWords.isNotEmpty) {
+        final legacyDeck = Category(
+          id: 'custom_legacy',
+          name: 'My Words',
+          icon: '✏️',
+          colorHex: '#FFC107',
+          words: legacyWords,
+        );
+        saveCustomDeck(legacyDeck);
+        return [legacyDeck];
+      }
+      return [];
+    }
+    try {
+      return Category.decode(jsonStr);
+    } catch (e) {
+      debugPrint("Error decoding custom decks: $e");
+      return [];
+    }
+  }
+
+  Future<void> saveCustomDeck(Category deck) async {
+    final decks = getCustomDecks();
+    final index = decks.indexWhere((d) => d.id == deck.id);
+    if (index >= 0) {
+      decks[index] = deck;
+    } else {
+      decks.add(deck);
+    }
+    await _prefs.setString(_customDecksKey, Category.encode(decks));
+  }
+
+  Future<void> deleteCustomDeck(String id) async {
+    final decks = getCustomDecks();
+    decks.removeWhere((d) => d.id == id);
+    await _prefs.setString(_customDecksKey, Category.encode(decks));
+  }
+
   // --- Custom Words ---
   List<String> getCustomWords() {
     return _prefs.getStringList(_customWordsKey) ?? [];
@@ -137,12 +194,34 @@ class StorageService {
     await setCustomWords(current);
   }
 
-  // --- Onboarding ---
+  // --- Onboarding & How-To-Play ---
   bool get hasSeenOnboarding => _hasSeenOnboarding;
 
   Future<void> setOnboardingSeen(bool value) async {
     _hasSeenOnboarding = value;
     await _prefs.setBool(_onboardingSeenKey, value);
+  }
+
+  bool get dontShowHowToPlay => _dontShowHowToPlay;
+
+  Future<void> setDontShowHowToPlay(bool value) async {
+    _dontShowHowToPlay = value;
+    await _prefs.setBool(_dontShowHowToPlayKey, value);
+  }
+
+  // --- Team Mode Setting ---
+  bool get isTeamMode => _isTeamMode;
+
+  Future<void> setTeamMode(bool value) async {
+    _isTeamMode = value;
+    await _prefs.setBool(_isTeamModeKey, value);
+  }
+
+  int get teamRounds => _teamRounds;
+
+  Future<void> setTeamRounds(int rounds) async {
+    _teamRounds = rounds;
+    await _prefs.setInt(_teamRoundsKey, rounds);
   }
 
   // --- Local File Words ---

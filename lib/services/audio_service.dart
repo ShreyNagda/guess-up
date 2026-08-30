@@ -18,31 +18,27 @@ class AudioService with WidgetsBindingObserver {
 
   // Initialize audio players
   Future<void> init() async {
-    // --- 1. Configure Audio Context (The Fix) ---
-    // This tells the OS: "Mix my sounds together, don't stop music for SFX"
     final AudioContext audioContext = AudioContext(
       iOS: AudioContextIOS(
-        category:
-            AVAudioSessionCategory.multiRoute, // Ambient = Mix with others
-        options: {
-          AVAudioSessionOptions.mixWithOthers, // Crucial for iOS mixing
-        },
+        category: AVAudioSessionCategory.playback,
+        options: {AVAudioSessionOptions.mixWithOthers},
       ),
       android: AudioContextAndroid(
         isSpeakerphoneOn: true,
         stayAwake: true,
         contentType: AndroidContentType.music,
         usageType: AndroidUsageType.game,
-        audioFocus:
-            AndroidAudioFocus.none, // 'None' prevents SFX from killing Music
+        audioFocus: AndroidAudioFocus.none,
       ),
     );
 
-    // Apply this context globally to all players
+    // Apply context to global and player instances
     await AudioPlayer.global.setAudioContext(audioContext);
+    await _musicPlayer.setAudioContext(audioContext);
+    await _sfxPlayer.setAudioContext(audioContext);
 
-    // Configure players
-    await _musicPlayer.setReleaseMode(ReleaseMode.loop); // Loop music
+    // Configure release modes
+    await _musicPlayer.setReleaseMode(ReleaseMode.loop);
     await _sfxPlayer.setReleaseMode(ReleaseMode.stop);
 
     // Start music if enabled
@@ -56,29 +52,26 @@ class AudioService with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      // App went to background (or screen locked) -> Pause Music
       _musicPlayer.pause();
     } else if (state == AppLifecycleState.resumed) {
-      // App came back -> Resume Music (if user wants it)
       if (StorageService().isMusicEnabled) {
-        _musicPlayer.resume();
+        playBackgroundMusic();
       }
     }
   }
 
   // --- Music Control ---
-  Future<void> playBackgroundMusic() async {
+  Future<void> playBackgroundMusic({bool forceRestart = false}) async {
     if (!StorageService().isMusicEnabled) return;
 
     try {
-      if (_musicPlayer.state == PlayerState.playing) return;
-      if (_musicPlayer.state == PlayerState.paused) await _musicPlayer.resume();
-      await _musicPlayer.play(
-        AssetSource('sounds/background.mp3'),
-        volume: 0.4, // Keep low to not distract
-      );
+      if (_musicPlayer.state == PlayerState.playing && !forceRestart) return;
+
+      await _musicPlayer.setReleaseMode(ReleaseMode.loop);
+      await _musicPlayer.setVolume(0.35);
+      await _musicPlayer.play(AssetSource('sounds/background.mp3'));
     } catch (e) {
-      print("Error playing music: $e");
+      debugPrint("Error playing background music: $e");
     }
   }
 
@@ -118,6 +111,10 @@ class AudioService with WidgetsBindingObserver {
   void playPass() => _playSfx('sounds/pass_sound.wav');
   void playStartCountdown() => _playSfx('sounds/start_beep.wav');
   void playEndingCountdown() => _playSfx('sounds/end_beep.wav');
+  void playStreakSound() {
+    _playSfx('sounds/correct_sound.wav');
+    heavyImpact();
+  }
 
   // --- Haptics Control ---
   Future<void> vibrate(int duration) async {
@@ -129,9 +126,10 @@ class AudioService with WidgetsBindingObserver {
     }
   }
 
-  void heavyImpact() => vibrate(500);
-  void mediumImpact() => vibrate(200);
-  void lightImpact() => vibrate(100);
+  void heavyImpact() => vibrate(800);
+  void mediumImpact() => vibrate(500);
+  void lightImpact() => vibrate(300);
+  void extraLightImpact() => vibrate(100);
 
   // Dispose observer
   void dispose() {

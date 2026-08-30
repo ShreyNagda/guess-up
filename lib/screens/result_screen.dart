@@ -1,16 +1,21 @@
+import 'package:confetti/confetti.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart'; // Import for SystemChrome
+import 'package:flutter/services.dart';
 import 'package:guess_up/models/category.dart';
+import 'package:guess_up/models/team_match_state.dart';
 import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/screens/home_screen.dart';
+import 'package:guess_up/screens/team_pass_screen.dart';
+import 'package:guess_up/services/word_history_service.dart';
+import 'package:guess_up/theme/app_theme.dart';
 
-// Convert to StatefulWidget to manage orientation
 class ResultScreen extends StatefulWidget {
   final int score;
   final int time;
   final Map<String, String> scoreMap;
   final List<Category>? selectedCategories;
+  final TeamMatchState? teamMatchState;
 
   const ResultScreen({
     super.key,
@@ -18,6 +23,7 @@ class ResultScreen extends StatefulWidget {
     required this.time,
     required this.scoreMap,
     this.selectedCategories,
+    this.teamMatchState,
   });
 
   @override
@@ -25,30 +31,61 @@ class ResultScreen extends StatefulWidget {
 }
 
 class _ResultScreenState extends State<ResultScreen> {
+  late ConfettiController _confettiController;
   int _correctCount = 0;
   int _passCount = 0;
+  bool _hasRecordedTeamTurn = false;
 
   @override
   void initState() {
     super.initState();
-    _setLandscapeOrientation(); // Enforce landscape on entry
-    _calculateStats(); // Calculate stats
+    _setLandscapeOrientation();
+    _confettiController = ConfettiController(
+      duration: const Duration(seconds: 4),
+    );
+
+    _calculateStatsAndSaveHistory();
+
+    if (widget.score >= 3 || (widget.teamMatchState?.isMatchFinished == true)) {
+      _confettiController.play();
+    }
   }
 
-  // Calculate Correct/Pass counts
-  void _calculateStats() {
+  void _calculateStatsAndSaveHistory() {
     int correct = 0;
     int passed = 0;
+    final List<String> shownWords = [];
+
     widget.scoreMap.forEach((key, value) {
+      shownWords.add(key);
       if (value == "Correct") {
         correct++;
       } else if (value == "Pass") {
         passed++;
       }
     });
-    // Use setState only if needed, here we can assign directly before build
     _correctCount = correct;
     _passCount = passed;
+
+    if (widget.selectedCategories != null && shownWords.isNotEmpty) {
+      for (final cat in widget.selectedCategories!) {
+        final relevantWords =
+            shownWords.where((w) => cat.words.contains(w)).toList();
+        if (relevantWords.isNotEmpty) {
+          WordHistoryService.markWordsAsPlayed(
+            cat.id,
+            relevantWords,
+            totalDeckWords: cat.words.length,
+          );
+        }
+      }
+    }
+
+    if (widget.teamMatchState != null && !_hasRecordedTeamTurn) {
+      _hasRecordedTeamTurn = true;
+      widget.teamMatchState!.recordRoundScore(widget.score);
+      widget.teamMatchState!.advanceTurn();
+    }
   }
 
   void _setLandscapeOrientation() {
@@ -59,179 +96,459 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   void _setPortraitOrientation() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  }
+
+  @override
+  void dispose() {
+    _confettiController.dispose();
+    _setPortraitOrientation();
+    super.dispose();
+  }
+
+  void _handleStartTiebreaker() {
+    final teamState = widget.teamMatchState;
+    if (teamState == null) return;
+    teamState.startTiebreaker();
+    _setPortraitOrientation();
+    Navigator.of(context).pushReplacement(
+      CupertinoPageRoute(
+        builder:
+            (_) => TeamPassScreen(
+              teamState: teamState,
+              lastRoundScore: widget.score,
+              time: 30, // 30-second rapid sudden death showdown!
+              selectedCategories: widget.selectedCategories ?? [],
+            ),
+      ),
+    );
+  }
+
+  void _handleNextAction() {
+    final teamState = widget.teamMatchState;
+
+    if (teamState != null && !teamState.isMatchFinished) {
+      _setPortraitOrientation();
+      Navigator.of(context).pushReplacement(
+        CupertinoPageRoute(
+          builder:
+              (_) => TeamPassScreen(
+                teamState: teamState,
+                lastRoundScore: widget.score,
+                time: widget.time,
+                selectedCategories: widget.selectedCategories ?? [],
+              ),
+        ),
+      );
+    } else {
+      _setLandscapeOrientation();
+      Navigator.of(context).pushReplacement(
+        CupertinoPageRoute(
+          builder:
+              (_) => GameScreen(
+                time: widget.time,
+                selectedCategories: widget.selectedCategories ?? [],
+                teamMatchState:
+                    teamState?.isTeamMode == true
+                        ? TeamMatchState(isTeamMode: true)
+                        : null,
+              ),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final teamState = widget.teamMatchState;
+    final isTeamMatchComplete = teamState?.isMatchFinished == true;
 
-    // Filter out unanswered words (using widget property)
     final answeredWords =
         widget.scoreMap.entries
             .where((e) => e.value == "Correct" || e.value == "Pass")
             .toList();
 
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: 24.0,
-            vertical: 16.0,
-          ), // Adjust padding for landscape
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center, // Center vertically
-            children: [
-              // Header Text
-              Text(
-                widget.score > 3 ? "Congratulations!" : "Game Over",
-                style: theme.textTheme.displayLarge?.copyWith(
-                  fontWeight: FontWeight.w900,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 10), // Reduced space
-              // Score
-              Text(
-                "Score: ${widget.score}",
-                style: theme.textTheme.headlineLarge!.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              // Optional: Add Correct/Pass statistics
-              const SizedBox(height: 4),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    "Correct: $_correctCount",
-                    style: theme.textTheme.titleMedium,
-                  ),
-                  const SizedBox(width: 16),
-                  Text(
-                    "Passed: $_passCount",
-                    style: theme.textTheme.titleMedium,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16), // Space before word list
-              // Word List Section (scrollable)
-              Expanded(
-                child: Center(
-                  // Center the scroll view if content is less than full height
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 8.0,
-                    ), // Padding for scroll content
-                    child: Wrap(
-                      spacing: 12, // Horizontal space
-                      runSpacing: 12, // Vertical space
-                      alignment: WrapAlignment.center,
-                      children:
-                          answeredWords.map((entry) {
-                            final word = entry.key;
-                            final result = entry.value;
-                            final isCorrect = result == "Correct";
-                            final bgColor =
-                                isCorrect
-                                    ? Colors.green.withAlpha(
-                                      80,
-                                    ) // Slightly adjusted colors
-                                    : Colors.red.withAlpha(80);
-                            final icon =
-                                isCorrect
-                                    ? Icons.check_circle_outline
-                                    : Icons
-                                        .highlight_off; // Different icons?// Darker text for contrast
+    String titleText = "GREAT JOB! 🎉";
+    if (isTeamMatchComplete && teamState != null) {
+      if (teamState.isTie) {
+        titleText = "IT'S A TIE! 🤝";
+      } else {
+        final winName =
+            teamState.winningTeam == TeamColor.cyan
+                ? "${AppTheme.teamAName.toUpperCase()} ${AppTheme.teamAEmoji}"
+                : "${AppTheme.teamBName.toUpperCase()} ${AppTheme.teamBEmoji}";
+        titleText = "$winName WINS! 🎉";
+      }
+    } else if (widget.score <= 3) {
+      titleText = "GAME OVER";
+    }
 
-                            return Card(
-                              color: bgColor,
+    return Scaffold(
+      body: Stack(
+        children: [
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 20.0,
+                vertical: 12.0,
+              ),
+              child: Column(
+                children: [
+                  // ==========================================
+                  // 1. TOP PART: Title, Score & Stat Badges
+                  // ==========================================
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Title
+                      Flexible(
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            titleText,
+                            style: theme.textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 24,
+                              color:
+                                  isDark
+                                      ? Colors.amber
+                                      : theme.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+
+                      // Score & Stat Pill Badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.cardColor,
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: (isDark
+                                    ? Colors.amber
+                                    : theme.colorScheme.primary)
+                                .withAlpha(90),
+                            width: 2,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              isTeamMatchComplete && teamState != null
+                                  ? "MATCH: ${teamState.teamCyanScore} - ${teamState.teamMagentaScore}"
+                                  : "SCORE: ${widget.score}",
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 19,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            const SizedBox(width: 14),
+
+                            // Green ✓ Stat Pill
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withAlpha(45),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                "✓ $_correctCount",
+                                style: const TextStyle(
+                                  color: Colors.greenAccent,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+
+                            // Red ✗ Stat Pill
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withAlpha(45),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Text(
+                                "✗ $_passCount",
+                                style: const TextStyle(
+                                  color: Colors.redAccent,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // ==========================================
+                  // 2. MIDDLE PART: Answered Words (Larger & Clearer)
+                  // ==========================================
+                  Expanded(
+                    child: Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: theme.cardColor.withAlpha(isDark ? 100 : 200),
+                        borderRadius: BorderRadius.circular(22),
+                        border: Border.all(
+                          color: theme.dividerColor.withAlpha(50),
+                          width: 1.5,
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(14),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.only(
+                              left: 4.0,
+                              bottom: 10.0,
+                            ),
+                            child: Text(
+                              "WORD BREAKDOWN (${answeredWords.length})",
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: 1.8,
+                                fontSize: 12,
+                                color: theme.hintColor,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child:
+                                answeredWords.isEmpty
+                                    ? const Center(
+                                      child: Text(
+                                        "No words answered",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    )
+                                    : SingleChildScrollView(
+                                      physics: const BouncingScrollPhysics(),
+                                      child: Wrap(
+                                        spacing: 10,
+                                        runSpacing: 10,
+                                        children:
+                                            answeredWords.map((entry) {
+                                              final word = entry.key;
+                                              final isCorrect =
+                                                  entry.value == "Correct";
+                                              return Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 14,
+                                                      vertical: 9,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color:
+                                                      isCorrect
+                                                          ? Colors.green
+                                                              .withAlpha(45)
+                                                          : Colors.red
+                                                              .withAlpha(45),
+                                                  borderRadius:
+                                                      BorderRadius.circular(14),
+                                                  border: Border.all(
+                                                    color:
+                                                        isCorrect
+                                                            ? Colors.greenAccent
+                                                                .withAlpha(140)
+                                                            : Colors.redAccent
+                                                                .withAlpha(140),
+                                                    width: 1.5,
+                                                  ),
+                                                ),
+                                                child: Row(
+                                                  mainAxisSize:
+                                                      MainAxisSize.min,
+                                                  children: [
+                                                    Icon(
+                                                      isCorrect
+                                                          ? Icons
+                                                              .check_circle_rounded
+                                                          : Icons
+                                                              .cancel_rounded,
+                                                      size: 20,
+                                                      color:
+                                                          isCorrect
+                                                              ? Colors
+                                                                  .greenAccent
+                                                              : Colors
+                                                                  .redAccent,
+                                                    ),
+                                                    const SizedBox(width: 8),
+                                                    Flexible(
+                                                      child: Text(
+                                                        word,
+                                                        maxLines: 1,
+                                                        overflow:
+                                                            TextOverflow
+                                                                .ellipsis,
+                                                        style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.w800,
+                                                          fontSize: 17,
+                                                          letterSpacing: 0.3,
+                                                          color:
+                                                              theme
+                                                                  .textTheme
+                                                                  .bodyMedium
+                                                                  ?.color,
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              );
+                                            }).toList(),
+                                      ),
+                                    ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // ==========================================
+                  // 3. BOTTOM PART: Action Buttons & Controls
+                  // ==========================================
+                  Row(
+                    children: [
+                      Expanded(
+                        flex: 3,
+                        child: SizedBox(
+                          height: 52,
+                          child: ElevatedButton.icon(
+                            onPressed:
+                                isTeamMatchComplete && teamState!.isTie
+                                    ? _handleStartTiebreaker
+                                    : _handleNextAction,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor:
+                                  isTeamMatchComplete &&
+                                          teamState?.isTie == true
+                                      ? Colors.deepOrangeAccent
+                                      : (isDark
+                                          ? Colors.amber
+                                          : theme.colorScheme.primary),
+                              foregroundColor:
+                                  isTeamMatchComplete &&
+                                          teamState?.isTie == true
+                                      ? Colors.white
+                                      : (isDark ? Colors.black : Colors.white),
+                              elevation: 2,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              elevation:
-                                  1, // Reduce elevation for a flatter look in the list
-                              child: Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 10,
-                                ), // Adjust padding
-                                child: Row(
-                                  mainAxisSize:
-                                      MainAxisSize.min, // Keep cards tight
-                                  children: [
-                                    Text(
-                                      word,
-                                      style: theme.textTheme.bodyLarge!.copyWith(
-                                        fontWeight:
-                                            FontWeight.w600, // Make text bolder
-                                        // color: textColor, // Optional: Explicit text color for contrast
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Icon(
-                                      icon,
-                                      color:
-                                          isCorrect
-                                              ? Colors.green.shade700
-                                              : Colors
-                                                  .red
-                                                  .shade700, // Icon color matching status
-                                      size: 18, // Slightly smaller icon
-                                    ),
-                                  ],
-                                ),
+                            ),
+                            icon: Icon(
+                              isTeamMatchComplete && teamState?.isTie == true
+                                  ? Icons.bolt_rounded
+                                  : (teamState != null &&
+                                          !teamState.isMatchFinished
+                                      ? Icons.phone_forwarded_rounded
+                                      : Icons.replay_rounded),
+                              size: 22,
+                            ),
+                            label: Text(
+                              isTeamMatchComplete && teamState?.isTie == true
+                                  ? "TIEBREAKER (30s) ⚔️"
+                                  : (teamState != null &&
+                                          !teamState.isMatchFinished
+                                      ? "PASS PHONE"
+                                      : "PLAY AGAIN"),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 15,
+                                letterSpacing: 1.1,
                               ),
-                            );
-                          }).toList(),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20), // Space before buttons
-              // Action Buttons Row
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  // Replay Button (Primary Action)
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Ensure it remains landscape for replay
-                      _setLandscapeOrientation();
-                      Navigator.of(context).pushReplacement(
-                        CupertinoPageRoute(
-                          builder:
-                              (_) => GameScreen(
-                                time: widget.time,
-                                // Pass non-nullable list or handle null case appropriately
-                                selectedCategories:
-                                    widget.selectedCategories ?? [],
-                              ),
+                            ),
+                          ),
                         ),
-                      );
-                    },
-                    icon: const Icon(Icons.replay),
-                    label: const Text("Replay"),
-                  ),
-                  const SizedBox(width: 20),
-
-                  // Back to Home Button (Secondary Action)
-                  OutlinedButton.icon(
-                    onPressed: () {
-                      _setPortraitOrientation(); // Set orientation BEFORE navigating
-                      Navigator.of(context).pushReplacement(
-                        CupertinoPageRoute(builder: (_) => const HomeScreen()),
-                      );
-                    },
-                    icon: const Icon(Icons.home_outlined), // Outlined icon
-                    label: const Text("Back to Home"),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        flex: 2,
+                        child: SizedBox(
+                          height: 52,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              _setPortraitOrientation();
+                              Navigator.of(context).pushReplacement(
+                                CupertinoPageRoute(
+                                  builder: (_) => const HomeScreen(),
+                                ),
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: BorderSide(
+                                color: (isDark
+                                        ? Colors.amber
+                                        : theme.colorScheme.primary)
+                                    .withAlpha(120),
+                                width: 2,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            icon: const Icon(Icons.home_rounded, size: 22),
+                            label: const Text(
+                              "HOME",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 16,
+                                letterSpacing: 1,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
-              const SizedBox(height: 16), // Padding at the bottom
-            ],
+            ),
           ),
-        ),
+
+          // --- Confetti Celebration Overlay ---
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              numberOfParticles: 30,
+              gravity: 0.2,
+            ),
+          ),
+        ],
       ),
     );
   }

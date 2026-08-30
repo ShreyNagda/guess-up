@@ -6,20 +6,38 @@ class AppTheme {
   // Light Theme Palette (High Energy)
   static const Color lightPrimaryColor = Color(0xFFFFD600); // Electric Yellow
   static const Color lightAccentColor = Color(0xFF212121); // Deep Black
-  static const Color lightScaffoldBackground = Color(0xFFFAFAFA); // Crisp White/Grey
+  static const Color lightScaffoldBackground = Color(
+    0xFFFAFAFA,
+  ); // Crisp White/Grey
   static const Color lightSurfaceColor = Colors.white;
   static const Color lightTextColor = Color(0xFF212121); // Almost Black
 
   // Dark Theme Palette (Toned Down)
-  static const Color darkPrimaryColor = Color(0xFFFFC107); // Amber (Duller Yellow)
+  static const Color darkPrimaryColor = Color(
+    0xFFFFC107,
+  ); // Amber (Duller Yellow)
   static const Color darkAccentColor = Color(0xFF121212); // Very Dark Grey
-  static const Color darkScaffoldBackground = Color(0xFF121212); // Deep Dark Grey
+  static const Color darkScaffoldBackground = Color(
+    0xFF121212,
+  ); // Deep Dark Grey
   static const Color darkSurfaceColor = Color(0xFF1E1E1E); // Lighter Dark Grey
   static const Color darkTextColor = Color(0xFFEEEEEE); // Off-White
 
   // Shared/Utility Colors
   static const Color errorColor = Color(0xFFD32F2F);
   static const Color hintColor = Color(0xFF9E9E9E);
+
+  // --- Soothing Team Mode Palette (Cyan & Magenta) ---
+  static const Color teamAColor = Color(
+    0xFF00E5FF,
+  ); // Soothing luminous Cyan (Team A)
+  static const Color teamBColor = Color(
+    0xFFFF2A85,
+  ); // Soothing vivid Magenta/Pink (Team B)
+  static const String teamAName = "Team A";
+  static const String teamBName = "Team B";
+  static const String teamAEmoji = "🩵";
+  static const String teamBEmoji = "🩷";
 
   // --- 2. MODERN TYPESCALE ---
   static const String fontFamily = 'Manrope';

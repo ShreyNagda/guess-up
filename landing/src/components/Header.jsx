@@ -69,7 +69,7 @@ export const Header = () => {
         </>
       )}
 
-      {!isAdmin && (
+      {/* {!isAdmin && (
         <Link
           to="/admin"
           onClick={() => setIsOpen(false)}
@@ -77,7 +77,7 @@ export const Header = () => {
         >
           Admin
         </Link>
-      )}
+      )} */}
 
       <button
         onClick={() => {

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:guess_up/models/team_match_state.dart';
+import 'package:guess_up/theme/app_theme.dart';
 
 class GameTopBar extends StatelessWidget {
   final int score;
@@ -6,6 +8,7 @@ class GameTopBar extends StatelessWidget {
   final int remainingTime;
   final bool isGamePaused;
   final VoidCallback onPauseToggle;
+  final TeamMatchState? teamMatchState;
 
   const GameTopBar({
     super.key,
@@ -14,6 +17,7 @@ class GameTopBar extends StatelessWidget {
     required this.remainingTime,
     required this.isGamePaused,
     required this.onPauseToggle,
+    this.teamMatchState,
   });
 
   @override
@@ -22,18 +26,37 @@ class GameTopBar extends StatelessWidget {
     // Increased width for the timer circle
     final double timerSize = 70.0;
 
-    Color timerColor =
-        (remainingTime <= 10) ? Colors.redAccent : theme.colorScheme.primary;
+    final bool isLowTime = remainingTime <= 10;
+    final bool isCriticalTime = remainingTime <= 5;
+
+    Color timerColor = isLowTime ? Colors.redAccent : theme.colorScheme.primary;
+
+    final isTeamMode = teamMatchState?.isTeamMode == true;
+    final teamColor = teamMatchState?.currentTeamColor ?? AppTheme.teamAColor;
 
     return SizedBox(
-      height: timerSize, // Ensure the bar has enough height for the timer
+      height: timerSize,
       child: Stack(
         alignment: Alignment.center,
         children: [
           RepaintBoundary(
-            child: SizedBox(
-              width: timerSize,
-              height: timerSize,
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: isCriticalTime ? timerSize + 6 : timerSize,
+              height: isCriticalTime ? timerSize + 6 : timerSize,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                boxShadow:
+                    isCriticalTime
+                        ? [
+                          BoxShadow(
+                            color: Colors.redAccent.withAlpha(180),
+                            blurRadius: 16,
+                            spreadRadius: 2,
+                          ),
+                        ]
+                        : [],
+              ),
               child: Stack(
                 alignment: Alignment.center,
                 children: [
@@ -42,7 +65,8 @@ class GameTopBar extends StatelessWidget {
                     height: timerSize,
                     child: CircularProgressIndicator(
                       value: timerProgress,
-                      strokeWidth: timerSize / 10,
+                      strokeWidth:
+                          isCriticalTime ? (timerSize / 8) : (timerSize / 10),
                       valueColor: AlwaysStoppedAnimation<Color>(timerColor),
                       backgroundColor: Colors.grey.withAlpha(77),
                       strokeCap: StrokeCap.round,
@@ -52,9 +76,9 @@ class GameTopBar extends StatelessWidget {
                     "$remainingTime",
                     style: theme.textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.w900,
-                      fontSize: 28,
+                      fontSize: isCriticalTime ? 32 : 28,
                       color: timerColor,
-                      height: 1.0, // Remove vertical leading
+                      height: 1.0,
                     ),
                   ),
                 ],
@@ -64,26 +88,83 @@ class GameTopBar extends StatelessWidget {
 
           Align(
             alignment: Alignment.centerLeft,
-            child: Column(
+            child: Row(
               mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  "SCORE",
-                  style: theme.textTheme.labelMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.hintColor,
-                    letterSpacing: 1.5,
-                  ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "SCORE",
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: theme.hintColor,
+                        letterSpacing: 1.5,
+                      ),
+                    ),
+                    Text(
+                      "$score",
+                      style: theme.textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 36,
+                        height: 1.0,
+                      ),
+                    ),
+                  ],
                 ),
-                Text(
-                  "$score",
-                  style: theme.textTheme.headlineMedium?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    fontSize: 40,
-                    height: 1.0,
+                if (isTeamMode) ...[
+                  const SizedBox(width: 14),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color:
+                          teamMatchState!.isTiebreaker
+                              ? Colors.deepOrangeAccent.withAlpha(45)
+                              : teamColor.withAlpha(45),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color:
+                            teamMatchState!.isTiebreaker
+                                ? Colors.deepOrangeAccent
+                                : teamColor,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          teamMatchState!.isTiebreaker
+                              ? Icons.bolt_rounded
+                              : Icons.shield_outlined,
+                          size: 14,
+                          color:
+                              teamMatchState!.isTiebreaker
+                                  ? Colors.deepOrangeAccent
+                                  : teamColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          teamMatchState!.isTiebreaker
+                              ? "⚡ TIEBREAKER: ${teamMatchState!.currentTeamName}"
+                              : teamMatchState!.currentTeamName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                            color:
+                                teamMatchState!.isTiebreaker
+                                    ? Colors.deepOrangeAccent
+                                    : teamColor,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
+                ],
               ],
             ),
           ),
@@ -92,10 +173,10 @@ class GameTopBar extends StatelessWidget {
             child: IconButton(
               icon: Icon(
                 isGamePaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-                size: 50,
+                size: 44,
               ),
-              padding: EdgeInsets.all(10),
-              constraints: const BoxConstraints(),
+              padding: const EdgeInsets.all(12),
+              constraints: const BoxConstraints(minWidth: 52, minHeight: 52),
               onPressed: onPauseToggle,
             ),
           ),

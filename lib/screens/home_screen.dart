@@ -2,14 +2,10 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:guess_up/constants/app_info.dart';
-import 'package:guess_up/models/category.dart';
-import 'package:guess_up/screens/about_screen.dart';
 import 'package:guess_up/screens/config_screen.dart';
-import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/screens/onboarding_screen.dart';
 import 'package:guess_up/screens/settings_screen.dart';
-import 'package:guess_up/services/category_service.dart';
-import 'package:guess_up/services/storage_service.dart';
+import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,19 +18,29 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen>
     with SingleTickerProviderStateMixin {
   late AnimationController _scrollController;
-  bool _isStartingQuickPlay = false;
+  bool _isPlayPressed = false;
 
-  // The pattern sequence (repeated in the grid)
-  final List<String> _deckEmojis = ["🏏", "🎬", "🍔", "🗻", "🎧", "🅰️", "📺"];
+  final List<String> _deckEmojis = [
+    "🏏",
+    "🎬",
+    "🍔",
+    "🗻",
+    "🎧",
+    "🅰️",
+    "📺",
+    "🚀",
+    "👑",
+  ];
 
   @override
   void initState() {
     super.initState();
     _setPortraitOnly();
+    AudioService().playBackgroundMusic();
 
     _scrollController = AnimationController(
       vsync: this,
-      duration: const Duration(seconds: 30), // Speed of the scroll
+      duration: const Duration(seconds: 25),
     )..repeat();
   }
 
@@ -48,77 +54,39 @@ class _HomeScreenState extends State<HomeScreen>
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
 
-  Future<void> _quickStartGame() async {
-    if (_isStartingQuickPlay) return;
-    setState(() => _isStartingQuickPlay = true);
-
-    try {
-      final allCategories = await CategoryService().getAllCategories();
-      final time = StorageService().gameDuration;
-      final lastCategoryIds = StorageService().getLastCategoryIds();
-
-      List<Category> categoriesToPlay = [];
-      if (lastCategoryIds.isNotEmpty) {
-        categoriesToPlay =
-            allCategories
-                .where((cat) => lastCategoryIds.contains(cat.id))
-                .toList();
-      }
-      if (categoriesToPlay.isEmpty) {
-        categoriesToPlay = allCategories;
-      }
-
-      if (mounted) {
-        setState(() => _isStartingQuickPlay = false);
-        Navigator.of(context).push(
-          CupertinoPageRoute(
-            builder:
-                (_) => GameScreen(
-                  time: time,
-                  selectedCategories: categoriesToPlay,
-                ),
-          ),
-        );
-      }
-    } catch (_) {
-      if (mounted) {
-        setState(() => _isStartingQuickPlay = false);
-        Navigator.of(
-          context,
-        ).push(CupertinoPageRoute(builder: (_) => const ConfigScreen()));
-      }
-    }
+  void _navigateToConfig() {
+    AudioService().extraLightImpact();
+    Navigator.of(
+      context,
+    ).push(CupertinoPageRoute(builder: (_) => const ConfigScreen()));
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
-    final size = MediaQuery.of(context).size;
 
     final primaryColor =
         isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
     final textColor =
         isDark ? AppTheme.darkTextColor : AppTheme.lightAccentColor;
-    final buttonTextColor =
-        isDark ? AppTheme.darkAccentColor : AppTheme.lightAccentColor;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       body: Stack(
         children: [
-          // --- 1. Structured Pattern Background ---
+          // --- 1. Dynamic Floating Party Icons Background Canvas ---
           Positioned.fill(
             child: Opacity(
-              opacity: 0.15, // Subtle background transparency
+              opacity: 0.12,
               child: AnimatedBuilder(
                 animation: _scrollController,
                 builder: (context, child) {
                   return CustomPaint(
-                    painter: PatternPainter(
+                    painter: FloatingPatternPainter(
                       scrollValue: _scrollController.value,
                       emojis: _deckEmojis,
-                      textColor: textColor, // Use theme color for emojis
+                      textColor: textColor,
                     ),
                     size: Size.infinite,
                   );
@@ -127,225 +95,203 @@ class _HomeScreenState extends State<HomeScreen>
             ),
           ),
 
-          // --- 2. Foreground UI (Unchanged) ---
-          SafeArea(
-            child: Stack(
-              children: [
-                // Title Section
-                Positioned(
-                  top: size.height * 0.15,
-                  left: 0,
-                  right: 0,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        "GUESS\nUP",
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.displayLarge?.copyWith(
-                          fontSize: 90,
-                          height: 0.85,
-                          color: textColor,
-                          shadows: [
-                            Shadow(
-                              color: primaryColor,
-                              offset: const Offset(6, 6),
-                              blurRadius: 0,
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 20),
-                      Text(
-                        "The Ultimate Party Game",
-                        textAlign: TextAlign.center,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          letterSpacing: 4,
-                          fontWeight: FontWeight.bold,
-                          color: textColor.withAlpha(150),
-                        ),
-                      ),
-                    ],
-                  ),
+          // --- 2. Bounded Foreground Content ---
+          Positioned.fill(
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24.0,
+                  vertical: 12.0,
                 ),
-
-                // Actions Section
-                Positioned(
-                  bottom: size.height * 0.1,
-                  left: 24,
-                  right: 24,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      SizedBox(
-                        height: 70,
-                        width: double.infinity,
-                        child: ElevatedButton(
-                          onPressed: _quickStartGame,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            foregroundColor: buttonTextColor,
-                            elevation: 0,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(20),
-                              side: BorderSide(
-                                color:
-                                    isDark
-                                        ? Colors.transparent
-                                        : AppTheme.lightAccentColor,
-                                width: isDark ? 0 : 3,
-                              ),
-                            ),
-                            shadowColor: Colors.transparent,
+                child: Column(
+                  children: [
+                    // Top Navigation Bar (Rules & Settings Icons)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        IconButton(
+                          icon: Icon(
+                            Icons.help_outline_rounded,
+                            size: 30,
+                            color: primaryColor,
                           ),
-                          child:
-                              _isStartingQuickPlay
-                                  ? const SizedBox(
-                                    height: 28,
-                                    width: 28,
-                                    child: CircularProgressIndicator(
-                                      strokeWidth: 3,
-                                      color: Colors.white,
+                          tooltip: "How to Play",
+                          onPressed: () {
+                            AudioService().extraLightImpact();
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder:
+                                    (_) => const OnboardingScreen(
+                                      isRevisiting: true,
                                     ),
-                                  )
-                                  : Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        "QUICK PLAY",
-                                        style: theme.textTheme.headlineMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.w900,
-                                              color: buttonTextColor,
-                                              letterSpacing: 1.5,
-                                            ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Icon(
-                                        Icons.play_arrow_rounded,
-                                        size: 40,
-                                        color: buttonTextColor,
-                                      ),
-                                    ],
-                                  ),
+                              ),
+                            );
+                          },
                         ),
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
+                        IconButton(
+                          icon: Icon(
+                            Icons.settings_outlined,
+                            size: 30,
+                            color: primaryColor,
+                          ),
+                          tooltip: "Settings",
+                          onPressed: () {
+                            AudioService().extraLightImpact();
+                            Navigator.of(context).push(
+                              CupertinoPageRoute(
+                                builder: (_) => const SettingsScreen(),
+                              ),
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+
+                    // Center Content
+                    Expanded(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Expanded(
-                            child: _buildMenuButton(
-                              context,
-                              "Decks",
-                              Icons.style_outlined,
-                              () => Navigator.of(context).push(
-                                CupertinoPageRoute(
-                                  builder: (_) => const ConfigScreen(),
-                                ),
+                          const Spacer(),
+
+                          // Title Badge
+                          FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              "GUESS\nUP",
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.displayLarge?.copyWith(
+                                fontSize: 88,
+                                height: 0.82,
+                                fontWeight: FontWeight.w900,
+                                color: textColor,
+                                shadows: [
+                                  Shadow(
+                                    color: primaryColor,
+                                    offset: const Offset(6, 6),
+                                    blurRadius: 0,
+                                  ),
+                                ],
                               ),
-                              isDark,
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildMenuButton(
-                              context,
-                              "Tutorial",
-                              Icons.help_outline_rounded,
-                              () => Navigator.of(context).push(
-                                CupertinoPageRoute(
-                                  builder:
-                                      (_) => const OnboardingScreen(
-                                        isRevisiting: true,
-                                      ),
-                                ),
+                          const SizedBox(height: 14),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: primaryColor.withAlpha(40),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: primaryColor.withAlpha(100),
                               ),
-                              isDark,
+                            ),
+                            child: Text(
+                              "ARCADE PARTY GAME 🎉",
+                              textAlign: TextAlign.center,
+                              style: theme.textTheme.titleSmall?.copyWith(
+                                letterSpacing: 3,
+                                fontWeight: FontWeight.w900,
+                                color: primaryColor,
+                              ),
                             ),
                           ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: _buildMenuButton(
-                              context,
-                              "Settings",
-                              Icons.settings_outlined,
-                              () => Navigator.of(context).push(
-                                CupertinoPageRoute(
-                                  builder: (_) => const SettingsScreen(),
+
+                          const Spacer(),
+
+                          // --- 3D Chunky Hero PLAY Button ---
+                          GestureDetector(
+                            onTapDown:
+                                (_) => setState(() => _isPlayPressed = true),
+                            onTapUp: (_) {
+                              setState(() => _isPlayPressed = false);
+                              _navigateToConfig();
+                            },
+                            onTapCancel:
+                                () => setState(() => _isPlayPressed = false),
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 100),
+                              height: 74,
+                              width: double.infinity,
+                              transform: Matrix4.translationValues(
+                                0,
+                                _isPlayPressed ? 6 : 0,
+                                0,
+                              ),
+                              decoration: BoxDecoration(
+                                color: primaryColor,
+                                borderRadius: BorderRadius.circular(24),
+                                boxShadow:
+                                    _isPlayPressed
+                                        ? []
+                                        : [
+                                          BoxShadow(
+                                            color: Colors.amber.shade900,
+                                            offset: const Offset(0, 8),
+                                            blurRadius: 0,
+                                          ),
+                                          BoxShadow(
+                                            color: primaryColor.withAlpha(150),
+                                            blurRadius: 20,
+                                            offset: const Offset(0, 6),
+                                          ),
+                                        ],
+                              ),
+                              child: Center(
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Text(
+                                      "PLAY",
+                                      style: theme.textTheme.headlineMedium
+                                          ?.copyWith(
+                                            fontWeight: FontWeight.w900,
+                                            color: Colors.black,
+                                            letterSpacing: 4,
+                                            fontSize: 32,
+                                          ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    const Icon(
+                                      Icons.play_arrow_rounded,
+                                      size: 44,
+                                      color: Colors.black,
+                                    ),
+                                  ],
                                 ),
                               ),
-                              isDark,
                             ),
                           ),
+
+                          const Spacer(),
                         ],
                       ),
-                      const SizedBox(height: 30),
-                      InkWell(
-                        onTap:
-                            () => Navigator.of(context).push(
-                              CupertinoPageRoute(
-                                builder: (_) => const AboutScreen(),
-                              ),
+                    ),
+
+                    // Version Footer
+                    InkWell(
+                      onTap:
+                          () => Navigator.of(context).push(
+                            CupertinoPageRoute(
+                              builder: (_) => const SettingsScreen(),
                             ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(12.0),
-                          child: Text(
-                            AppInfo.displayVersion,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: textColor.withAlpha(100),
-                              fontWeight: FontWeight.bold,
-                            ),
+                          ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Text(
+                          AppInfo.displayVersion,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: textColor.withAlpha(100),
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMenuButton(
-    BuildContext context,
-    String label,
-    IconData icon,
-    VoidCallback onTap,
-    bool isDark,
-  ) {
-    final borderColor =
-        isDark
-            ? AppTheme.darkPrimaryColor.withAlpha(130)
-            : AppTheme.lightAccentColor.withAlpha(60);
-    final textColor =
-        isDark ? AppTheme.darkTextColor : AppTheme.lightAccentColor;
-    final iconColor =
-        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightAccentColor;
-    final bgColor =
-        isDark ? AppTheme.darkSurfaceColor : AppTheme.lightSurfaceColor;
-
-    return OutlinedButton(
-      onPressed: onTap,
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        side: BorderSide(color: borderColor, width: 2),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        backgroundColor: bgColor,
-        foregroundColor: textColor,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, color: iconColor, size: 28),
-          const SizedBox(height: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: textColor,
-              fontWeight: FontWeight.w800,
+              ),
             ),
           ),
         ],
@@ -354,13 +300,13 @@ class _HomeScreenState extends State<HomeScreen>
   }
 }
 
-// --- Custom Painter for the Grid Pattern ---
-class PatternPainter extends CustomPainter {
+// --- Animated Floating Pattern Painter ---
+class FloatingPatternPainter extends CustomPainter {
   final double scrollValue;
   final List<String> emojis;
   final Color textColor;
 
-  PatternPainter({
+  FloatingPatternPainter({
     required this.scrollValue,
     required this.emojis,
     required this.textColor,
@@ -368,35 +314,25 @@ class PatternPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final textStyle = TextStyle(
-      fontSize: 50, // Fixed size for cleanliness
-      color: textColor, // Monochrome look
-    );
+    final textStyle = TextStyle(fontSize: 48, color: textColor);
     final textPainter = TextPainter(textDirection: TextDirection.ltr);
 
-    // Grid Settings
-    const double spacing = 140.0; // Space between icons
+    const double spacing = 130.0;
     final int cols = (size.width / spacing).ceil() + 2;
     final int rows = (size.height / spacing).ceil() + 2;
 
-    // Diagonal Scroll Offset
     final double offsetX = scrollValue * spacing;
     final double offsetY = scrollValue * spacing;
 
     for (int i = 0; i < cols; i++) {
       for (int j = 0; j < rows; j++) {
-        // Use modulo to pick emoji consistently
-        final int emojiIndex = (i + j) % emojis.length;
+        final int emojiIndex = (i * 3 + j) % emojis.length;
         textPainter.text = TextSpan(text: emojis[emojiIndex], style: textStyle);
         textPainter.layout();
 
-        // Calculate position with wrap-around
-        // We subtract spacing to start drawing slightly off-screen (top-left)
         double x = (i * spacing) + offsetX - spacing;
         double y = (j * spacing) + offsetY - spacing;
 
-        // Wrap logic: If it goes off-screen, move it back to the start
-        // This mimics infinite scrolling
         x = x % (cols * spacing) - spacing;
         y = y % (rows * spacing) - spacing;
 
@@ -406,7 +342,7 @@ class PatternPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant PatternPainter oldDelegate) {
+  bool shouldRepaint(covariant FloatingPatternPainter oldDelegate) {
     return oldDelegate.scrollValue != scrollValue ||
         oldDelegate.textColor != textColor;
   }

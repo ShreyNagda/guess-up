@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { collection, onSnapshot } from "firebase/firestore";
 import { motion } from "motion/react";
+import { db } from "../lib/firebase";
 import { Header } from "../components/Header";
 import { Footer } from "../components/Footer";
 import { PhoneMockup } from "../components/PhoneMockup";
@@ -7,34 +9,34 @@ import { DeckModal } from "../components/DeckModal";
 
 const FEATURES = [
   {
+    icon: "⚔️",
+    title: "Team Battle Mode",
+    desc: "Split into Team Purple and Team Cyan for high-stakes multi-round battle matches! Real-time round scoring, turn handoffs, and instant winner celebrations.",
+  },
+  {
     icon: "🇮🇳",
     title: "Desi Pop-Culture Decks",
     desc: "Curated categories spanning Bollywood movies, Cricket legends, Indian delicacies (Samosa, Chai, Biryani), street-food classics, and regional festivals.",
   },
   {
     icon: "📱",
-    title: "Forehead Game Design",
-    desc: "A classic heads-up party layout. Slide the phone onto your forehead, orient it horizontally, and let your friends guide you to the answers.",
+    title: "Forehead Placement & Auto-Start",
+    desc: "Hold phone on forehead facing your friends. Auto-detects forehead positioning to launch the 3-second countdown before game starts!",
   },
   {
     icon: "🔄",
-    title: "Intuitive Tilt Controls",
-    desc: "Built-in motion sensing. Tilt your screen downwards to mark a guess as Correct (+1 Point) or tilt it upwards to Pass. Simple and seamless!",
+    title: "Protected Motion Controls",
+    desc: "Tilt downwards for Correct (+1) or tilt upwards to Pass. Motion sensing is strictly active during live game timer to prevent accidental triggers.",
   },
   {
-    icon: "🃏",
-    title: "Mix & Match Decks",
-    desc: "Why limit yourself? Select multiple decks at the same time to create a randomized custom game session that keeps everyone guessing.",
+    icon: "🔍",
+    title: "Deck Search & Word Previews",
+    desc: "Instant search bar filtering across decks and words. Tap any deck to preview sample cards and inspect categories before playing.",
   },
   {
     icon: "✍️",
     title: "Create Custom Decks",
-    desc: "Add your own personal inside jokes, names of friends, or specific categories directly in settings. Save locally and launch immediately.",
-  },
-  {
-    icon: "📶",
-    title: "Offline Cache & Play",
-    desc: "Bad network? No worries. Play anytime with automatic Firestore content caching. Take Guess Up on roadtrips, flights, or remote getaways.",
+    desc: "Add your own personal inside jokes, names of friends, or custom categories. Save locally and launch immediately for party fun.",
   },
 ];
 
@@ -42,8 +44,8 @@ const STEPS = [
   {
     num: 1,
     img: "/images/onboarding2.png",
-    title: "1. Select Decks & Align",
-    desc: "Pick one or more theme decks. Select your timer duration, then hold the phone up to your forehead facing your friends.",
+    title: "1. Select Decks & Mode",
+    desc: "Pick your favorite decks or search keywords. Choose Solo or Team Battle mode, then hold the phone up to your forehead facing your friends.",
   },
   {
     num: 2,
@@ -65,6 +67,7 @@ const DECKS = [
     icon: "🏏",
     title: "Cricket Fever",
     subtitle: "100+ Player names, events, & rules",
+    category: "sports",
     words:
       "Cricket, Sachin Tendulkar, Virat Kohli, MS Dhoni, Boundary, Wicket, Cover Drive, Sixer, Lagaan, IPL",
   },
@@ -73,6 +76,7 @@ const DECKS = [
     icon: "🎬",
     title: "Bollywood Hitlist",
     subtitle: "Blockbusters, superstars, & movie songs",
+    category: "movies",
     words:
       "Bollywood, Shah Rukh Khan, Amitabh Bachchan, Sholay, DDLJ, Popcorn, Intermission, Oscar, Item Number, Action Hero",
   },
@@ -81,6 +85,7 @@ const DECKS = [
     icon: "🍕",
     title: "Desi Cravings",
     subtitle: "Mouth-watering snacks & local cuisines",
+    category: "food",
     words:
       "Samosa, Biryani, Chai, Dosa, Paneer, Roti, Lassi, Mango, Curry, Masala, Golgappa, Gulab Jamun",
   },
@@ -89,6 +94,7 @@ const DECKS = [
     icon: "🗻",
     title: "Incredible India",
     subtitle: "Historic places, landmarks, & heritage sites",
+    category: "trending",
     words:
       "Taj Mahal, Lotus Temple, Gateway of India, Mumbai Local, Kolkata Tram, Rickshaw, Monsoon, Himalayas, Goa Beach",
   },
@@ -97,17 +103,28 @@ const DECKS = [
     icon: "🎧",
     title: "Harry Potter Magic",
     subtitle: "Wizarding world, spells, & characters",
+    category: "movies",
     words:
       "Hogwarts, Harry Potter, Hermione Granger, Quidditch, Golden Snitch, Dumbledore, Voldemort, Gryffindor, Expelliarmus",
   },
   {
-    deckId: "tech_startups",
-    icon: "💻",
-    title: "Tech & Startups",
-    subtitle: "Unicorns, tech terms, & founder stories",
+    deckId: "classic_party",
+    icon: "🎉",
+    title: "Classic Party Charades",
+    subtitle: "Funny actions, memes, & viral trends",
+    category: "party",
     words:
-      "Startup, Unicorn, Silicon Valley, Pitch Deck, Algorithm, Artificial Intelligence, Venture Capital, Coding, Hackathon",
+      "Moonwalk, Selfie Queen, TikTok Dance, Air Guitar, Breakdancing, Sumo Wrestler, Robot Dance, Zombie Walk",
   },
+];
+
+const CATEGORY_FILTERS = [
+  { id: "all", label: "All Decks" },
+  { id: "trending", label: "Trending" },
+  { id: "movies", label: "Movies & TV" },
+  { id: "sports", label: "Sports" },
+  { id: "food", label: "Desi Food" },
+  { id: "party", label: "Party Fun" },
 ];
 
 const playStoreUrl = import.meta.env.VITE_PLAY_STORE_URL || "#";
@@ -115,6 +132,54 @@ const playStoreUrl = import.meta.env.VITE_PLAY_STORE_URL || "#";
 export const LandingPage = () => {
   const [selectedDeck, setSelectedDeck] = useState(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [liveDecks, setLiveDecks] = useState([]);
+  const [deckSearch, setDeckSearch] = useState("");
+  const [activeCategoryFilter, setActiveCategoryFilter] = useState("all");
+
+  useEffect(() => {
+    const unsubscribe = onSnapshot(
+      collection(db, "categories"),
+      (snapshot) => {
+        const list = [];
+        snapshot.forEach((docSnap) => {
+          const data = docSnap.data();
+          const nameLower = (data.name || "").toLowerCase();
+          list.push({
+            deckId: docSnap.id,
+            id: docSnap.id,
+            icon: data.icon || "🎮",
+            title: data.name || docSnap.id,
+            subtitle: `${data.words?.length || 0} cards in deck`,
+            words: data.words || [],
+            category: nameLower.includes("movie") || nameLower.includes("bollywood")
+              ? "movies"
+              : nameLower.includes("cricket") || nameLower.includes("sport")
+                ? "sports"
+                : nameLower.includes("food") || nameLower.includes("snack")
+                  ? "food"
+                  : "trending",
+          });
+        });
+        if (list.length > 0) {
+          setLiveDecks(list);
+        }
+      },
+      () => {},
+    );
+    return unsubscribe;
+  }, []);
+
+  const baseDecks = liveDecks.length > 0 ? liveDecks : DECKS;
+
+  const filteredDecks = baseDecks.filter((deck) => {
+    const title = (deck.title || deck.name || "").toLowerCase();
+    const sub = (deck.subtitle || "").toLowerCase();
+    const query = deckSearch.toLowerCase();
+    const matchesSearch = title.includes(query) || sub.includes(query);
+    const matchesCategory =
+      activeCategoryFilter === "all" || deck.category === activeCategoryFilter;
+    return matchesSearch && matchesCategory;
+  });
 
   const openDeckModal = (deck) => {
     setSelectedDeck(deck);
@@ -130,17 +195,17 @@ export const LandingPage = () => {
     show: {
       opacity: 1,
       transition: {
-        staggerChildren: 0.08,
+        staggerChildren: 0.05,
       },
     },
   };
 
   const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
+    hidden: { opacity: 0, y: 15 },
     show: {
       opacity: 1,
       y: 0,
-      transition: { type: "spring", stiffness: 260, damping: 20 },
+      transition: { type: "spring", stiffness: 380, damping: 24 },
     },
   };
 
@@ -159,6 +224,7 @@ export const LandingPage = () => {
           <span className="bg-primary/15 border border-primary text-primary dark:border-accent dark:text-text-dark px-4 py-1.5 rounded-full font-black text-xs uppercase tracking-widest self-center lg:self-start">
             Now Trending in India
           </span>
+
           <h2 className="text-4xl md:text-5xl lg:text-7xl font-black leading-none tracking-tight uppercase">
             Put it on your{" "}
             <span className="block text-primary dark:text-text-dark drop-shadow-[4px_4px_0px_var(--color-accent)] dark:drop-shadow-[4px_4px_0px_var(--color-primary)]">
@@ -174,6 +240,7 @@ export const LandingPage = () => {
             youths, guess words from Bollywood, Cricket, Food, Culture, and more
             while your friends mime, shout, and enact.
           </p>
+
           <div className="flex flex-col sm:flex-row gap-4 w-full sm:w-auto">
             <a
               href="#download"
@@ -182,14 +249,15 @@ export const LandingPage = () => {
               Play Now
             </a>
             <a
-              href="#features"
+              href="#decks"
               className="border-2 border-primary dark:border-border-dark bg-transparent text-text-light dark:text-text-dark text-center justify-center font-extrabold px-8 py-3.5 rounded-xl hover:bg-primary hover:text-accent dark:hover:bg-white/5 transition-all shadow-none"
             >
-              Learn More
+              Explore Decks
             </a>
           </div>
         </motion.div>
 
+        {/* Hero Gameplay GIF / Phone Mockup Loop */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -199,9 +267,47 @@ export const LandingPage = () => {
         </motion.div>
       </section>
 
+      {/* Social Proof Stats Banner */}
+      <section className="bg-surface-card-light/40 dark:bg-surface-dark/40 border-y border-border-light dark:border-border-dark py-8 px-4">
+        <div className="max-w-5xl mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+          <div className="flex flex-col">
+            <span className="text-2xl md:text-3xl font-black text-primary">
+              50,000+
+            </span>
+            <span className="text-xs uppercase font-extrabold tracking-wider text-muted-light dark:text-muted-dark mt-1">
+              Cards Guessed
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-2xl md:text-3xl font-black text-primary">
+              100+
+            </span>
+            <span className="text-xs uppercase font-extrabold tracking-wider text-muted-light dark:text-muted-dark mt-1">
+              Party Decks
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-2xl md:text-3xl font-black text-primary">
+              4.9★
+            </span>
+            <span className="text-xs uppercase font-extrabold tracking-wider text-muted-light dark:text-muted-dark mt-1">
+              Party Rating
+            </span>
+          </div>
+          <div className="flex flex-col">
+            <span className="text-2xl md:text-3xl font-black text-primary">
+              100% Free
+            </span>
+            <span className="text-xs uppercase font-extrabold tracking-wider text-muted-light dark:text-muted-dark mt-1">
+              No Ads / Unlimited
+            </span>
+          </div>
+        </div>
+      </section>
+
       {/* Key Features Grid */}
       <section
-        className="bg-surface-card-light/50 dark:bg-surface-dark/50 border-y border-border-light dark:border-border-dark py-16 md:py-24 px-4 md:px-8 backdrop-blur-sm transition-colors duration-300"
+        className="bg-surface-card-light/50 dark:bg-surface-dark/50 border-b border-border-light dark:border-border-dark py-16 md:py-24 px-4 md:px-8 backdrop-blur-sm transition-colors duration-300"
         id="features"
       >
         <div className="max-w-6xl mx-auto">
@@ -294,8 +400,8 @@ export const LandingPage = () => {
         className="bg-surface-card-light/30 dark:bg-surface-dark/30 border-t border-border-light dark:border-border-dark py-16 md:py-24 px-4 md:px-8 backdrop-blur-sm transition-colors duration-300"
         id="decks"
       >
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center max-w-2xl mx-auto mb-16 flex flex-col gap-3">
+        <div className="max-w-6xl mx-auto flex flex-col gap-10">
+          <div className="text-center max-w-2xl mx-auto flex flex-col gap-3">
             <h2 className="text-3xl md:text-5xl font-black tracking-tight">
               Explore Word Decks
             </h2>
@@ -305,6 +411,38 @@ export const LandingPage = () => {
             </p>
           </div>
 
+          {/* Decks Search & Category Filter Controls */}
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4 max-w-4xl mx-auto w-full bg-surface-light dark:bg-surface-dark border-2 border-border-light dark:border-border-dark p-3 px-5 rounded-2xl shadow-sm">
+            {/* Category Chips */}
+            <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto py-1">
+              {CATEGORY_FILTERS.map((cat) => (
+                <button
+                  key={cat.id}
+                  onClick={() => setActiveCategoryFilter(cat.id)}
+                  className={`px-3.5 py-1.5 rounded-xl font-extrabold text-xs transition-all whitespace-nowrap cursor-pointer ${
+                    activeCategoryFilter === cat.id
+                      ? "bg-primary text-accent shadow-sm scale-105"
+                      : "bg-surface-card-light dark:bg-surface-card-dark text-muted-light dark:text-muted-dark hover:text-text-light dark:hover:text-text-dark"
+                  }`}
+                >
+                  {cat.label}
+                </button>
+              ))}
+            </div>
+
+            {/* Deck Search Bar */}
+            <div className="w-full md:w-64 shrink-0">
+              <input
+                type="text"
+                placeholder="Search decks..."
+                value={deckSearch}
+                onChange={(e) => setDeckSearch(e.target.value)}
+                className="w-full text-xs font-semibold p-2 px-3 rounded-xl border border-border-light dark:border-border-dark bg-surface-card-light dark:bg-surface-card-dark outline-none focus:border-primary transition-all placeholder:text-muted-light dark:placeholder:text-muted-dark"
+              />
+            </div>
+          </div>
+
+          {/* Deck Cards Grid */}
           <motion.div
             variants={containerVariants}
             initial="hidden"
@@ -312,9 +450,9 @@ export const LandingPage = () => {
             viewport={{ once: true }}
             className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6"
           >
-            {DECKS.map((deck, idx) => (
+            {filteredDecks.map((deck, idx) => (
               <motion.div
-                key={idx}
+                key={deck.deckId || idx}
                 variants={itemVariants}
                 whileHover={{
                   scale: 1.03,
@@ -328,7 +466,7 @@ export const LandingPage = () => {
                 </div>
                 <div>
                   <h4 className="font-extrabold text-[1.05rem] mb-0.5">
-                    {deck.title}
+                    {deck.title || deck.name}
                   </h4>
                   <p className="text-muted-light dark:text-muted-dark text-[0.8rem]">
                     {deck.subtitle}
@@ -336,6 +474,14 @@ export const LandingPage = () => {
                 </div>
               </motion.div>
             ))}
+
+            {filteredDecks.length === 0 && (
+              <div className="col-span-full text-center py-12 text-muted-light dark:text-muted-dark">
+                <p className="text-sm font-bold">
+                  No decks match "{deckSearch}". Try a different filter!
+                </p>
+              </div>
+            )}
           </motion.div>
         </div>
       </section>

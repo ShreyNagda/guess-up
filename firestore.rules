@@ -1,8 +1,9 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /categories/{document} {
-      allow read: if true;  // Anyone can read categories
+    // Categories / Decks collection - public read for all app users
+    match /categories/{categoryId} {
+      allow read: if true;
       allow write: if request.auth != null && request.auth.token.email == "admin@guessup.com";
     }
 
@@ -12,3 +13,4 @@ service cloud.firestore {
     }
   }
 }
+

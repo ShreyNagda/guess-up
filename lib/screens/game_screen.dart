@@ -3,9 +3,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:guess_up/models/category.dart';
+import 'package:guess_up/models/team_match_state.dart';
 import 'package:guess_up/screens/result_screen.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/category_service.dart';
+import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/game_pause_overlay.dart';
 import 'package:guess_up/widgets/game_top_bar.dart';
 import 'package:guess_up/widgets/tilt_detector.dart';
@@ -16,11 +18,15 @@ import 'package:wakelock_plus/wakelock_plus.dart';
 class GameScreen extends StatefulWidget {
   final int time;
   final List<Category> selectedCategories;
+  final TeamMatchState? teamMatchState;
+
   const GameScreen({
     super.key,
     required this.time,
     required this.selectedCategories,
+    this.teamMatchState,
   });
+
   @override
   State<GameScreen> createState() => _GameScreenState();
 }
@@ -31,27 +37,39 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   bool isGameFinished = false;
   bool isPlacedOnForehead = false;
   bool isCountdownRunning = false;
+  bool hasStartTimerEnded = false;
   bool canDetectTilt = true;
   bool isLoadingWords = true;
   int getReadyCountdown = 3;
   int score = 0;
   int currentIndex = 0;
+  int _currentStreak = 0;
+  int _consecutivePasses = 0;
   List<String> wordsList = [];
   Map<String, String> scoreMap = {};
+
   // --- Feedback Overlay State ---
   String? _feedbackMessage;
   Color? _feedbackColor;
   IconData? _feedbackIcon;
+
   // --- Services & Controllers ---
   final CategoryService service = CategoryService();
   StreamSubscription<AccelerometerEvent>? _subscription;
   late TimerController gameTimerController;
   Timer? countdownTimer;
   double lastZ = 0;
+  int? _lastSecondBeeped;
+  bool _isStartingCountdown = false;
 
   @override
   void initState() {
     super.initState();
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     WidgetsBinding.instance.addObserver(this);
     WakelockPlus.enable();
     gameTimerController = TimerController.seconds(widget.time);
@@ -64,10 +82,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      // 1. Pause background music
       AudioService().pauseBackgroundMusic();
-
-      // 2. Pause game timer & update UI state if actively playing
       if (gameTimerController.value.status == TimerStatus.running) {
         gameTimerController.pause();
         if (mounted) {
@@ -76,12 +91,6 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
           });
         }
       }
-
-      // 3. Pause sensor stream while app is in background/call
-      _subscription?.pause();
-    } else if (state == AppLifecycleState.resumed) {
-      // Resume sensor stream when app returns to foreground
-      _subscription?.resume();
     }
   }
 
@@ -90,19 +99,21 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,
     ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
   void _setPortraitOrientation() {
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
   }
 
   Future<void> _fetchInitialWords() async {
-    final initialWords = service.getWordsFromSelectedCategories(
+    final shuffled = service.getWordsFromSelectedCategories(
       widget.selectedCategories,
     );
     if (mounted) {
       setState(() {
-        wordsList = initialWords.toSet().toList()..shuffle();
+        wordsList = shuffled..shuffle();
         isLoadingWords = false;
       });
     }
@@ -110,16 +121,16 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   void _handleAccelerometer(AccelerometerEvent event) {
     lastZ = event.z;
-    // Ignore if game hasn't started or is paused
     if (isGamePaused ||
         isGameFinished ||
         gameTimerController.value.status == TimerStatus.running) {
       return;
     }
-    // Logic to start the game when phone is placed on forehead (vertical)
-    // Z-axis close to 0 means the screen is vertical (landscape mode)
     final isFlat = lastZ.abs() < 2.5;
-    if (isFlat && !isPlacedOnForehead && !isCountdownRunning) {
+    if (isFlat &&
+        !isPlacedOnForehead &&
+        !isCountdownRunning &&
+        !_isStartingCountdown) {
       if (mounted) {
         setState(() {
           isPlacedOnForehead = true;
@@ -132,74 +143,82 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   void _startGetReadyCountdown() {
+    if (_isStartingCountdown) return;
+    _isStartingCountdown = true;
     AudioService().pauseBackgroundMusic();
     AudioService().playStartCountdown();
-    AudioService().mediumImpact();
+    AudioService().lightImpact();
+
     countdownTimer?.cancel();
     countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) {
         timer.cancel();
         return;
       }
-      if (getReadyCountdown == 1) {
-        timer.cancel();
-        setState(() {
-          isCountdownRunning = false;
-        });
-        gameTimerController.start();
-      } else {
+      if (getReadyCountdown > 1) {
         setState(() {
           getReadyCountdown--;
         });
+        AudioService().lightImpact();
+      } else {
+        timer.cancel();
+        _isStartingCountdown = false;
+        _lastSecondBeeped = null;
+        setState(() {
+          isCountdownRunning = false;
+          hasStartTimerEnded = true;
+        });
+        AudioService().heavyImpact();
+        gameTimerController.start();
       }
     });
   }
 
-  // --- Tilt Cooldown Logic ---
   Future<void> _resetTiltDetection() async {
-    if (!mounted) return;
-    setState(() => canDetectTilt = false);
-    // Debounce time
-    await Future.delayed(const Duration(milliseconds: 700));
-    // Check mounted after await
-    if (!mounted) return;
-    // Wait for user to bring phone back to neutral (vertical) position
-    while (mounted && lastZ.abs() > 4.0) {
-      // Increased threshold slightly for easier reset
-      await Future.delayed(const Duration(milliseconds: 100));
-    }
+    setState(() {
+      canDetectTilt = false;
+    });
+    await Future.delayed(const Duration(milliseconds: 600));
     if (mounted) {
-      setState(() => canDetectTilt = true);
+      setState(() {
+        canDetectTilt = true;
+      });
     }
   }
 
   void handleGamePauseToggle() {
-    if (isGameFinished || !mounted || isCountdownRunning) return;
+    if (isGameFinished || !isPlacedOnForehead || isCountdownRunning) return;
+    HapticFeedback.mediumImpact();
     if (isGamePaused) {
-      // Resume game → pause music
+      setState(() {
+        isGamePaused = false;
+      });
       gameTimerController.start();
-      AudioService().pauseBackgroundMusic();
     } else {
-      // Pause game → resume music
       gameTimerController.pause();
-      AudioService().playBackgroundMusic();
+      setState(() {
+        isGamePaused = true;
+      });
     }
-    setState(() {
-      isGamePaused = !isGamePaused;
-    });
   }
 
   Future<void> _handleExitGamePressed() async {
-    // Pause timer while showing dialog
-    final wasRunning = gameTimerController.value.status == TimerStatus.running;
-    if (wasRunning) gameTimerController.pause();
-    final shouldExit = await showDialog<bool>(
+    final bool wasRunning =
+        gameTimerController.value.status == TimerStatus.running;
+    if (wasRunning) {
+      gameTimerController.pause();
+    }
+    AudioService().lightImpact();
+
+    final bool? shouldExit = await showDialog<bool>(
       context: context,
       barrierDismissible: false,
       builder:
           (dialogContext) => AlertDialog(
             title: const Text("Exit Game?"),
-            content: const Text("Your current score will be lost."),
+            content: const Text(
+              "Are you sure you want to leave? Your game progress will be lost.",
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.of(dialogContext).pop(false),
@@ -220,8 +239,14 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     );
     if (!mounted) return;
     if (shouldExit == true) {
+      if (isGamePaused) {
+        setState(() {
+          isGamePaused = false;
+        });
+      }
       _setPortraitOrientation();
-      Navigator.of(context).pop();
+      await Future.delayed(const Duration(milliseconds: 50));
+      if (mounted) Navigator.of(context).pop();
     } else {
       if (wasRunning && !isGamePaused) {
         gameTimerController.start();
@@ -230,14 +255,15 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   void _triggerFeedback(String status) {
-    final isCorrect = status == "Correct";
+    final isCorrect =
+        status == "Correct" ||
+        status.contains("STREAK") ||
+        status.contains("FIRE") ||
+        status.contains("+");
     setState(() {
       _feedbackMessage = status;
-      _feedbackColor =
-          isCorrect
-              ? Colors.green
-              : Colors.redAccent; // Changed Pass color to redAccent
-      _feedbackIcon = isCorrect ? Icons.check_circle : Icons.refresh_rounded;
+      _feedbackColor = isCorrect ? Colors.green : Colors.redAccent;
+      _feedbackIcon = isCorrect ? Icons.check_circle : Icons.warning_rounded;
     });
     Future.delayed(const Duration(milliseconds: 800), () {
       if (mounted) {
@@ -252,26 +278,59 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (currentIndex >= wordsList.length || isGameFinished || !mounted) return;
     final currentWord = wordsList[currentIndex];
     scoreMap[currentWord] = status;
-    print(scoreMap);
+
     if (status == "Correct") {
-      AudioService().mediumImpact();
-      AudioService().playCorrect();
-      if (mounted) setState(() => score++);
+      _currentStreak++;
+      _consecutivePasses = 0;
+      int pointsAdded = 1;
+
+      if (_currentStreak >= 5) {
+        pointsAdded = 3;
+        AudioService().playStreakSound();
+        _triggerFeedback("ON FIRE! 🔥🔥 +3");
+      } else if (_currentStreak >= 3) {
+        pointsAdded = 2;
+        AudioService().playStreakSound();
+        _triggerFeedback("HOT STREAK! 🔥 +2");
+      } else {
+        AudioService().mediumImpact();
+        AudioService().playCorrect();
+        _triggerFeedback("CORRECT! +1");
+      }
+
+      if (mounted) {
+        setState(() => score += pointsAdded);
+      }
     } else {
+      _currentStreak = 0;
+      _consecutivePasses++;
       AudioService().heavyImpact();
       AudioService().playPass();
+
+      if (_consecutivePasses >= 5) {
+        _consecutivePasses = 0;
+        if (mounted) {
+          setState(() {
+            score = (score - 1).clamp(0, 9999);
+          });
+        }
+        _triggerFeedback("5 PASSES! ⚠️ -1");
+      } else {
+        _triggerFeedback("Pass");
+      }
     }
-    if (mounted) _triggerFeedback(status);
+
     if (mounted) {
       setState(() {
         currentIndex++;
       });
-      scoreMap[wordsList[currentIndex]] = "Pass";
+      if (currentIndex < wordsList.length) {
+        scoreMap[wordsList[currentIndex]] = "Pass";
+      }
     }
     if (currentIndex >= wordsList.length - 3) {
       _fetchMoreWords();
     }
-    // Ensure mounted before calling async logic that touches state
     if (mounted) await _resetTiltDetection();
   }
 
@@ -296,6 +355,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     countdownTimer?.cancel();
     gameTimerController.dispose();
     AudioService().playBackgroundMusic();
+    _setPortraitOrientation();
     super.dispose();
   }
 
@@ -311,11 +371,22 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       child: TimerControllerListener(
         controller: gameTimerController,
         listener: (context, value) {
-          if (value.remaining == 1) {
-            AudioService().playEndingCountdown();
+          final rem = value.remaining;
+          if (rem <= 3 &&
+              rem > 0 &&
+              isPlacedOnForehead &&
+              !isGameFinished &&
+              !isCountdownRunning) {
+            if (_lastSecondBeeped != rem) {
+              _lastSecondBeeped = rem;
+              // AudioService().playStartCountdown();
+              AudioService().lightImpact();
+            }
           }
-          if (value.remaining == 0 && !isGameFinished) {
+          if (rem == 0 && !isGameFinished) {
             if (!mounted) return;
+            AudioService().playEndingCountdown();
+            AudioService().heavyImpact();
             setState(() => isGameFinished = true);
             _setLandscapeOrientation();
             Navigator.of(context).pushReplacement(
@@ -326,6 +397,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                       time: widget.time,
                       scoreMap: scoreMap,
                       selectedCategories: widget.selectedCategories,
+                      teamMatchState: widget.teamMatchState,
                     ),
               ),
             );
@@ -336,39 +408,108 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
           builder: (context, value, child) {
             final timerProgress =
                 (widget.time > 0) ? value.remaining / widget.time : 0.0;
+            final isTeamMode = widget.teamMatchState?.isTeamMode == true;
+            final teamColor =
+                widget.teamMatchState?.currentTeamColor ?? AppTheme.teamAColor;
+
             return Scaffold(
-              body: Stack(
-                children: [
-                  // 1. Main Game Content (Isolated with RepaintBoundary)
-                  RepaintBoundary(
-                    child: Center(child: _buildMainContent(theme)),
-                  ),
-                  // 2. Top Bar (Centered horizontally now, but visually acts as top bar)
-                  Positioned(
-                    top: 10, // Adjusted top spacing
-                    left: 20,
-                    right: 20,
-                    child: Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: GameTopBar(
-                        score: score,
-                        timerProgress: timerProgress,
-                        remainingTime: value.remaining,
-                        isGamePaused: isGamePaused,
-                        onPauseToggle: handleGamePauseToggle,
+              body: Container(
+                decoration:
+                    isTeamMode
+                        ? BoxDecoration(
+                          border: Border.all(color: teamColor, width: 5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: teamColor.withAlpha(120),
+                              blurRadius: 20,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        )
+                        : null,
+                child: Stack(
+                  children: [
+                    // 1. Main Game Content
+                    RepaintBoundary(
+                      child: Center(child: _buildMainContent(theme)),
+                    ),
+
+                    // 2. Fallback Split-Screen Touch Controls (Left half = Pass, Right half = Correct)
+                    if (!isGamePaused &&
+                        !isGameFinished &&
+                        isPlacedOnForehead &&
+                        !isCountdownRunning)
+                      Positioned.fill(
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.translucent,
+                                onTap: () {
+                                  if (canDetectTilt) _processAnswer("Pass");
+                                },
+                              ),
+                            ),
+                            Expanded(
+                              child: GestureDetector(
+                                behavior: HitTestBehavior.translucent,
+                                onTap: () {
+                                  if (canDetectTilt) _processAnswer("Correct");
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                  ),
-                  // 3. Pause Overlay
-                  if (isGamePaused)
-                    GamePauseOverlay(
-                      score: score,
-                      onResumePressed: handleGamePauseToggle,
-                      onExitPressed: _handleExitGamePressed,
-                    ),
-                  // 4. Feedback Overlay (Correct/Pass) - Replaces Dialog
-                  if (_feedbackMessage != null) _buildFeedbackOverlay(),
-                ],
+
+                    // 3. Top Bar (Hidden until start timer has ended)
+                    if (hasStartTimerEnded)
+                      Positioned(
+                        top: 10,
+                        left: 20,
+                        right: 20,
+                        child: Padding(
+                          padding: const EdgeInsets.all(8.0),
+                          child: GameTopBar(
+                            score: score,
+                            timerProgress: timerProgress,
+                            remainingTime: value.remaining,
+                            isGamePaused: isGamePaused,
+                            onPauseToggle: handleGamePauseToggle,
+                            teamMatchState: widget.teamMatchState,
+                          ),
+                        ),
+                      ),
+
+                    // Exit button before start timer has ended
+                    if (!hasStartTimerEnded && !isCountdownRunning)
+                      Positioned(
+                        top: 16,
+                        left: 20,
+                        child: SafeArea(
+                          child: IconButton(
+                            icon: const Icon(
+                              Icons.arrow_back_ios_new_rounded,
+                              color: Colors.white70,
+                              size: 22,
+                            ),
+                            onPressed: _handleExitGamePressed,
+                          ),
+                        ),
+                      ),
+
+                    // 4. Pause Overlay
+                    if (isGamePaused)
+                      GamePauseOverlay(
+                        onResumePressed: handleGamePauseToggle,
+                        onExitPressed: _handleExitGamePressed,
+                        score: score,
+                      ),
+
+                    // 5. Feedback Overlay (Correct / Pass / Streak Hype)
+                    if (_feedbackMessage != null) _buildFeedbackOverlay(),
+                  ],
+                ),
               ),
             );
           },
@@ -379,28 +520,64 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   Widget _buildFeedbackOverlay() {
     return Positioned.fill(
-      child: Container(
-        decoration: BoxDecoration(
-          color: _feedbackColor?.withAlpha(225),
-          // No borderRadius for fullscreen overlay
-        ),
-        child: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(_feedbackIcon, size: 100, color: Colors.white),
-              const SizedBox(height: 20),
-              Text(
-                _feedbackMessage?.toUpperCase() ?? "",
-                style: const TextStyle(
-                  fontSize: 50,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  letterSpacing: 4,
-                  decoration: TextDecoration.none,
-                ),
+      child: IgnorePointer(
+        child: Container(
+          decoration: BoxDecoration(
+            border: Border.all(
+              color: (_feedbackColor ?? Colors.green).withAlpha(220),
+              width: 12,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: (_feedbackColor ?? Colors.green).withAlpha(160),
+                blurRadius: 36,
+                spreadRadius: 8,
               ),
             ],
+          ),
+          child: Align(
+            alignment: Alignment.topCenter,
+            child: Padding(
+              padding: const EdgeInsets.only(top: 20.0),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 150),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 10,
+                ),
+                decoration: BoxDecoration(
+                  color: _feedbackColor ?? Colors.green,
+                  borderRadius: BorderRadius.circular(24),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withAlpha(80),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      _feedbackIcon ?? Icons.check_circle,
+                      color: Colors.white,
+                      size: 28,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      _feedbackMessage ?? "",
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w900,
+                        color: Colors.white,
+                        letterSpacing: 2,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -411,94 +588,186 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (isLoadingWords) {
       return const CircularProgressIndicator();
     }
+
+    final teamState = widget.teamMatchState;
+    final isTeamMode = teamState?.isTeamMode == true;
+    final teamColor = teamState?.currentTeamColor ?? AppTheme.teamAColor;
+
+    // --- State 1: Place Phone on Forehead Pre-game Screen ---
     if (!isPlacedOnForehead) {
-      return Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.phone_android_outlined,
-              size: 60,
-              color: theme.colorScheme.primary,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "Place Phone on Forehead\nto Start!",
-              style: theme.textTheme.displaySmall,
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      );
-    } else if (isCountdownRunning) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text("Get Ready!", style: theme.textTheme.headlineLarge),
-          const SizedBox(height: 8),
-          Text(
-            "$getReadyCountdown",
-            style: theme.textTheme.displayLarge?.copyWith(
-              fontSize: 120,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      );
-    } else if (currentIndex >= wordsList.length && !isGameFinished) {
-      return Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const CircularProgressIndicator(),
-          const SizedBox(height: 16),
-          Text("Loading more words...", style: theme.textTheme.headlineSmall),
-        ],
-      );
-    } else if (isGameFinished) {
       return Center(
-        child: Text("Finished!", style: theme.textTheme.displayMedium),
-      );
-    } else {
-      // The Active Game Word - No Card Container
-      return TiltDetector(
-        isActive: !isGamePaused && !isGameFinished && canDetectTilt,
-        onTiltUp: () => _processAnswer("Pass"),
-        onTiltDown: () => _processAnswer("Correct"),
-        child: Center(
-          // Ensure it's centered
-          child: AnimatedSwitcher(
-            duration: const Duration(milliseconds: 200),
-            transitionBuilder: (Widget child, Animation<double> animation) {
-              return ScaleTransition(scale: animation, child: child);
-            },
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 8.0),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    (currentIndex < wordsList.length)
-                        ? wordsList[currentIndex]
-                        : "...",
-                    key: ValueKey<int>(currentIndex),
-                    textAlign: TextAlign.center,
-                    softWrap: true,
-                    style: theme.textTheme.displayLarge!.copyWith(
+        child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24.0,
+              vertical: 16.0,
+            ),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                if (isTeamMode) ...[
+                  Text(
+                    "${teamState!.currentTeamName.toUpperCase()} PLAYS  •  ROUND ${teamState.currentRound}/${teamState.maxRounds}",
+                    style: TextStyle(
                       fontWeight: FontWeight.w900,
-                      fontSize:
-                          90, // Even Bigger text since no card constraints
-                      // Using primary/accent color based on theme for text color directly
-                      color: theme.textTheme.displayLarge?.color,
-                      letterSpacing: -2.0,
+                      fontSize: 16,
+                      color: teamColor,
+                      letterSpacing: 2,
+                      shadows: [
+                        Shadow(
+                          color: Colors.black.withAlpha(180),
+                          blurRadius: 8,
+                        ),
+                      ],
                     ),
                   ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Phone Forehead Graphic & Main Instruction
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 20,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black45,
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(color: Colors.white24, width: 1.5),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(
+                            Icons.phone_android_rounded,
+                            size: 48,
+                            color: Colors.amber,
+                          ),
+                          SizedBox(width: 12),
+                          Icon(
+                            Icons.face_rounded,
+                            size: 48,
+                            color: Colors.amber,
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        "PLACE PHONE ON FOREHEAD",
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          color: Colors.amber,
+                          letterSpacing: 1.5,
+                          fontSize: 24,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        "Screen facing your friends! Countdown starts automatically when held flat.",
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: Colors.white70,
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
       );
     }
+
+    // --- State 2: 3-2-1 Countdown Screen ---
+    if (isCountdownRunning) {
+      return Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          if (isTeamMode) ...[
+            Text(
+              "${teamState!.currentTeamName.toUpperCase()} GET READY!",
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 18,
+                color: teamColor,
+                letterSpacing: 2,
+                shadows: [
+                  Shadow(color: Colors.black.withAlpha(180), blurRadius: 8),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
+          Text(
+            getReadyCountdown.toString(),
+            style: theme.textTheme.displayLarge?.copyWith(
+              fontSize: 150,
+              fontWeight: FontWeight.w900,
+              color: Colors.amber,
+            ),
+          ),
+          const Text(
+            "GET READY TO GUESS!",
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              letterSpacing: 2,
+              fontSize: 16,
+              color: Colors.white70,
+            ),
+          ),
+        ],
+      );
+    }
+
+    if (wordsList.isEmpty || currentIndex >= wordsList.length) {
+      return const CircularProgressIndicator();
+    }
+
+    final currentWord = wordsList[currentIndex];
+    final isTimerRunning =
+        gameTimerController.value.status == TimerStatus.running;
+
+    // --- State 3: Active Gameplay Word Screen with Protected TiltDetector ---
+    return Container(
+      width: double.infinity,
+      height: double.infinity,
+      alignment: Alignment.center,
+      child: TiltDetector(
+        isActive:
+            canDetectTilt &&
+            !isGamePaused &&
+            !isCountdownRunning &&
+            !isGameFinished &&
+            isPlacedOnForehead &&
+            isTimerRunning,
+        onTiltDown: () => _processAnswer("Correct"),
+        onTiltUp: () => _processAnswer("Pass"),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 32.0),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            alignment: Alignment.center,
+            child: Text(
+              currentWord,
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              softWrap: true,
+              style: theme.textTheme.displayMedium?.copyWith(
+                fontSize: 100,
+                fontWeight: FontWeight.w900,
+                color: theme.textTheme.displayMedium?.color,
+                height: 1.1,
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }

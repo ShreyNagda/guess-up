@@ -12,9 +12,6 @@ function App() {
     <ThemeProvider>
       <ToastProvider>
         <BrowserRouter>
-          {/* Animated Scrolling Background Patterns */}
-          <PatternCanvas />
-          
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/privacy" element={<PrivacyPage />} />

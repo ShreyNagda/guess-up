@@ -25,13 +25,9 @@ dependencies:
   vibration: ^3.1.4
   flutter_native_splash: ^2.4.4
   url_launcher: ^6.3.1
+  confetti: ^0.8.0
 
 dev_dependencies:
-  flutter_test:
-    sdk: flutter
-  integration_test:
-    sdk: flutter
-
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.3
 

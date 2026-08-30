@@ -1,10 +1,13 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:guess_up/constants/app_info.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/services/theme_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -18,10 +21,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool isMusicOn = true;
   bool isSfxOn = true;
   bool isHapticsOn = true;
-  // [NEW] Local state for time
   int selectedDuration = 60;
-  List<String> customWords = [];
-  final TextEditingController multiWordController = TextEditingController();
 
   @override
   void initState() {
@@ -38,7 +38,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final storage = StorageService();
     final currentThemeMode =
         Provider.of<ThemeService>(context, listen: false).themeMode;
-    final words = storage.getCustomWords();
 
     if (mounted) {
       setState(() {
@@ -46,10 +45,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
         isMusicOn = storage.isMusicEnabled;
         isSfxOn = storage.isSfxEnabled;
         isHapticsOn = storage.isHapticsEnabled;
-        customWords = words;
-        // [NEW] Load duration
         selectedDuration = storage.gameDuration;
       });
+    }
+  }
+
+  Future<void> _launchURL(String url) async {
+    final uri = Uri.parse(url);
+    try {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (e) {
+      debugPrint("Could not launch $url: $e");
     }
   }
 
@@ -89,30 +95,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (newValue) AudioService().mediumImpact();
   }
 
-  void _addMultipleWords(String text) {
-    if (text.isEmpty) return;
-    final newWords =
-        text
-            .split(',')
-            .map((w) => w.trim())
-            .where((w) => w.isNotEmpty)
-            .toList();
-    if (mounted) {
-      setState(() {
-        customWords.addAll(
-          newWords.where((word) => !customWords.contains(word)),
-        );
-        multiWordController.clear();
-      });
-    }
-    StorageService().setCustomWords(customWords.toSet().toList());
-  }
-
-  void _removeWord(String word) {
-    if (mounted) setState(() => customWords.remove(word));
-    StorageService().setCustomWords(customWords);
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -127,6 +109,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final borderColor =
         isDark ? primaryColor.withAlpha(77) : accentColor.withAlpha(26);
 
+    const String alexMorganUrl =
+        "https://pixabay.com/users/alex-morgan-54692529/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=573931";
+    const String pixabayUrl =
+        "https://pixabay.com/music//?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=573931";
+
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
@@ -135,7 +122,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: Text(
-          "SETTINGS",
+          "SETTINGS & ABOUT",
           style: theme.textTheme.headlineSmall?.copyWith(
             fontWeight: FontWeight.w900,
             letterSpacing: 2,
@@ -186,7 +173,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
           const SizedBox(height: 32),
 
-          // --- [NEW] 2. Game Duration Section ---
+          // --- 2. Game Duration Section ---
           _buildSectionTitle("ROUND DURATION", textColor),
           Container(
             padding: const EdgeInsets.all(6),
@@ -256,112 +243,141 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: 36),
 
-          // --- 4. Custom Words Section ---
-          _buildSectionTitle("CUSTOM WORDS", textColor),
+          // --- 4. About & Credits Section ---
+          _buildSectionTitle("ABOUT & CREDITS", textColor),
           Container(
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               color: isDark ? AppTheme.darkSurfaceColor : Colors.white,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(20),
               border: Border.all(color: borderColor, width: 2),
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-            child: TextField(
-              controller: multiWordController,
-              style: TextStyle(color: textColor, fontWeight: FontWeight.w600),
-              decoration: InputDecoration(
-                border: InputBorder.none,
-                hintText: "Add words (comma separated)...",
-                hintStyle: TextStyle(color: textColor.withAlpha(100)),
-              ),
-              minLines: 1,
-              maxLines: 3,
+            child: Column(
+              children: [
+                // App Logo
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF000000) : Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withAlpha(isDark ? 80 : 20),
+                        blurRadius: 12,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(10.0),
+                    child: Image.asset(
+                      'assets/images/logo-transparent.png',
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Text(
+                  AppInfo.name.toUpperCase(),
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 2.0,
+                    color: textColor,
+                  ),
+                ),
+                Text(
+                  "Version ${AppInfo.displayVersion}",
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: textColor.withAlpha(140),
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 12),
+
+                Text(
+                  AppInfo.description,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: textColor.withAlpha(200),
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 18),
+                const Divider(height: 1),
+                const SizedBox(height: 16),
+
+                // Audio credits
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.music_note_rounded,
+                      color: primaryColor,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      "Audio & Music Credits",
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: textColor,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                RichText(
+                  textAlign: TextAlign.center,
+                  text: TextSpan(
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: textColor.withAlpha(180),
+                    ),
+                    children: [
+                      const TextSpan(text: "Music by "),
+                      TextSpan(
+                        text: "Alex Morgan",
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
+                        recognizer:
+                            TapGestureRecognizer()
+                              ..onTap = () => _launchURL(alexMorganUrl),
+                      ),
+                      const TextSpan(text: " from "),
+                      TextSpan(
+                        text: "Pixabay",
+                        style: TextStyle(
+                          color: primaryColor,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                        ),
+                        recognizer:
+                            TapGestureRecognizer()
+                              ..onTap = () => _launchURL(pixabayUrl),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            height: 50,
-            child: ElevatedButton(
-              onPressed:
-                  () => _addMultipleWords(multiWordController.text.trim()),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: primaryColor,
-                foregroundColor: isDark ? accentColor : Colors.white,
-                elevation: 0,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
-              child: Text(
-                "ADD WORDS",
-                style: TextStyle(
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 1,
-                  color:
-                      isDark
-                          ? AppTheme.darkAccentColor
-                          : AppTheme.lightAccentColor,
-                ),
-              ),
+
+          const SizedBox(height: 24),
+
+          // Copyright Footer
+          Text(
+            "© ${DateTime.now().year} Guess Up / Shrey Nagda\nAll rights reserved.",
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: textColor.withAlpha(110),
             ),
+            textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
-          if (customWords.isNotEmpty) ...[
-            Text(
-              "${customWords.length} WORDS ADDED",
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: textColor.withAlpha(125),
-                letterSpacing: 1,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children:
-                  customWords.map((word) {
-                    return Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color:
-                            isDark
-                                ? AppTheme.darkSurfaceColor
-                                : AppTheme.lightScaffoldBackground,
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(color: borderColor),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            word,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          InkWell(
-                            onTap: () => _removeWord(word),
-                            child: Icon(
-                              Icons.close_rounded,
-                              size: 16,
-                              color: Colors.redAccent.withAlpha(200),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-            ),
-          ],
-          const SizedBox(height: 40),
+          const SizedBox(height: 30),
         ],
       ),
     );
