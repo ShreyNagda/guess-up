@@ -264,7 +264,7 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
           DateTime.now().millisecondsSinceEpoch.toString(),
       name: title,
       icon: _selectedIcon,
-      colorHex: _selectedColorHex,
+      color: _selectedColorHex,
       words: _words,
     );
 
@@ -365,368 +365,373 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
         ambientColor: primaryColor,
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
-          child: Column(
-            children: [
-              Expanded(
-                child: ListView(
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    // Deck Title Input
-                    Text(
-                      "DECK TITLE",
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
-                        color: theme.hintColor,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _titleController,
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                      decoration: InputDecoration(
-                        hintText: "e.g., Family Jokes, Movie Trivia...",
-                        filled: true,
-                        fillColor:
-                            isDark ? AppTheme.darkSurfaceColor : Colors.white,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: primaryColor),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(
-                            color: primaryColor.withAlpha(100),
-                          ),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 12.0,
+            ),
+            child: Column(
+              children: [
+                Expanded(
+                  child: ListView(
+                    physics: const BouncingScrollPhysics(),
+                    children: [
+                      // Deck Title Input
+                      Text(
+                        "DECK TITLE",
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                          color: theme.hintColor,
                         ),
                       ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Deck Icon Picker (Custom input + Presets)
-                    Text(
-                      "CHOOSE OR TYPE EMOJI ICON",
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
-                        color: theme.hintColor,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        // Custom Emoji Direct Text Field
-                        Container(
-                          width: 60,
-                          height: 54,
-                          margin: const EdgeInsets.only(right: 12),
-                          decoration: BoxDecoration(
-                            color:
-                                isDark
-                                    ? AppTheme.darkSurfaceColor
-                                    : Colors.white,
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _titleController,
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: textColor,
+                        ),
+                        decoration: InputDecoration(
+                          hintText: "e.g., Family Jokes, Movie Trivia...",
+                          filled: true,
+                          fillColor:
+                              isDark ? AppTheme.darkSurfaceColor : Colors.white,
+                          border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(color: primaryColor, width: 2),
+                            borderSide: BorderSide(color: primaryColor),
                           ),
-                          child: TextField(
-                            controller: _customEmojiController,
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(fontSize: 24),
-                            maxLength: 2,
-                            decoration: const InputDecoration(
-                              counterText: "",
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.symmetric(
-                                vertical: 10,
-                              ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(16),
+                            borderSide: BorderSide(
+                              color: primaryColor.withAlpha(100),
                             ),
-                            onChanged: (val) {
-                              if (val.trim().isNotEmpty) {
-                                setState(() {
-                                  _selectedIcon = val.trim();
-                                });
-                              }
-                            },
                           ),
                         ),
+                      ),
 
-                        // Preset Emojis List
-                        Expanded(
-                          child: SizedBox(
+                      const SizedBox(height: 20),
+
+                      // Deck Icon Picker (Custom input + Presets)
+                      Text(
+                        "CHOOSE OR TYPE EMOJI ICON",
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                          color: theme.hintColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          // Custom Emoji Direct Text Field
+                          Container(
+                            width: 60,
                             height: 54,
-                            child: ListView.builder(
-                              scrollDirection: Axis.horizontal,
-                              itemCount: _emojiIcons.length,
-                              itemBuilder: (context, index) {
-                                final emoji = _emojiIcons[index];
-                                final isSelected = emoji == _selectedIcon;
-                                return GestureDetector(
-                                  onTap: () {
-                                    setState(() {
-                                      _selectedIcon = emoji;
-                                      _customEmojiController.text = emoji;
-                                    });
-                                    AudioService().extraLightImpact();
-                                  },
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 150),
-                                    margin: const EdgeInsets.only(right: 10),
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          isSelected
-                                              ? primaryColor.withAlpha(60)
-                                              : (isDark
-                                                  ? AppTheme.darkSurfaceColor
-                                                  : Colors.white),
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
-                                        color:
-                                            isSelected
-                                                ? primaryColor
-                                                : Colors.transparent,
-                                        width: 2,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      emoji,
-                                      style: const TextStyle(fontSize: 24),
-                                    ),
-                                  ),
-                                );
-                              },
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    // Color Accent Picker
-                    Text(
-                      "CHOOSE DECK COLOR",
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 1.5,
-                        color: theme.hintColor,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: 44,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _colorPalettes.length,
-                        itemBuilder: (context, index) {
-                          final colorObj = _colorPalettes[index];
-                          final hex = colorObj['hex']!;
-                          final isSelected = hex == _selectedColorHex;
-                          final color = _parseColor(hex);
-                          return GestureDetector(
-                            onTap: () {
-                              setState(() => _selectedColorHex = hex);
-                              AudioService().extraLightImpact();
-                            },
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 150),
-                              margin: const EdgeInsets.only(right: 12),
-                              width: 44,
-                              height: 44,
-                              decoration: BoxDecoration(
-                                color: color,
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color:
-                                      isSelected
-                                          ? Colors.white
-                                          : Colors.transparent,
-                                  width: 3,
-                                ),
-                                boxShadow:
-                                    isSelected
-                                        ? [
-                                          BoxShadow(
-                                            color: color.withAlpha(150),
-                                            blurRadius: 10,
-                                            spreadRadius: 2,
-                                          ),
-                                        ]
-                                        : [],
-                              ),
-                              child:
-                                  isSelected
-                                      ? const Icon(
-                                        Icons.check,
-                                        color: Colors.black,
-                                        size: 20,
-                                      )
-                                      : null,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-
-                    const SizedBox(height: 24),
-
-                    // Words Section Header
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          "ADD WORDS (${_words.length})",
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.5,
-                            color: theme.hintColor,
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () => _showHowToAddDecksHelpModal(context),
-                          child: Text(
-                            "Need Help?",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: primaryColor,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: _wordsInputController,
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: textColor,
-                            ),
-                            decoration: InputDecoration(
-                              hintText: "Enter words (comma separated)...",
-                              filled: true,
-                              fillColor:
+                            margin: const EdgeInsets.only(right: 12),
+                            decoration: BoxDecoration(
+                              color:
                                   isDark
                                       ? AppTheme.darkSurfaceColor
                                       : Colors.white,
-                              border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(16),
-                                borderSide: BorderSide.none,
-                              ),
-                            ),
-                            onSubmitted: (_) => _addWordsFromInput(),
-                          ),
-                        ),
-                        const SizedBox(width: 10),
-                        ElevatedButton(
-                          onPressed: _addWordsFromInput,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: primaryColor,
-                            foregroundColor: AppTheme.darkAccentColor,
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 20,
-                              vertical: 16,
-                            ),
-                            shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: primaryColor, width: 2),
                             ),
-                          ),
-                          child: const Text(
-                            "ADD",
-                            style: TextStyle(fontWeight: FontWeight.w900),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Word Chips List
-                    Wrap(
-                      spacing: 8,
-                      runSpacing: 8,
-                      children:
-                          _words.map((word) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: primaryColor.withAlpha(40),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(
-                                  color: primaryColor.withAlpha(80),
+                            child: TextField(
+                              controller: _customEmojiController,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(fontSize: 24),
+                              maxLength: 2,
+                              decoration: const InputDecoration(
+                                counterText: "",
+                                border: InputBorder.none,
+                                contentPadding: EdgeInsets.symmetric(
+                                  vertical: 10,
                                 ),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    word,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      color: textColor,
+                              onChanged: (val) {
+                                if (val.trim().isNotEmpty) {
+                                  setState(() {
+                                    _selectedIcon = val.trim();
+                                  });
+                                }
+                              },
+                            ),
+                          ),
+
+                          // Preset Emojis List
+                          Expanded(
+                            child: SizedBox(
+                              height: 54,
+                              child: ListView.builder(
+                                scrollDirection: Axis.horizontal,
+                                itemCount: _emojiIcons.length,
+                                itemBuilder: (context, index) {
+                                  final emoji = _emojiIcons[index];
+                                  final isSelected = emoji == _selectedIcon;
+                                  return GestureDetector(
+                                    onTap: () {
+                                      setState(() {
+                                        _selectedIcon = emoji;
+                                        _customEmojiController.text = emoji;
+                                      });
+                                      AudioService().extraLightImpact();
+                                    },
+                                    child: AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 150,
+                                      ),
+                                      margin: const EdgeInsets.only(right: 10),
+                                      padding: const EdgeInsets.all(10),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            isSelected
+                                                ? primaryColor.withAlpha(60)
+                                                : (isDark
+                                                    ? AppTheme.darkSurfaceColor
+                                                    : Colors.white),
+                                        borderRadius: BorderRadius.circular(14),
+                                        border: Border.all(
+                                          color:
+                                              isSelected
+                                                  ? primaryColor
+                                                  : Colors.transparent,
+                                          width: 2,
+                                        ),
+                                      ),
+                                      child: Text(
+                                        emoji,
+                                        style: const TextStyle(fontSize: 24),
+                                      ),
                                     ),
+                                  );
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 20),
+
+                      // Color Accent Picker
+                      Text(
+                        "CHOOSE DECK COLOR",
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 1.5,
+                          color: theme.hintColor,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      SizedBox(
+                        height: 44,
+                        child: ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          itemCount: _colorPalettes.length,
+                          itemBuilder: (context, index) {
+                            final colorObj = _colorPalettes[index];
+                            final hex = colorObj['hex']!;
+                            final isSelected = hex == _selectedColorHex;
+                            final color = _parseColor(hex);
+                            return GestureDetector(
+                              onTap: () {
+                                setState(() => _selectedColorHex = hex);
+                                AudioService().extraLightImpact();
+                              },
+                              child: AnimatedContainer(
+                                duration: const Duration(milliseconds: 150),
+                                margin: const EdgeInsets.only(right: 12),
+                                width: 44,
+                                height: 44,
+                                decoration: BoxDecoration(
+                                  color: color,
+                                  shape: BoxShape.circle,
+                                  border: Border.all(
+                                    color:
+                                        isSelected
+                                            ? Colors.white
+                                            : Colors.transparent,
+                                    width: 3,
                                   ),
-                                  const SizedBox(width: 6),
-                                  GestureDetector(
-                                    onTap: () => _removeWord(word),
-                                    child: const Icon(
-                                      Icons.close,
-                                      size: 16,
-                                      color: Colors.redAccent,
-                                    ),
-                                  ),
-                                ],
+                                  boxShadow:
+                                      isSelected
+                                          ? [
+                                            BoxShadow(
+                                              color: color.withAlpha(150),
+                                              blurRadius: 10,
+                                              spreadRadius: 2,
+                                            ),
+                                          ]
+                                          : [],
+                                ),
+                                child:
+                                    isSelected
+                                        ? const Icon(
+                                          Icons.check,
+                                          color: Colors.black,
+                                          size: 20,
+                                        )
+                                        : null,
                               ),
                             );
-                          }).toList(),
-                    ),
-                    const SizedBox(height: 30),
-                  ],
-                ),
-              ),
+                          },
+                        ),
+                      ),
 
-              // Bottom Save CTA
-              SizedBox(
-                width: double.infinity,
-                height: 60,
-                child: ElevatedButton(
-                  onPressed: _saveDeck,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: primaryColor,
-                    foregroundColor: AppTheme.darkAccentColor,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    elevation: 6,
+                      const SizedBox(height: 24),
+
+                      // Words Section Header
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            "ADD WORDS (${_words.length})",
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.5,
+                              color: theme.hintColor,
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => _showHowToAddDecksHelpModal(context),
+                            child: Text(
+                              "Need Help?",
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                                color: primaryColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _wordsInputController,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: textColor,
+                              ),
+                              decoration: InputDecoration(
+                                hintText: "Enter words (comma separated)...",
+                                filled: true,
+                                fillColor:
+                                    isDark
+                                        ? AppTheme.darkSurfaceColor
+                                        : Colors.white,
+                                border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                  borderSide: BorderSide.none,
+                                ),
+                              ),
+                              onSubmitted: (_) => _addWordsFromInput(),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          ElevatedButton(
+                            onPressed: _addWordsFromInput,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primaryColor,
+                              foregroundColor: AppTheme.darkAccentColor,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 20,
+                                vertical: 16,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                            ),
+                            child: const Text(
+                              "ADD",
+                              style: TextStyle(fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                        ],
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Word Chips List
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children:
+                            _words.map((word) {
+                              return Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: primaryColor.withAlpha(40),
+                                  borderRadius: BorderRadius.circular(12),
+                                  border: Border.all(
+                                    color: primaryColor.withAlpha(80),
+                                  ),
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      word,
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                        color: textColor,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 6),
+                                    GestureDetector(
+                                      onTap: () => _removeWord(word),
+                                      child: const Icon(
+                                        Icons.close,
+                                        size: 16,
+                                        color: Colors.redAccent,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                      ),
+                      const SizedBox(height: 30),
+                    ],
                   ),
-                  child: Text(
-                    widget.existingDeck == null
-                        ? "SAVE CUSTOM DECK"
-                        : "UPDATE DECK",
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 1.5,
+                ),
+
+                // Bottom Save CTA
+                SizedBox(
+                  width: double.infinity,
+                  height: 60,
+                  child: ElevatedButton(
+                    onPressed: _saveDeck,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: primaryColor,
+                      foregroundColor: AppTheme.darkAccentColor,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      elevation: 6,
+                    ),
+                    child: Text(
+                      widget.existingDeck == null
+                          ? "SAVE CUSTOM DECK"
+                          : "UPDATE DECK",
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.5,
+                      ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 }

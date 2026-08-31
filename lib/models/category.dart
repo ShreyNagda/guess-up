@@ -11,7 +11,7 @@ class Category {
   final String icon;
   final List<String> words;
   final String? description;
-  final String? colorHex;
+  final String? color;
   final String? gradientEnd;
   final bool isTrending;
   final int sortOrder;
@@ -30,7 +30,7 @@ class Category {
     required this.icon,
     required this.words,
     this.description,
-    this.colorHex,
+    this.color,
     this.gradientEnd,
     this.isTrending = false,
     this.sortOrder = 0,
@@ -43,6 +43,9 @@ class Category {
     this.createdAt,
     this.updatedAt,
   });
+
+  /// Alias for color hex string
+  String? get colorHex => color;
 
   /// Alias for title
   String get title => name;
@@ -78,17 +81,17 @@ class Category {
 
   /// Primary theme color for the deck
   Color get themeColor {
+    if (color != null && color!.isNotEmpty) {
+      return parseHex(color);
+    }
     if (theme != null && theme!['accentColor'] != null) {
       return parseHex(theme!['accentColor'].toString());
-    }
-    if (colorHex != null && colorHex!.isNotEmpty) {
-      return parseHex(colorHex);
     }
     return const Color(0xFFFFC107);
   }
 
   /// Color alias for themeColor
-  Color get color => themeColor;
+  Color get primaryColor => themeColor;
 
   /// End gradient color (defaults to gradientEnd or 20% darker tone of themeColor)
   Color get gradientEndColor {
@@ -143,8 +146,8 @@ class Category {
         'Unnamed Category';
 
     final String colorVal =
-        data['colorHex']?.toString() ??
         data['color']?.toString() ??
+        data['colorHex']?.toString() ??
         data['accentColor']?.toString() ??
         '#FFC107';
 
@@ -176,7 +179,7 @@ class Category {
       icon: data['icon']?.toString() ?? '🎮',
       words: wordsList,
       description: data['description']?.toString() ?? data['desc']?.toString(),
-      colorHex: colorVal,
+      color: colorVal,
       gradientEnd: data['gradientEnd']?.toString(),
       isTrending: trendingVal,
       sortOrder: sortVal,
@@ -225,8 +228,8 @@ class Category {
         'Unnamed Category';
 
     final String colorVal =
-        json['colorHex']?.toString() ??
         json['color']?.toString() ??
+        json['colorHex']?.toString() ??
         json['accentColor']?.toString() ??
         '#FFC107';
 
@@ -252,7 +255,7 @@ class Category {
       icon: json['icon']?.toString() ?? '🎮',
       words: wordsList,
       description: json['description']?.toString() ?? json['desc']?.toString(),
-      colorHex: colorVal,
+      color: colorVal,
       gradientEnd: json['gradientEnd']?.toString(),
       isTrending: trendingVal,
       sortOrder: sortVal,
@@ -281,23 +284,16 @@ class Category {
     return {
       'id': id,
       'name': name,
-      'title': name,
       'icon': icon,
       'words': words,
       'description': description,
-      'colorHex': colorHex,
-      'color': colorHex,
-      'accentColor': colorHex,
+      'color': color,
       'gradientEnd': gradientEnd,
       'isTrending': isTrending,
       'sortOrder': sortOrder,
       'wordsCount': wordsCount ?? words.length,
-      'imageUrl': imageUrl,
+      if (imageUrl != null) 'imageUrl': imageUrl,
       'isAvailable': isAvailable,
-      'status': isAvailable ? 'active' : 'inactive',
-      'isLocked': isLocked,
-      'lockReason': lockReason,
-      'theme': theme,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
     };

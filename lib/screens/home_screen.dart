@@ -173,7 +173,7 @@ class _HomeScreenState extends State<HomeScreen> {
         id: "fallback",
         name: "Party Charades",
         icon: "👑",
-        colorHex: "#E50914",
+        color: "#E50914",
         gradientEnd: "#8B0000",
         words: ["Guess Up", "Charades", "Party Time"],
       );
@@ -751,7 +751,6 @@ class _HomeScreenState extends State<HomeScreen> {
   ) {
     final deckColor = deck.themeColor;
     final gradientEnd = deck.gradientEndColor;
-
     return AspectRatio(
       aspectRatio: 3 / 4,
       child: AnimatedContainer(

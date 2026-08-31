@@ -166,7 +166,7 @@ class StorageService {
           id: 'custom_legacy',
           name: 'My Words',
           icon: '✏️',
-          colorHex: '#FFC107',
+          color: '#FFC107',
           words: legacyWords,
         );
         saveCustomDeck(legacyDeck);

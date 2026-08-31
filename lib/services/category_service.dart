@@ -274,21 +274,18 @@ class CategoryService {
     await clearCache();
   }
 
-  /// Admin method to update category status (active/inactive) and hex color in Firestore
   Future<void> updateCategoryStatusAndColor(
     String categoryId, {
     bool? isAvailable,
-    String? colorHex,
+    String? color,
   }) async {
     try {
       final updates = <String, dynamic>{};
       if (isAvailable != null) {
         updates['isAvailable'] = isAvailable;
-        updates['status'] = isAvailable ? 'active' : 'inactive';
       }
-      if (colorHex != null) {
-        updates['color'] = colorHex;
-        updates['colorHex'] = colorHex;
+      if (color != null) {
+        updates['color'] = color;
       }
       if (updates.isNotEmpty) {
         await _categoryRef?.doc(categoryId).update(updates);

@@ -11,7 +11,7 @@ export const DeckModal = ({ isOpen, deck, onClose }) => {
         ? deck.words
         : [];
 
-  const accentColor = deck.colorHex || deck.color || "#FFC107";
+  const accentColor = deck.color || deck.colorHex || "#FFC107";
   const description = deck.description || deck.desc || "";
   const isAvailable = deck.isAvailable !== undefined ? deck.isAvailable : true;
   const isLocked = deck.isLocked || false;

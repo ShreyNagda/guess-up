@@ -4,7 +4,7 @@
       "id": "bollywood_blockbusters",
       "name": "Bollywood Blockbusters",
       "icon": "🎬",
-      "colorHex": "#E50914",
+      "color": "#E50914",
       "gradientEnd": "#8B0000",
       "isTrending": true,
       "words": [
@@ -30,7 +30,7 @@
       "id": "cricket_mania",
       "name": "Cricket Mania",
       "icon": "🏏",
-      "colorHex": "#0080FF",
+      "color": "#0080FF",
       "gradientEnd": "#003366",
       "isTrending": true,
       "words": [
@@ -52,7 +52,7 @@
       "id": "desi_foodies",
       "name": "Desi Foodies",
       "icon": "🍔",
-      "colorHex": "#FF9900",
+      "color": "#FF9900",
       "gradientEnd": "#CC5500",
       "isTrending": true,
       "words": [
@@ -74,7 +74,7 @@
       "id": "desi_youth_vibes",
       "name": "Desi Youth & Vibes",
       "icon": "😎",
-      "colorHex": "#9C27B0",
+      "color": "#9C27B0",
       "gradientEnd": "#4A148C",
       "isTrending": true,
       "words": [

@@ -1,7 +1,9 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:guess_up/constants/app_info.dart';
+import 'package:guess_up/screens/privacy_policy_screen.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/services/theme_service.dart';
@@ -107,8 +109,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
         isDark ? AppTheme.darkAccentColor : AppTheme.lightAccentColor;
     final textColor =
         isDark ? AppTheme.darkTextColor : AppTheme.lightAccentColor;
-    final borderColor =
-        isDark ? primaryColor.withAlpha(77) : accentColor.withAlpha(26);
 
     const String alexMorganUrl =
         "https://pixabay.com/users/alex-morgan-54692529/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=573931";
@@ -138,44 +138,42 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             // --- 1. Appearance Section ---
             _buildSectionTitle("APPEARANCE", textColor),
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                border: Border.all(color: borderColor, width: 2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildThemeButton(
-                      ThemeMode.light,
-                      "Light",
-                      Icons.wb_sunny_rounded,
-                      isDark,
-                    ),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildThemeButton(
+                    ThemeMode.light,
+                    "Light",
+                    Icons.wb_sunny_rounded,
+                    isDark,
                   ),
-                  Expanded(
-                    child: _buildThemeButton(
-                      ThemeMode.dark,
-                      "Dark",
-                      Icons.nights_stay_rounded,
-                      isDark,
-                    ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildThemeButton(
+                    ThemeMode.dark,
+                    "Dark",
+                    Icons.nights_stay_rounded,
+                    isDark,
                   ),
-                  Expanded(
-                    child: _buildThemeButton(
-                      ThemeMode.system,
-                      "System",
-                      Icons.settings_brightness_rounded,
-                      isDark,
-                    ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildThemeButton(
+                    ThemeMode.system,
+                    "System",
+                    Icons.settings_brightness_rounded,
+                    isDark,
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 28),
+            Divider(color: textColor.withAlpha(25), height: 1),
+            const SizedBox(height: 24),
 
+            // --- 2. Controls Section ---
             _buildSectionTitle("CONTROLS", textColor),
             Row(
               children: [
@@ -192,7 +190,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     isDark,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _buildToggleButton(
                     "Sounds",
@@ -206,7 +204,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     isDark,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _buildToggleButton(
                     "Haptics",
@@ -223,111 +221,197 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 28),
+            Divider(color: textColor.withAlpha(25), height: 1),
+            const SizedBox(height: 24),
 
             // --- 3. Tilt Sensitivity Section ---
             _buildSectionTitle("FOREHEAD TILT SENSITIVITY", textColor),
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: BoxDecoration(
-                border: Border.all(color: borderColor, width: 2),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildSensitivityButton(
-                      'Low',
-                      'Low',
-                      Icons.screen_rotation_rounded,
-                      isDark,
-                    ),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildSensitivityButton(
+                    'Low',
+                    'Low',
+                    Icons.screen_rotation_rounded,
+                    isDark,
                   ),
-                  Expanded(
-                    child: _buildSensitivityButton(
-                      'Normal',
-                      'Normal',
-                      Icons.stay_current_portrait_rounded,
-                      isDark,
-                    ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildSensitivityButton(
+                    'Normal',
+                    'Normal',
+                    Icons.stay_current_portrait_rounded,
+                    isDark,
                   ),
-                  Expanded(
-                    child: _buildSensitivityButton(
-                      'High',
-                      'High',
-                      Icons.bolt_rounded,
-                      isDark,
-                    ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _buildSensitivityButton(
+                    'High',
+                    'High',
+                    Icons.bolt_rounded,
+                    isDark,
                   ),
-                ],
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 28),
+            Divider(color: textColor.withAlpha(25), height: 1),
+            const SizedBox(height: 24),
+
+            // --- 4. Legal & Privacy Section ---
+            _buildSectionTitle("LEGAL & PRIVACY", textColor),
+            InkWell(
+              onTap: () {
+                AudioService().lightImpact();
+                Navigator.of(context).push(
+                  CupertinoPageRoute(
+                    builder: (_) => const PrivacyPolicyScreen(),
+                  ),
+                );
+              },
+              borderRadius: BorderRadius.circular(16),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 4,
+                  vertical: 10,
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: primaryColor.withAlpha(40),
+                        borderRadius: BorderRadius.circular(14), // Squircle
+                      ),
+                      child: Icon(
+                        Icons.shield_outlined,
+                        color: primaryColor,
+                        size: 22,
+                      ),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "Privacy Policy",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                              color: textColor,
+                              letterSpacing: 0.3,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "Read how your data and privacy are protected",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: textColor.withAlpha(140),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      color: textColor.withAlpha(120),
+                      size: 16,
+                    ),
+                  ],
+                ),
               ),
             ),
 
-            const SizedBox(height: 36),
+            const SizedBox(height: 28),
+            Divider(color: textColor.withAlpha(25), height: 1),
+            const SizedBox(height: 24),
 
-            // --- 4. About & Credits Section ---
+            // --- 5. About & Credits Section (Unboxed / No Card Container) ---
             _buildSectionTitle("ABOUT & CREDITS", textColor),
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: isDark ? AppTheme.darkSurfaceColor : Colors.white,
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: borderColor, width: 2),
-              ),
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Column(
                 children: [
-                  // App Logo
+                  // App Logo (Squircle Shape!)
                   Container(
-                    width: 72,
-                    height: 72,
+                    width: 80,
+                    height: 80,
                     decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF000000) : Colors.white,
-                      shape: BoxShape.circle,
+                      color: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+                      borderRadius: BorderRadius.circular(
+                        22,
+                      ), // Squircle shape!
+                      border: Border.all(
+                        color: primaryColor.withAlpha(140),
+                        width: 2.5,
+                      ),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withAlpha(isDark ? 80 : 20),
-                          blurRadius: 12,
+                          color: primaryColor.withAlpha(60),
+                          blurRadius: 18,
                           offset: const Offset(0, 4),
                         ),
                       ],
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(10.0),
+                      padding: const EdgeInsets.all(12.0),
                       child: Image.asset(
                         'assets/images/logo-transparent.png',
                         fit: BoxFit.contain,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
                   Text(
                     AppInfo.name.toUpperCase(),
                     style: theme.textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.w900,
-                      letterSpacing: 2.0,
+                      letterSpacing: 2.5,
                       color: textColor,
                     ),
                   ),
-                  Text(
-                    "Version ${AppInfo.displayVersion}",
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: textColor.withAlpha(140),
-                      fontWeight: FontWeight.bold,
+                  const SizedBox(height: 4),
+
+                  // Version Pill Badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: primaryColor.withAlpha(35),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: primaryColor.withAlpha(80)),
+                    ),
+                    child: Text(
+                      "v${AppInfo.displayVersion} • PARTY CHARADES",
+                      style: TextStyle(
+                        color: primaryColor,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 11,
+                        letterSpacing: 0.8,
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
 
                   Text(
                     AppInfo.description,
+                    softWrap: true,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: textColor.withAlpha(200),
+                      height: 1.4,
                     ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 18),
-                  const Divider(height: 1),
-                  const SizedBox(height: 16),
 
                   // Audio credits
                   Row(
@@ -336,7 +420,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       Icon(
                         Icons.music_note_rounded,
                         color: primaryColor,
-                        size: 20,
+                        size: 18,
                       ),
                       const SizedBox(width: 6),
                       Text(
@@ -348,7 +432,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
@@ -387,7 +471,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: 28),
 
             // Copyright Footer
             Text(

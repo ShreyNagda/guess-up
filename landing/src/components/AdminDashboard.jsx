@@ -6,6 +6,7 @@ import {
   setDoc,
   updateDoc,
   deleteDoc,
+  deleteField,
   serverTimestamp,
   query,
   orderBy,
@@ -39,6 +40,7 @@ import {
   AlertTriangle,
   Smile,
   SlidersHorizontal,
+  Wand2,
 } from "lucide-react";
 import { ColorPicker } from "./ColorPicker";
 
@@ -97,7 +99,7 @@ export const AdminDashboard = () => {
   const [deckName, setDeckName] = useState("");
   const [deckIcon, setDeckIcon] = useState("🎮");
   const [deckDesc, setDeckDesc] = useState("");
-  const [deckColorHex, setDeckColorHex] = useState("#FFD600");
+  const [deckColor, setDeckColor] = useState("#FFD600");
   const [deckGradientEnd, setDeckGradientEnd] = useState("#FF9100");
   const [deckIsTrending, setDeckIsTrending] = useState(false);
   const [deckIsAvailable, setDeckIsAvailable] = useState(true);
@@ -131,7 +133,7 @@ export const AdminDashboard = () => {
               icon: data.icon || "🎮",
               words: Array.isArray(data.words) ? data.words : [],
               description: data.description || data.desc || "",
-              colorHex: data.colorHex || data.color || "#FFD600",
+              color: data.color || data.colorHex || "#FFD600",
               gradientEnd: data.gradientEnd || "#FF9100",
               isTrending: data.isTrending === true,
               isAvailable: data.isAvailable !== false,
@@ -272,30 +274,15 @@ export const AdminDashboard = () => {
     }
   };
 
-  // --- QUICK INLINE VISIBILITY TOGGLE ---
   const handleInlineToggleAvailable = async (deck) => {
     try {
-      await setDoc(
-        doc(db, "categories", deck.id),
-        {
-          isAvailable: !deck.isAvailable,
-          adminSecret: ADMIN_SECRET_KEY,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true },
-      );
+      await updateDoc(doc(db, "categories", deck.id), {
+        isAvailable: !deck.isAvailable,
+        adminSecret: ADMIN_SECRET_KEY,
+        updatedAt: serverTimestamp(),
+      });
     } catch (err) {
       console.error("Error toggling deck visibility:", err);
-      if (
-        err.message?.includes("permission") ||
-        err.code === "permission-denied"
-      ) {
-        alert(
-          "Firestore Permission Error: Please update Rules in Firebase Console for guess-up-646e0 to allow writes with adminSecret:\n\nmatch /categories/{document=**} {\n  allow read: if true;\n  allow write: if request.resource.data.adminSecret == '" +
-            ADMIN_SECRET_KEY +
-            "';\n}",
-        );
-      }
     }
   };
 
@@ -307,7 +294,7 @@ export const AdminDashboard = () => {
     setDeckName("");
     setDeckIcon("🎮");
     setDeckDesc("");
-    setDeckColorHex("#FFD600");
+    setDeckColor("#FFD600");
     setDeckGradientEnd("#FF9100");
     setDeckIsTrending(false);
     setDeckIsAvailable(true);
@@ -324,7 +311,7 @@ export const AdminDashboard = () => {
     setDeckName(deck.name);
     setDeckIcon(deck.icon || "🎮");
     setDeckDesc(deck.description || "");
-    setDeckColorHex(deck.colorHex || "#FFD600");
+    setDeckColor(deck.color || "#FFD600");
     setDeckGradientEnd(deck.gradientEnd || "#FF9100");
     setDeckIsTrending(deck.isTrending === true);
     setDeckIsAvailable(deck.isAvailable !== false);
@@ -365,12 +352,9 @@ export const AdminDashboard = () => {
 
     const payload = {
       name: deckName.trim(),
-      title: deckName.trim(),
       icon: deckIcon.trim() || "🎮",
       description: deckDesc.trim(),
-      colorHex: deckColorHex,
-      color: deckColorHex,
-      accentColor: deckColorHex,
+      color: deckColor,
       gradientEnd: deckGradientEnd,
       isTrending: deckIsTrending,
       isAvailable: deckIsAvailable,
@@ -381,7 +365,15 @@ export const AdminDashboard = () => {
       updatedAt: serverTimestamp(),
     };
 
-    if (!editingDeck) {
+    if (editingDeck) {
+      payload.accentColor = deleteField();
+      payload.colorHex = deleteField();
+      payload.title = deleteField();
+      payload.status = deleteField();
+      payload.isLocked = deleteField();
+      payload.lockReason = deleteField();
+      payload.theme = deleteField();
+    } else {
       payload.createdAt = serverTimestamp();
     }
 
@@ -392,20 +384,57 @@ export const AdminDashboard = () => {
       setIsDeckModalOpen(false);
     } catch (err) {
       console.error("Error saving deck to Firestore:", err);
-      if (
-        err.message?.includes("permission") ||
-        err.code === "permission-denied"
-      ) {
-        alert(
-          "Firestore Permission Error: Please update Firestore Rules in Firebase Console for project guess-up-646e0 to check adminSecret:\n\nmatch /categories/{document=**} {\n  allow read: if true;\n  allow write: if request.resource.data.adminSecret == '" +
-            ADMIN_SECRET_KEY +
-            "';\n}",
-        );
-      } else {
-        alert("Failed to save deck: " + err.message);
-      }
+      alert("Failed to save deck: " + err.message);
     } finally {
       setSavingDeck(false);
+    }
+  };
+
+  const [sanitizing, setSanitizing] = useState(false);
+
+  const handleSanitizeAllFirestoreDecks = async () => {
+    if (decksList.length === 0) return;
+    if (
+      !window.confirm(
+        `Are you sure you want to clean up all ${decksList.length} deck documents in Firestore? This will remove all redundant fields (accentColor, colorHex, title, status, isLocked, lockReason, theme) and standardize document schema across all decks to use "color".`,
+      )
+    ) {
+      return;
+    }
+
+    setSanitizing(true);
+    let successCount = 0;
+
+    try {
+      for (const deck of decksList) {
+        await updateDoc(doc(db, "categories", deck.id), {
+          adminSecret: ADMIN_SECRET_KEY,
+          accentColor: deleteField(),
+          colorHex: deleteField(),
+          title: deleteField(),
+          status: deleteField(),
+          isLocked: deleteField(),
+          lockReason: deleteField(),
+          theme: deleteField(),
+          name: deck.name || deck.id,
+          icon: deck.icon || "🎮",
+          color: deck.color || "#FFD600",
+          gradientEnd: deck.gradientEnd || "#FF9100",
+          isAvailable: deck.isAvailable !== false,
+          isTrending: deck.isTrending === true,
+          sortOrder: typeof deck.sortOrder === "number" ? deck.sortOrder : 0,
+          updatedAt: serverTimestamp(),
+        });
+        successCount++;
+      }
+      alert(
+        `Successfully sanitized ${successCount} deck documents in Firestore!`,
+      );
+    } catch (err) {
+      console.error("Error sanitizing Firestore decks:", err);
+      alert("Sanitization encountered an error: " + err.message);
+    } finally {
+      setSanitizing(false);
     }
   };
 
@@ -437,32 +466,17 @@ export const AdminDashboard = () => {
     });
 
     try {
-      await setDoc(
-        doc(db, "categories", editingDeck.id),
-        {
-          words: mergedWords,
-          wordsCount: mergedWords.length,
-          adminSecret: ADMIN_SECRET_KEY,
-          updatedAt: serverTimestamp(),
-        },
-        { merge: true },
-      );
+      await updateDoc(doc(db, "categories", editingDeck.id), {
+        words: mergedWords,
+        wordsCount: mergedWords.length,
+        adminSecret: ADMIN_SECRET_KEY,
+        updatedAt: serverTimestamp(),
+      });
       setIsAddWordsModalOpen(false);
       setDeckWordsInput(mergedWords.join(", "));
     } catch (err) {
       console.error("Error adding new words:", err);
-      if (
-        err.message?.includes("permission") ||
-        err.code === "permission-denied"
-      ) {
-        alert(
-          "Firestore Permission Error: Please update Firestore Rules in Firebase Console for project guess-up-646e0 to check adminSecret:\n\nmatch /categories/{document=**} {\n  allow read: if true;\n  allow write: if request.resource.data.adminSecret == '" +
-            ADMIN_SECRET_KEY +
-            "';\n}",
-        );
-      } else {
-        alert("Failed to add words: " + err.message);
-      }
+      alert("Failed to add words: " + err.message);
     } finally {
       setSavingNewWords(false);
     }
@@ -777,6 +791,17 @@ export const AdminDashboard = () => {
           )}
 
           <div className="flex items-center gap-2 shrink-0">
+            {activeSection === "decks" && (
+              <button
+                onClick={handleSanitizeAllFirestoreDecks}
+                disabled={sanitizing}
+                className="px-3.5 py-2 rounded-xl border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
+                title="Strip redundant legacy fields (adminSecret, accentColor, color, status, etc.) & standardize document schema in Firestore"
+              >
+                <Wand2 className="w-4 h-4 text-primary" />
+                {sanitizing ? "Cleaning..." : "Clean Firestore Schema"}
+              </button>
+            )}
             <button
               onClick={exportCSV}
               className="px-3.5 py-2 rounded-xl border border-border-dark bg-white/5 hover:bg-white/10 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
@@ -821,8 +846,8 @@ export const AdminDashboard = () => {
                   whileHover={{ y: -4 }}
                   className="bg-surface-dark border-2 border-border-dark rounded-3xl p-6 flex flex-col justify-between gap-6 shadow-md relative overflow-hidden group"
                   style={{
-                    borderColor: deck.colorHex
-                      ? `${deck.colorHex}40`
+                    borderColor: deck.color
+                      ? `${deck.color}40`
                       : "var(--color-border-dark)",
                   }}
                 >
@@ -832,10 +857,10 @@ export const AdminDashboard = () => {
                       <div
                         className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-2xl border-2 shadow-inner"
                         style={{
-                          backgroundColor: deck.colorHex
-                            ? `${deck.colorHex}20`
+                          backgroundColor: deck.color
+                            ? `${deck.color}20`
                             : "rgba(255,214,0,0.15)",
-                          borderColor: deck.colorHex || "var(--color-primary)",
+                          borderColor: deck.color || "var(--color-primary)",
                         }}
                       >
                         {deck.icon || "🎮"}
@@ -1160,13 +1185,22 @@ export const AdminDashboard = () => {
                         {emoji}
                       </button>
                     ))}
-                    <input
-                      type="text"
-                      placeholder="Custom..."
-                      value={deckIcon}
-                      onChange={(e) => setDeckIcon(e.target.value)}
-                      className="w-24 p-2 rounded-xl bg-surface-card-dark border border-border-dark text-center text-sm outline-none focus:border-primary"
-                    />
+                    <div className="flex items-center gap-1.5">
+                      <label
+                        htmlFor="custom_emoji_field"
+                        className="text-sm text-white"
+                      >
+                        Use custom emoji
+                      </label>
+                      <input
+                        type="text"
+                        id="custom_emoji_field"
+                        placeholder="Custom..."
+                        value={deckIcon}
+                        onChange={(e) => setDeckIcon(e.target.value)}
+                        className="w-24 p-2 rounded-xl bg-surface-card-dark border border-border-dark text-center text-sm outline-none focus:border-primary"
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -1174,9 +1208,9 @@ export const AdminDashboard = () => {
                 <div className="grid md:grid-cols-3 gap-4 items-end">
                   <ColorPicker
                     label="Primary Deck Color"
-                    value={deckColorHex}
+                    value={deckColor}
                     defaultValue="#FFD600"
-                    onChange={(newHex) => setDeckColorHex(newHex)}
+                    onChange={(newHex) => setDeckColor(newHex)}
                   />
 
                   <ColorPicker

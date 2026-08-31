@@ -120,8 +120,8 @@ export const DeckShowcase = ({
               className="max-w-4xl mx-auto w-full bg-surface-light dark:bg-surface-dark border-3 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden flex flex-col gap-6 relative"
               style={{
                 borderColor:
-                  selectedDeck.colorHex ||
                   selectedDeck.color ||
+                  selectedDeck.colorHex ||
                   "var(--color-primary)",
               }}
             >
@@ -131,11 +131,11 @@ export const DeckShowcase = ({
                   <div
                     className="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-3xl shrink-0 border-2 shadow-inner"
                     style={{
-                      backgroundColor: selectedDeck.colorHex
-                        ? `${selectedDeck.colorHex}25`
+                      backgroundColor: (selectedDeck.color || selectedDeck.colorHex)
+                        ? `${selectedDeck.color || selectedDeck.colorHex}25`
                         : "rgba(255,214,0,0.15)",
                       borderColor:
-                        selectedDeck.colorHex || "var(--color-primary)",
+                        selectedDeck.color || selectedDeck.colorHex || "var(--color-primary)",
                     }}
                   >
                     {selectedDeck.icon || "🎮"}
@@ -263,10 +263,10 @@ export const DeckShowcase = ({
                   <div
                     className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl select-none shrink-0 shadow-inner border-2"
                     style={{
-                      backgroundColor: deck.colorHex
-                        ? `${deck.colorHex}20`
+                      backgroundColor: (deck.color || deck.colorHex)
+                        ? `${deck.color || deck.colorHex}20`
                         : "rgba(255,214,0,0.15)",
-                      borderColor: deck.colorHex || "var(--color-primary)",
+                      borderColor: deck.color || deck.colorHex || "var(--color-primary)",
                     }}
                   >
                     {deck.icon || "🎮"}
