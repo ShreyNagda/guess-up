@@ -262,15 +262,12 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         status.contains("+");
     setState(() {
       _feedbackMessage = status;
-      _feedbackColor = isCorrect ? Colors.green : Colors.redAccent;
-      _feedbackIcon = isCorrect ? Icons.check_circle : Icons.warning_rounded;
-    });
-    Future.delayed(const Duration(milliseconds: 800), () {
-      if (mounted) {
-        setState(() {
-          _feedbackMessage = null;
-        });
-      }
+      _feedbackColor =
+          isCorrect
+              ? const Color(0xFF1B5E20)
+              : const Color(0xFFB71C1C); // Solid Green vs Red
+      _feedbackIcon =
+          isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded;
     });
   }
 
@@ -316,13 +313,17 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         }
         _triggerFeedback("5 PASSES! ⚠️ -1");
       } else {
-        _triggerFeedback("Pass");
+        _triggerFeedback("PASS");
       }
     }
+
+    // Solid curtain is active — hold next word reveal for 450ms
+    await Future.delayed(const Duration(milliseconds: 450));
 
     if (mounted) {
       setState(() {
         currentIndex++;
+        _feedbackMessage = null; // Uncover curtain after word changes
       });
       if (currentIndex < wordsList.length) {
         scoreMap[wordsList[currentIndex]] = "Pass";
@@ -521,61 +522,36 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     return Positioned.fill(
       child: IgnorePointer(
         child: Container(
-          decoration: BoxDecoration(
-            border: Border.all(
-              color: (_feedbackColor ?? Colors.green).withAlpha(220),
-              width: 12,
-            ),
-            boxShadow: [
-              BoxShadow(
-                color: (_feedbackColor ?? Colors.green).withAlpha(160),
-                blurRadius: 36,
-                spreadRadius: 8,
-              ),
-            ],
-          ),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: Padding(
-              padding: const EdgeInsets.only(top: 20.0),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 10,
+          color:
+              _feedbackColor ?? Colors.green.shade800, // 100% Solid background
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  _feedbackIcon ?? Icons.check_circle_rounded,
+                  color: Colors.white,
+                  size: 80,
                 ),
-                decoration: BoxDecoration(
-                  color: _feedbackColor ?? Colors.green,
-                  borderRadius: BorderRadius.circular(24),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(80),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _feedbackIcon ?? Icons.check_circle,
-                      color: Colors.white,
-                      size: 28,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      _feedbackMessage ?? "",
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.w900,
-                        color: Colors.white,
-                        letterSpacing: 2,
+                const SizedBox(height: 16),
+                Text(
+                  _feedbackMessage ?? "",
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 48,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 2,
+                    shadows: [
+                      Shadow(
+                        color: Colors.black45,
+                        blurRadius: 10,
+                        offset: Offset(0, 4),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         ),
@@ -594,6 +570,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
     // --- State 1: Place Phone on Forehead Pre-game Screen ---
     if (!isPlacedOnForehead) {
+      final isFlat = lastZ.abs() < 2.5;
+
       return Center(
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
@@ -611,18 +589,14 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                       horizontal: 20,
                       vertical: 10,
                     ),
-                    // decoration: BoxDecoration(
-                    //   color: Colors.black.withAlpha(220),
-                    //   borderRadius: BorderRadius.circular(20),
-                    //   border: Border.all(color: teamColor, width: 2),
-                    //   boxShadow: [
-                    //     BoxShadow(
-                    //       color: teamColor.withAlpha(140),
-                    //       blurRadius: 16,
-                    //       spreadRadius: 1,
-                    //     ),
-                    //   ],
-                    // ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withAlpha(160),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: teamColor.withAlpha(180),
+                        width: 2,
+                      ),
+                    ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -645,14 +619,21 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
                 // Phone Forehead Graphic & Main Instruction
                 Container(
+                  margin: EdgeInsets.symmetric(horizontal: 100),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 20,
+                    horizontal: 28,
+                    vertical: 22,
                   ),
                   decoration: BoxDecoration(
-                    // color: Colors.black45,
-                    // borderRadius: BorderRadius.circular(28),
-                    // border: Border.all(color: Colors.white24, width: 1.5),
+                    color: Colors.black.withAlpha(120),
+                    borderRadius: BorderRadius.circular(28),
+                    border: Border.all(
+                      color:
+                          isTeamMode
+                              ? teamColor.withAlpha(140)
+                              : Colors.white24,
+                      width: 1.5,
+                    ),
                   ),
                   child: Column(
                     children: [
@@ -664,7 +645,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                             size: 48,
                             color: isTeamMode ? Colors.white : Colors.amber,
                           ),
-                          SizedBox(width: 12),
+                          const SizedBox(width: 16),
                           Icon(
                             Icons.face_rounded,
                             size: 48,
@@ -672,7 +653,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 20),
                       Text(
                         "PLACE PHONE ON FOREHEAD",
                         textAlign: TextAlign.center,
@@ -691,7 +672,44 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                           color: Colors.white70,
                           height: 1.3,
                         ),
+                        softWrap: true,
                       ),
+                      if (isFlat) ...[
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 5,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber.withAlpha(50),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Colors.amberAccent.withAlpha(140),
+                            ),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.check_circle_rounded,
+                                size: 14,
+                                color: Colors.amberAccent,
+                              ),
+                              SizedBox(width: 6),
+                              Text(
+                                "HELD FLAT • STARTING...",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  color: Colors.amberAccent,
+                                  letterSpacing: 1.0,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -751,7 +769,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     final isTimerRunning =
         gameTimerController.value.status == TimerStatus.running;
 
-    // --- State 3: Active Gameplay Word Screen with Wrapped Text Box Container ---
+    // --- State 3: Active Gameplay Word Screen with Animated Word Flip ---
     return Container(
       width: double.infinity,
       height: double.infinity,
@@ -771,38 +789,39 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
           child: Container(
             constraints: const BoxConstraints(maxWidth: 720, maxHeight: 280),
             padding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
-            // decoration: BoxDecoration(
-            //   color: Colors.black.withAlpha(170),
-            //   borderRadius: BorderRadius.circular(28),
-            //   border: Border.all(
-            //     color: isTeamMode ? teamColor.withAlpha(180) : Colors.white24,
-            //     width: isTeamMode ? 3 : 2,
-            //   ),
-            //   boxShadow: [
-            //     BoxShadow(
-            //       color:
-            //           isTeamMode
-            //               ? teamColor.withAlpha(90)
-            //               : Colors.black.withAlpha(100),
-            //       blurRadius: 20,
-            //       spreadRadius: 2,
-            //     ),
-            //   ],
-            // ),
             child: Center(
-              child: FittedBox(
-                fit: BoxFit.scaleDown,
-                alignment: Alignment.center,
-                child: Text(
-                  currentWord,
-                  textAlign: TextAlign.center,
-                  maxLines: 3,
-                  softWrap: true,
-                  style: theme.textTheme.displayMedium?.copyWith(
-                    fontSize: 84,
-                    fontWeight: FontWeight.w900,
-                    color: Colors.white,
-                    height: 1.15,
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 250),
+                switchInCurve: Curves.easeOutBack,
+                switchOutCurve: Curves.easeIn,
+                transitionBuilder: (Widget child, Animation<double> animation) {
+                  return ScaleTransition(
+                    scale: animation,
+                    child: FadeTransition(opacity: animation, child: child),
+                  );
+                },
+                child: FittedBox(
+                  key: ValueKey<String>(currentWord),
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Text(
+                    currentWord,
+                    textAlign: TextAlign.center,
+                    maxLines: 3,
+                    softWrap: true,
+                    style: theme.textTheme.displayMedium?.copyWith(
+                      fontSize: 84,
+                      fontWeight: FontWeight.w900,
+                      color: Colors.white,
+                      height: 1.15,
+                      shadows: [
+                        const Shadow(
+                          color: Colors.black87,
+                          blurRadius: 12,
+                          offset: Offset(0, 4),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),

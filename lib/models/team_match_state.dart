@@ -48,6 +48,14 @@ class TeamMatchState {
     }
   }
 
+  void adjustLastTeamScore(int scoreDiff) {
+    if (isMatchFinished || currentTeam == TeamColor.cyan) {
+      teamMagentaScore = (teamMagentaScore + scoreDiff).clamp(0, 9999);
+    } else {
+      teamCyanScore = (teamCyanScore + scoreDiff).clamp(0, 9999);
+    }
+  }
+
   void startTiebreaker() {
     isTiebreaker = true;
     maxRounds = currentRound + 1;

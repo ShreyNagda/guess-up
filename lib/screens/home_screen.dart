@@ -200,12 +200,15 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _toggleDeckSelection(Category deck, int cardIndex) {
-    if (_focusedIndex != cardIndex && _pageController.hasClients) {
-      _pageController.animateToPage(
-        cardIndex,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeInOut,
-      );
+    if (_focusedIndex != cardIndex) {
+      if (_pageController.hasClients) {
+        _pageController.animateToPage(
+          cardIndex,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeInOut,
+        );
+      }
+      return;
     }
 
     setState(() {
@@ -421,6 +424,109 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
+  Future<void> _showExitConfirmationDialog() async {
+    _audioService.lightImpact();
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final primaryColor =
+        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
+
+    final shouldExit = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+            side: BorderSide(color: primaryColor.withAlpha(100), width: 2),
+          ),
+          title: Text(
+            "EXIT GUESS UP?",
+            style: TextStyle(
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
+              color: isDark ? Colors.white : Colors.black,
+              letterSpacing: 1.0,
+            ),
+          ),
+          content: Text(
+            "Are you sure you want to exit the party?",
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: isDark ? Colors.white70 : Colors.black87,
+              height: 1.3,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () {
+                      _audioService.lightImpact();
+                      Navigator.of(dialogCtx).pop(false);
+                    },
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      side: BorderSide(
+                        color: isDark ? Colors.white38 : Colors.black38,
+                        width: 1.5,
+                      ),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: Text(
+                      "KEEP PLAYING",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        color: isDark ? Colors.white : Colors.black87,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () {
+                      _audioService.mediumImpact();
+                      Navigator.of(dialogCtx).pop(true);
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.redAccent,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(vertical: 12),
+                      elevation: 2,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                    ),
+                    child: const Text(
+                      "EXIT APP",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 12,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldExit == true) {
+      SystemNavigator.pop();
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final activeDeck = _activeDeck;
@@ -428,45 +534,119 @@ class _HomeScreenState extends State<HomeScreen> {
     final selectedDecks = _selectedDecks;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF121212) : const Color(0xFFF6F7FA),
-      body: AmbientBackground(
-        ambientColor: activeColor,
-        child: SafeArea(
-          child: Column(
-            children: [
-              // 1. TOP BAR
-              _buildTopBar(isDark),
-              const SizedBox(height: 6),
-              // 2. CAROUSEL REEL
-              Expanded(
-                flex: 5,
-                child:
-                    _isLoading
-                        ? Center(
-                          child: CircularProgressIndicator(
-                            color:
-                                isDark
-                                    ? AppTheme.darkPrimaryColor
-                                    : AppTheme.lightPrimaryColor,
-                            strokeWidth: 3,
-                          ),
-                        )
-                        : _buildCarousel(isDark),
-              ),
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        _showExitConfirmationDialog();
+      },
+      child: Scaffold(
+        backgroundColor:
+            isDark ? const Color(0xFF121212) : const Color(0xFFF6F7FA),
+        body: AmbientBackground(
+          ambientColor: activeColor,
+          child: SafeArea(
+            child: Column(
+              children: [
+                // 1. TOP BAR
+                _buildTopBar(isDark),
+                const SizedBox(height: 6),
+                // 2. CAROUSEL REEL
+                Expanded(
+                  flex: 5,
+                  child:
+                      _isLoading
+                          ? Center(
+                            child: CircularProgressIndicator(
+                              color:
+                                  isDark
+                                      ? AppTheme.darkPrimaryColor
+                                      : AppTheme.lightPrimaryColor,
+                              strokeWidth: 3,
+                            ),
+                          )
+                          : _buildCarousel(isDark),
+                ),
 
-              const SizedBox(height: 8),
+                const SizedBox(height: 4),
 
-              // 3. DYNAMIC SELECTED DECKS CHIP TRAY WITH MODE GUIDANCE
-              _buildSelectedDecksChipTray(selectedDecks, isDark),
-              const SizedBox(height: 10),
+                // 2b. INTERACTIVE DECK DOT INDICATOR
+                if (!_isLoading) _buildDeckPageIndicator(isDark),
 
-              // 4. STICKY ACTION HUD WITH DROPDOWNS
-              _buildStickyActionHUD(selectedDecks, isDark),
+                const SizedBox(height: 6),
 
-              const SizedBox(height: 10),
-            ],
+                // 3. DYNAMIC SELECTED DECKS CHIP TRAY WITH MODE GUIDANCE
+                _buildSelectedDecksChipTray(selectedDecks, isDark),
+                const SizedBox(height: 10),
+
+                // 4. STICKY ACTION HUD WITH DROPDOWNS
+                _buildStickyActionHUD(selectedDecks, isDark),
+
+                const SizedBox(height: 10),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeckPageIndicator(bool isDark) {
+    if (_decks.isEmpty) return const SizedBox.shrink();
+
+    final inactiveColor = isDark ? Colors.white24 : Colors.black26;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Center(
+        child: SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: List.generate(_decks.length, (index) {
+              final isFocused = index == _focusedIndex;
+              final deck = _decks[index];
+
+              return GestureDetector(
+                onTap: () {
+                  if (_pageController.hasClients) {
+                    _audioService.extraLightImpact();
+                    HapticFeedback.lightImpact();
+                    _pageController.animateToPage(
+                      index,
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeInOutCubic,
+                    );
+                  }
+                },
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: isFocused ? 26 : 8,
+                  height: 8,
+                  decoration: BoxDecoration(
+                    color: isFocused ? deck.themeColor : inactiveColor,
+                    borderRadius: BorderRadius.circular(4),
+                    border:
+                        isFocused
+                            ? Border.all(color: Colors.white, width: 1)
+                            : null,
+                    boxShadow:
+                        isFocused
+                            ? [
+                              BoxShadow(
+                                color: deck.themeColor.withAlpha(160),
+                                blurRadius: 6,
+                                spreadRadius: 1,
+                              ),
+                            ]
+                            : null,
+                  ),
+                ),
+              );
+            }),
           ),
         ),
       ),
@@ -574,7 +754,8 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return AspectRatio(
       aspectRatio: 3 / 4,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26),
@@ -586,22 +767,27 @@ class _HomeScreenState extends State<HomeScreen> {
           border:
               isSelected
                   ? Border.all(color: Colors.white, width: 3.5)
-                  : Border.all(color: Colors.white.withAlpha(60), width: 1.5),
+                  : Border.all(color: Colors.white.withAlpha(70), width: 1.5),
           boxShadow:
               isSelected
                   ? [
                     BoxShadow(
-                      color: deckColor.withAlpha(200),
-                      blurRadius: 28,
-                      spreadRadius: 3,
+                      color: deckColor.withAlpha(220),
+                      blurRadius: 30,
+                      spreadRadius: 4,
                       offset: const Offset(0, 8),
+                    ),
+                    BoxShadow(
+                      color: Colors.white.withAlpha(120),
+                      blurRadius: 10,
+                      spreadRadius: -2,
                     ),
                   ]
                   : [
                     BoxShadow(
-                      color: Colors.black.withAlpha(isDark ? 80 : 35),
-                      blurRadius: 12,
-                      offset: const Offset(0, 4),
+                      color: Colors.black.withAlpha(isDark ? 90 : 35),
+                      blurRadius: 14,
+                      offset: const Offset(0, 5),
                     ),
                   ],
         ),
@@ -609,18 +795,20 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(23),
           child: Stack(
             children: [
+              // Top Right Gloss Circle Effect
               Positioned(
-                top: -30,
-                right: -30,
+                top: -35,
+                right: -35,
                 child: Container(
-                  width: 120,
-                  height: 120,
+                  width: 130,
+                  height: 130,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.white.withAlpha(20),
+                    color: Colors.white.withAlpha(25),
                   ),
                 ),
               ),
+              // Top Left Selection Status Pill
               Positioned(
                 top: 12,
                 left: 12,
@@ -632,14 +820,14 @@ class _HomeScreenState extends State<HomeScreen> {
                   decoration: BoxDecoration(
                     color:
                         isSelected
-                            ? Colors.black.withAlpha(160)
-                            : Colors.black.withAlpha(100),
+                            ? Colors.black.withAlpha(170)
+                            : Colors.black.withAlpha(110),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color:
                           isSelected
-                              ? Colors.white.withAlpha(180)
-                              : Colors.white.withAlpha(40),
+                              ? Colors.white.withAlpha(200)
+                              : Colors.white.withAlpha(50),
                       width: 1,
                     ),
                   ),
@@ -681,6 +869,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+              // Top Right Deck Details Modal Trigger
               Positioned(
                 top: 10,
                 right: 10,
@@ -689,10 +878,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   child: Container(
                     padding: const EdgeInsets.all(7),
                     decoration: BoxDecoration(
-                      color: Colors.black.withAlpha(120),
+                      color: Colors.black.withAlpha(130),
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color: Colors.white.withAlpha(80),
+                        color: Colors.white.withAlpha(90),
                         width: 1,
                       ),
                     ),
@@ -704,6 +893,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ),
               ),
+              // Center Deck Icon, Title & Word Count
               Center(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(16.0, 42.0, 16.0, 16.0),
@@ -713,7 +903,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       mainAxisSize: MainAxisSize.min,
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Text(deck.icon, style: const TextStyle(fontSize: 52)),
+                        Text(deck.icon, style: const TextStyle(fontSize: 54)),
                         const SizedBox(height: 8),
                         Text(
                           deck.title.toUpperCase(),
@@ -722,26 +912,39 @@ class _HomeScreenState extends State<HomeScreen> {
                           overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 16,
+                            fontSize: 17,
                             fontWeight: FontWeight.w900,
-                            letterSpacing: 1.1,
+                            letterSpacing: 1.2,
                             shadows: [
                               Shadow(
                                 color: Colors.black54,
-                                blurRadius: 6,
+                                blurRadius: 8,
                                 offset: Offset(0, 2),
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        Text(
-                          "${deck.count} WORDS",
-                          style: TextStyle(
-                            color: Colors.white.withAlpha(200),
-                            fontSize: 11,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.0,
+                        const SizedBox(height: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withAlpha(90),
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: Colors.white.withAlpha(40),
+                            ),
+                          ),
+                          child: Text(
+                            "${deck.count} WORDS",
+                            style: TextStyle(
+                              color: Colors.white.withAlpha(230),
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.0,
+                            ),
                           ),
                         ),
                       ],
@@ -762,13 +965,17 @@ class _HomeScreenState extends State<HomeScreen> {
   ) {
     final titleColor = isDark ? Colors.white70 : Colors.black87;
     final chipBg = isDark ? const Color(0xFF222222) : Colors.white;
+    final int totalCombinedWords = selectedDecks.fold(
+      0,
+      (sum, d) => sum + d.words.length,
+    );
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header with Guidance Cue
+          // Header with Guidance Cue & Total Word Count
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -806,7 +1013,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Text(
                         _isTeamMode
                             ? "1 Deck Locked for Fair Play (Team A vs Team B)"
-                            : "Mix & Match any decks for a custom party!",
+                            : "Mix & Match any decks for a custom party pool!",
                         style: TextStyle(
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
@@ -824,15 +1031,34 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              // if (!_isTeamMode && selectedDecks.isNotEmpty)
-              //   Text(
-              //     "$_totalSelectedWords Words",
-              //     style: TextStyle(
-              //       fontSize: 11,
-              //       fontWeight: FontWeight.w800,
-              //       color: isDark ? Colors.white60 : Colors.black54,
-              //     ),
-              //   ),
+              if (!_isTeamMode && selectedDecks.length > 1)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: (isDark
+                            ? AppTheme.darkPrimaryColor
+                            : AppTheme.lightPrimaryColor)
+                        .withAlpha(40),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: (isDark
+                              ? AppTheme.darkPrimaryColor
+                              : AppTheme.lightPrimaryColor)
+                          .withAlpha(100),
+                    ),
+                  ),
+                  child: Text(
+                    "$totalCombinedWords Words Total",
+                    style: TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? Colors.amberAccent : Colors.black87,
+                    ),
+                  ),
+                ),
             ],
           ),
           const SizedBox(height: 6),
@@ -882,8 +1108,8 @@ class _HomeScreenState extends State<HomeScreen> {
                             color: chipBg,
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                              color: deckColor.withAlpha(160),
-                              width: 1.2,
+                              color: deckColor.withAlpha(180),
+                              width: 1.5,
                             ),
                             boxShadow:
                                 isDark

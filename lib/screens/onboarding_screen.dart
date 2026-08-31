@@ -5,6 +5,7 @@ import 'package:guess_up/models/category.dart';
 import 'package:guess_up/models/team_match_state.dart';
 import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/screens/home_screen.dart';
+import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
@@ -252,41 +253,43 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     const SizedBox(height: 12),
 
                     // Don't show again toggle
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: Checkbox(
-                            value: _dontShowAgain,
-                            onChanged: (val) {
-                              if (val != null) {
-                                setState(() => _dontShowAgain = val);
-                              }
+                    if (!widget.isRevisiting) ...[
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: Checkbox(
+                              value: _dontShowAgain,
+                              onChanged: (val) {
+                                if (val != null) {
+                                  setState(() => _dontShowAgain = val);
+                                }
+                              },
+                              activeColor: primaryColor,
+                              checkColor: AppTheme.darkAccentColor,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          GestureDetector(
+                            onTap: () {
+                              setState(() => _dontShowAgain = !_dontShowAgain);
                             },
-                            activeColor: primaryColor,
-                            checkColor: AppTheme.darkAccentColor,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(4),
+                            child: Text(
+                              "Don't show this again",
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: textColor.withAlpha(200),
+                              ),
                             ),
                           ),
-                        ),
-                        const SizedBox(width: 8),
-                        GestureDetector(
-                          onTap: () {
-                            setState(() => _dontShowAgain = !_dontShowAgain);
-                          },
-                          child: Text(
-                            "Don't show this again",
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              fontWeight: FontWeight.w600,
-                              color: textColor.withAlpha(200),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
+                        ],
+                      ),
+                    ],
 
                     const SizedBox(height: 12),
 
@@ -476,7 +479,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 const SizedBox(height: 8),
 
                 Text(
-                  "No need to touch the screen! Use motion gestures to mark answers.",
+                  "Hold phone in LANDSCAPE mode against your forehead. Tilt up or down to score!",
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: textColor.withAlpha(220),
@@ -503,70 +506,111 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ],
                   ),
-                  child: Row(
+                  child: Column(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.greenAccent.withAlpha(40),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.south_rounded,
-                          color: Colors.greenAccent,
-                          size: 32,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.greenAccent.withAlpha(40),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.south_rounded,
+                              color: Colors.greenAccent,
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  "TILT DOWN",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.greenAccent,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.greenAccent,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Text(
-                                    "CORRECT +1",
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.black,
+                                Row(
+                                  children: [
+                                    const Text(
+                                      "TILT DOWN",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.greenAccent,
+                                        letterSpacing: 1,
+                                      ),
                                     ),
+                                    const Spacer(),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.greenAccent,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Text(
+                                        "CORRECT +1",
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  "Tilt phone face-down towards floor when guessed correctly!",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color:
+                                        isDark
+                                            ? Colors.green.shade200
+                                            : Colors.green.shade900,
+                                    height: 1.3,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              "Tilt your phone face-down towards the floor when you guess correctly!",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color:
-                                    isDark
-                                        ? Colors.green.shade200
-                                        : Colors.green.shade900,
-                                height: 1.3,
-                              ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: InkWell(
+                          onTap: () {
+                            AudioService().mediumImpact();
+                            AudioService().playCorrect();
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
                             ),
-                          ],
+                            decoration: BoxDecoration(
+                              color: Colors.greenAccent.withAlpha(40),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.greenAccent),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.volume_up_rounded, size: 16, color: Colors.greenAccent),
+                                SizedBox(width: 6),
+                                Text(
+                                  "TEST CUE 🔊",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.greenAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -592,70 +636,111 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                       ),
                     ],
                   ),
-                  child: Row(
+                  child: Column(
                     children: [
-                      Container(
-                        padding: const EdgeInsets.all(14),
-                        decoration: BoxDecoration(
-                          color: Colors.redAccent.withAlpha(40),
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.north_rounded,
-                          color: Colors.redAccent,
-                          size: 32,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent.withAlpha(40),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.north_rounded,
+                              color: Colors.redAccent,
+                              size: 32,
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                const Text(
-                                  "TILT UP",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.redAccent,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                                const Spacer(),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 10,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: Colors.redAccent,
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: const Text(
-                                    "PASS (0)",
-                                    style: TextStyle(
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w900,
-                                      color: Colors.white,
+                                Row(
+                                  children: [
+                                    const Text(
+                                      "TILT UP",
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w900,
+                                        color: Colors.redAccent,
+                                        letterSpacing: 1,
+                                      ),
                                     ),
+                                    const Spacer(),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 10,
+                                        vertical: 4,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.redAccent,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Text(
+                                        "PASS (0)",
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w900,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  "Tilt phone face-up towards ceiling to pass if stuck!",
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color:
+                                        isDark
+                                            ? Colors.red.shade200
+                                            : Colors.red.shade900,
+                                    height: 1.3,
                                   ),
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 6),
-                            Text(
-                              "Tilt your phone face-up towards the ceiling to pass if you get stuck!",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color:
-                                    isDark
-                                        ? Colors.red.shade200
-                                        : Colors.red.shade900,
-                                height: 1.3,
-                              ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: InkWell(
+                          onTap: () {
+                            AudioService().heavyImpact();
+                            AudioService().playPass();
+                          },
+                          borderRadius: BorderRadius.circular(12),
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 6,
                             ),
-                          ],
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent.withAlpha(40),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(color: Colors.redAccent),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(Icons.volume_up_rounded, size: 16, color: Colors.redAccent),
+                                SizedBox(width: 6),
+                                Text(
+                                  "TEST CUE 🔊",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                    color: Colors.redAccent,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
                         ),
                       ),
                     ],
@@ -718,7 +803,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   decoration: BoxDecoration(
                     color: cardBgColor,
                     borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: primaryColor.withAlpha(90), width: 2),
+                    border: Border.all(
+                      color: primaryColor.withAlpha(90),
+                      width: 2,
+                    ),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

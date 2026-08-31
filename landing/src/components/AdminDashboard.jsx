@@ -40,6 +40,7 @@ import {
   Smile,
   SlidersHorizontal,
 } from "lucide-react";
+import { ColorPicker } from "./ColorPicker";
 
 const EMOJI_PALETTE = [
   "🎬",
@@ -1171,56 +1172,30 @@ export const AdminDashboard = () => {
                 </div>
 
                 {/* Field 3: Colors & Sort Order */}
-                <div className="grid md:grid-cols-3 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
-                      Primary Color (Hex)
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={deckColorHex}
-                        onChange={(e) => setDeckColorHex(e.target.value)}
-                        className="w-10 h-10 rounded-xl bg-transparent border-0 cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={deckColorHex}
-                        onChange={(e) => setDeckColorHex(e.target.value)}
-                        className="w-full p-3 rounded-xl bg-surface-card-dark border border-border-dark text-xs font-mono outline-none focus:border-primary"
-                      />
-                    </div>
-                  </div>
+                <div className="grid md:grid-cols-3 gap-4 items-end">
+                  <ColorPicker
+                    label="Primary Deck Color"
+                    value={deckColorHex}
+                    defaultValue="#FFD600"
+                    onChange={(newHex) => setDeckColorHex(newHex)}
+                  />
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
-                      Gradient End Color (Hex)
-                    </label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="color"
-                        value={deckGradientEnd}
-                        onChange={(e) => setDeckGradientEnd(e.target.value)}
-                        className="w-10 h-10 rounded-xl bg-transparent border-0 cursor-pointer"
-                      />
-                      <input
-                        type="text"
-                        value={deckGradientEnd}
-                        onChange={(e) => setDeckGradientEnd(e.target.value)}
-                        className="w-full p-3 rounded-xl bg-surface-card-dark border border-border-dark text-xs font-mono outline-none focus:border-primary"
-                      />
-                    </div>
-                  </div>
+                  <ColorPicker
+                    label="Gradient End Color"
+                    value={deckGradientEnd}
+                    defaultValue="#FF9100"
+                    onChange={(newHex) => setDeckGradientEnd(newHex)}
+                  />
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
+                  <div className="flex flex-col gap-2 bg-surface-card-dark/60 p-3.5 rounded-2xl border border-border-dark justify-between h-full">
+                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark tracking-wider">
                       Sort Order Number
                     </label>
                     <input
                       type="number"
                       value={deckSortOrder}
                       onChange={(e) => setDeckSortOrder(e.target.value)}
-                      className="w-full p-3 rounded-xl bg-surface-card-dark border border-border-dark text-xs font-semibold outline-none focus:border-primary"
+                      className="w-full p-2.5 rounded-xl bg-surface-dark border border-border-dark text-xs font-semibold text-white outline-none focus:border-primary transition-all"
                     />
                   </div>
                 </div>
