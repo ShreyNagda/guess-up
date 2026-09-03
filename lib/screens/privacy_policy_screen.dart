@@ -15,8 +15,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
         isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
     final textColor =
         isDark ? AppTheme.darkTextColor : AppTheme.lightAccentColor;
-    final borderColor =
-        isDark ? primaryColor.withAlpha(77) : Colors.black12;
+    final borderColor = isDark ? primaryColor.withAlpha(77) : Colors.black12;
 
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
@@ -24,7 +23,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
           onPressed: () {
-            AudioService().lightImpact();
+            GameAudioEngine().lightImpact();
             Navigator.of(context).pop();
           },
         ),
@@ -63,7 +62,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: primaryColor.withAlpha(40),
-                      borderRadius: BorderRadius.circular(22), // Squircle shape!
+                      borderRadius: BorderRadius.circular(
+                        22,
+                      ), // Squircle shape!
                       border: Border.all(
                         color: primaryColor.withAlpha(100),
                         width: 2,
@@ -158,7 +159,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               icon: Icons.cloud_done_rounded,
               title: "4. Cloud Categories & Data Access",
               content:
-                  "Pre-built game categories are retrieved anonymously from Firebase Cloud Firestore. No telemetry or user device identifiers are attached to these category fetch requests.",
+                  "Pre-built game categories are retrieved anonymously from secure cloud storage. No telemetry or user device identifiers are attached to these category fetch requests.",
             ),
 
             const SizedBox(height: 14),

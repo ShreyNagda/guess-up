@@ -31,11 +31,11 @@ class _TeamPassScreenState extends State<TeamPassScreen> {
   void initState() {
     super.initState();
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-    AudioService().extraLightImpact();
+    GameAudioEngine().extraLightImpact();
   }
 
   void _startNextTurn() {
-    AudioService().extraLightImpact();
+    GameAudioEngine().extraLightImpact();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
       DeviceOrientation.landscapeRight,

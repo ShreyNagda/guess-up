@@ -43,7 +43,10 @@ import {
   Wand2,
 } from "lucide-react";
 import { ColorPicker } from "./ColorPicker";
+import { Switch } from "./Switch";
+import { WordTagInput } from "./WordTagInput";
 import { getRandomUnusedColor, getDarkerShade } from "../utils/colorUtils";
+import { normalizeCategory } from "../utils/categoryModel";
 
 const EMOJI_PALETTE = [
   "🎬",
@@ -127,20 +130,7 @@ export const AdminDashboard = () => {
         (snapshot) => {
           const list = [];
           snapshot.forEach((docSnap) => {
-            const data = docSnap.data();
-            list.push({
-              id: docSnap.id,
-              name: data.name || data.title || docSnap.id,
-              icon: data.icon || "🎮",
-              words: Array.isArray(data.words) ? data.words : [],
-              description: data.description || data.desc || "",
-              color: data.color || data.colorHex || "#FFD600",
-              gradientEnd: data.gradientEnd || "#FF9100",
-              isTrending: data.isTrending === true,
-              isAvailable: data.isAvailable !== false,
-              sortOrder:
-                typeof data.sortOrder === "number" ? data.sortOrder : 0,
-            });
+            list.push(normalizeCategory(docSnap.id, docSnap.data()));
           });
           list.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
           setDecksList(list);
@@ -734,7 +724,7 @@ export const AdminDashboard = () => {
               placeholder={`Search ${activeSection}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-card-dark border border-border-dark text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+              className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
             />
           </div>
 
@@ -866,24 +856,12 @@ export const AdminDashboard = () => {
                       </span>
                     </div>
 
-                    <button
-                      type="button"
-                      onClick={() => handleInlineToggleAvailable(deck)}
-                      className={`w-11 h-6 rounded-full transition-colors relative p-1 cursor-pointer ${
-                        deck.isAvailable ? "bg-success" : "bg-white/20"
-                      }`}
-                      title={
-                        deck.isAvailable
-                          ? "Hide deck from players"
-                          : "Show deck to players"
-                      }
-                    >
-                      <div
-                        className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                          deck.isAvailable ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </button>
+                    <Switch
+                      checked={deck.isAvailable}
+                      onChange={() => handleInlineToggleAvailable(deck)}
+                      ariaLabel={deck.isAvailable ? "Hide deck" : "Show deck"}
+                      size="sm"
+                    />
                   </div>
 
                   {/* Action Buttons */}
@@ -1071,7 +1049,7 @@ export const AdminDashboard = () => {
                       value={deckName}
                       onChange={(e) => handleNameChange(e.target.value)}
                       required
-                      className="w-full p-3.5 rounded-2xl bg-surface-card-dark border border-border-dark text-xs font-semibold outline-none focus:border-primary"
+                      className="w-full p-3.5 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary"
                     />
                   </div>
 
@@ -1104,7 +1082,7 @@ export const AdminDashboard = () => {
                       }}
                       disabled={!!editingDeck}
                       required
-                      className="w-full p-3.5 rounded-2xl bg-surface-card-dark border border-border-dark text-xs font-mono font-semibold outline-none focus:border-primary disabled:opacity-50"
+                      className="w-full p-3.5 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-mono font-semibold outline-none focus:border-primary disabled:opacity-50"
                     />
                   </div>
                 </div>
@@ -1144,7 +1122,7 @@ export const AdminDashboard = () => {
                         placeholder="Custom..."
                         value={deckIcon}
                         onChange={(e) => setDeckIcon(e.target.value)}
-                        className="w-24 p-2 rounded-xl bg-surface-card-dark border border-border-dark text-center text-sm outline-none focus:border-primary"
+                        className="w-24 p-2 rounded-xl bg-surface-card-dark border border-border-dark/80 text-center text-sm outline-none focus:border-primary"
                       />
                     </div>
                   </div>
@@ -1198,7 +1176,7 @@ export const AdminDashboard = () => {
                         type="number"
                         value={deckSortOrder}
                         onChange={(e) => setDeckSortOrder(e.target.value)}
-                        className="w-full p-2.5 rounded-xl bg-surface-dark border border-border-dark text-xs font-semibold text-white outline-none focus:border-primary transition-all"
+                        className="w-full p-2.5 rounded-xl bg-surface-dark border border-border-dark/80 text-xs font-semibold text-white outline-none focus:border-primary transition-all"
                       />
                     </div>
                   </div>
@@ -1214,7 +1192,7 @@ export const AdminDashboard = () => {
                     placeholder="e.g. Iconic movies, dialogues, & superstars"
                     value={deckDesc}
                     onChange={(e) => setDeckDesc(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-surface-card-dark border border-border-dark text-xs font-semibold outline-none focus:border-primary"
+                    className="w-full p-3 rounded-xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary"
                   />
                 </div>
 
@@ -1245,17 +1223,11 @@ export const AdminDashboard = () => {
                       </div>
                     </div>
 
-                    <div
-                      className={`w-11 h-6 rounded-full transition-colors relative p-1 ${
-                        deckIsAvailable ? "bg-success" : "bg-white/20"
-                      }`}
-                    >
-                      <div
-                        className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                          deckIsAvailable ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </div>
+                    <Switch
+                      checked={deckIsAvailable}
+                      onChange={(val) => setDeckIsAvailable(val)}
+                      ariaLabel="Toggle deck visibility"
+                    />
                   </div>
 
                   {/* Toggle Switch 2: Trending */}
@@ -1279,77 +1251,23 @@ export const AdminDashboard = () => {
                       </div>
                     </div>
 
-                    <div
-                      className={`w-11 h-6 rounded-full transition-colors relative p-1 ${
-                        deckIsTrending ? "bg-orange-500" : "bg-white/20"
-                      }`}
-                    >
-                      <div
-                        className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                          deckIsTrending ? "translate-x-5" : "translate-x-0"
-                        }`}
-                      />
-                    </div>
+                    <Switch
+                      checked={deckIsTrending}
+                      onChange={(val) => setDeckIsTrending(val)}
+                      ariaLabel="Toggle trending status"
+                    />
                   </div>
                 </div>
 
-                {/* VIEW EXISTING WORD CARDS IN INFO DIALOG */}
-                <div className="flex flex-col gap-3 pt-4 border-t border-border-dark">
-                  <div className="flex items-center justify-between">
-                    <label className="text-xs font-black uppercase text-primary tracking-wider flex items-center gap-1.5">
-                      <Tag className="w-4 h-4" /> View Word Cards (
-                      {currentDeckWords.length})
-                    </label>
-
-                    {editingDeck && (
-                      <button
-                        type="button"
-                        onClick={() => openAddWordsModal(editingDeck)}
-                        className="px-3.5 py-1.5 rounded-xl bg-primary text-accent font-extrabold text-xs flex items-center gap-1 hover:scale-105 transition-all cursor-pointer shadow-md"
-                      >
-                        <Plus className="w-3.5 h-3.5" /> Add New Words
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Search inside Info Dialog words */}
-                  <div className="relative">
-                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
-                    <input
-                      type="text"
-                      placeholder="Filter words inside deck..."
-                      value={infoWordsSearch}
-                      onChange={(e) => setInfoWordsSearch(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-card-dark border border-border-dark text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary"
-                    />
-                  </div>
-
-                  {/* Existing Word Chips */}
-                  <div className="max-h-40 overflow-y-auto p-3 rounded-2xl bg-surface-card-dark/40 border border-border-dark flex flex-wrap gap-2">
-                    {filteredCurrentWords.map((word, idx) => (
-                      <span
-                        key={idx}
-                        className="px-3 py-1.5 rounded-xl bg-white/5 border border-border-dark text-xs font-bold text-white flex items-center gap-2 group hover:border-error/50 transition-all"
-                      >
-                        <span>{word}</span>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveSingleWordFromInfo(word)}
-                          className="text-muted-dark hover:text-error transition-colors cursor-pointer"
-                          title="Remove word"
-                        >
-                          <X className="w-3.5 h-3.5" />
-                        </button>
-                      </span>
-                    ))}
-                    {filteredCurrentWords.length === 0 && (
-                      <p className="text-xs text-muted-dark py-4 text-center w-full">
-                        {infoWordsSearch
-                          ? "No words matching search."
-                          : "No word cards in this deck yet."}
-                      </p>
-                    )}
-                  </div>
+                {/* INTERACTIVE WORD CHIPS EDITOR IN INFO DIALOG */}
+                <div className="pt-4 border-t border-border-dark">
+                  <WordTagInput
+                    words={currentDeckWords}
+                    onChange={(newWordsArray) => {
+                      setDeckWordsInput(newWordsArray.join(", "));
+                    }}
+                    placeholder="Add words separated by commas or enter..."
+                  />
                 </div>
 
                 {/* Footer Buttons */}
@@ -1418,47 +1336,14 @@ export const AdminDashboard = () => {
                 className="flex flex-col gap-5"
               >
                 {/* SINGLE COMBINED INPUT FIELD */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark flex items-center justify-between">
-                    <span>
-                      Enter Word Card(s) — Single or Comma Separated *
-                    </span>
-                    {parsedNewWordsList.length > 0 && (
-                      <span className="text-primary font-black text-xs lowercase">
-                        {parsedNewWordsList.length} card(s) ready to append
-                      </span>
-                    )}
-                  </label>
-
-                  <textarea
-                    rows={4}
-                    placeholder="e.g. Sholay, Lagaan, 3 Idiots, Dangal, Pushpa"
-                    value={newWordsInput}
-                    onChange={(e) => setNewWordsInput(e.target.value)}
-                    autoFocus
-                    required
-                    className="w-full p-4 rounded-2xl bg-surface-card-dark border border-border-dark text-xs font-semibold outline-none focus:border-primary transition-all resize-none leading-relaxed"
-                  />
-                </div>
-
-                {/* Parsed Live Chips Preview */}
-                {parsedNewWordsList.length > 0 && (
-                  <div className="flex flex-col gap-1.5">
-                    <span className="text-[0.65rem] font-black uppercase text-muted-dark">
-                      Cards Preview ({parsedNewWordsList.length}):
-                    </span>
-                    <div className="max-h-28 overflow-y-auto p-3 rounded-xl bg-surface-card-dark/60 border border-border-dark flex flex-wrap gap-1.5">
-                      {parsedNewWordsList.map((word, idx) => (
-                        <span
-                          key={idx}
-                          className="px-2.5 py-1 rounded-lg bg-primary/15 border border-primary/30 text-xs font-bold text-primary"
-                        >
-                          {word}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* INTERACTIVE TAG CHIPS FIELD */}
+                <WordTagInput
+                  words={parsedNewWordsList}
+                  onChange={(newWordsArray) => {
+                    setNewWordsInput(newWordsArray.join(", "));
+                  }}
+                  placeholder="Type new words to append..."
+                />
 
                 {/* Footer Buttons */}
                 <div className="flex justify-end gap-3 pt-4 border-t border-border-dark">

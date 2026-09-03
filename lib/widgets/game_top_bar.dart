@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:guess_up/models/team_match_state.dart';
 import 'package:guess_up/theme/app_theme.dart';
+import 'package:guess_up/widgets/rolling_score_ticker.dart';
 
 class GameTopBar extends StatelessWidget {
   final int score;
@@ -104,8 +105,8 @@ class GameTopBar extends StatelessWidget {
                         letterSpacing: 1.5,
                       ),
                     ),
-                    Text(
-                      "$score",
+                    RollingScoreTicker(
+                      targetScore: score,
                       style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 36,
@@ -159,7 +160,7 @@ class GameTopBar extends StatelessWidget {
                         const SizedBox(width: 4),
                         Text(
                           teamMatchState!.isTiebreaker
-                              ? "⚡ TIEBREAKER: ${teamMatchState!.currentTeamName}"
+                              ? "TIEBREAKER: ${teamMatchState!.currentTeamName}"
                               : teamMatchState!.currentTeamName,
                           style: TextStyle(
                             fontWeight: FontWeight.w900,

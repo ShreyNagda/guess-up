@@ -1,12 +1,16 @@
 import React, { useState, useEffect, useRef } from "react";
 import { motion, AnimatePresence } from "motion/react";
+import { Play, RotateCcw, Volume2, VolumeX, Sparkles, RefreshCw } from "lucide-react";
+import { collection, onSnapshot } from "firebase/firestore";
+import { db } from "../lib/firebase";
+import { normalizeCategory } from "../utils/categoryModel";
 
 const DEMO_DECKS = [
   {
     id: "bollywood",
     name: "Bollywood",
     icon: "🎬",
-    color: "#E91E63",
+    color: "#FFD600",
     words: [
       "Dilwale Dulhania Le Jayenge",
       "Shah Rukh Khan",
@@ -15,7 +19,7 @@ const DEMO_DECKS = [
       "Pushpa",
       "Deepika Padukone",
       "Lagaan",
-      "Stree",
+      "Stree 2",
       "Zindagi Na Milegi Dobara",
     ],
   },
@@ -38,7 +42,7 @@ const DEMO_DECKS = [
   {
     id: "food",
     name: "Desi Food",
-    icon: "🍕",
+    icon: "🍔",
     color: "#FF9800",
     words: [
       "Samosa",
@@ -53,7 +57,7 @@ const DEMO_DECKS = [
   },
 ];
 
-// Audio Synth helper using Web Audio API (zero external sound file dependencies)
+// Audio Synth helper using Web Audio API
 const playTone = (type) => {
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -64,8 +68,8 @@ const playTone = (type) => {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
       osc.type = "triangle";
-      osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
-      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+      osc.frequency.setValueAtTime(523.25, ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15);
       gain.gain.setValueAtTime(0.2, ctx.currentTime);
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.2);
       osc.connect(gain);
@@ -134,7 +138,7 @@ const triggerConfetti = (canvasEl) => {
       active = true;
       p.x += p.vx;
       p.y += p.vy;
-      p.vy += 0.4; // gravity
+      p.vy += 0.4;
       p.alpha -= 0.025;
       p.rotation += 5;
 
@@ -155,7 +159,9 @@ const triggerConfetti = (canvasEl) => {
 };
 
 export const InteractiveHeroDemo = () => {
-  const [selectedDeckId, setSelectedDeckId] = useState("bollywood");
+  const [liveDecks, setLiveDecks] = useState([]);
+  const [isLiveLoading, setIsLiveLoading] = useState(true);
+  const [selectedDeckId, setSelectedDeckId] = useState("");
   const [gameState, setGameState] = useState("idle"); // 'idle' | 'playing' | 'ended'
   const [currentDeckWords, setCurrentDeckWords] = useState([]);
   const [wordIndex, setWordIndex] = useState(0);
@@ -165,12 +171,45 @@ export const InteractiveHeroDemo = () => {
   const [flashColor, setFlashColor] = useState(null); // 'green' | 'amber'
   const canvasRef = useRef(null);
 
+  // Subscribe to real-time Firestore 'categories' collection
+  useEffect(() => {
+    let unsubscribe = () => {};
+    try {
+      unsubscribe = onSnapshot(
+        collection(db, "categories"),
+        (snapshot) => {
+          const list = [];
+          snapshot.forEach((docSnap) => {
+            const norm = normalizeCategory(docSnap.id, docSnap.data());
+            if (norm.isAvailable && norm.words && norm.words.length > 0) {
+              list.push(norm);
+            }
+          });
+          list.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+          setLiveDecks(list);
+          setIsLiveLoading(false);
+        },
+        (err) => {
+          console.warn("Firestore live demo subscription fallback:", err);
+          setIsLiveLoading(false);
+        }
+      );
+    } catch (_) {
+      setIsLiveLoading(false);
+    }
+    return () => unsubscribe();
+  }, []);
+
+  const activeDecksList = liveDecks.length > 0 ? liveDecks : DEMO_DECKS;
+
   const activeDeck =
-    DEMO_DECKS.find((d) => d.id === selectedDeckId) || DEMO_DECKS[0];
+    activeDecksList.find((d) => d.id === selectedDeckId || d.deckId === selectedDeckId) ||
+    activeDecksList[0];
 
   const startGame = () => {
-    const shuffled = [...activeDeck.words].sort(() => Math.random() - 0.5);
-    setCurrentDeckWords(shuffled);
+    const rawWords = activeDeck ? activeDeck.words : [];
+    const shuffled = [...rawWords].sort(() => Math.random() - 0.5);
+    setCurrentDeckWords(shuffled.length > 0 ? shuffled : ["Guess Up", "Charades", "Party"]);
     setWordIndex(0);
     setScore(0);
     setPassedCount(0);
@@ -222,37 +261,40 @@ export const InteractiveHeroDemo = () => {
   };
 
   return (
-    <div className="relative w-full max-w-md mx-auto aspect-[9/16] max-h-[580px] bg-slate-950 border-4 border-slate-800 rounded-[40px] shadow-2xl p-4 flex flex-col justify-between overflow-hidden text-white font-sans select-none">
+    <div
+      id="interactive-hero-demo"
+      className="relative w-full max-w-3xl mx-auto aspect-[16/9] min-h-[340px] sm:min-h-[380px] bg-slate-950 border-4 sm:border-6 border-slate-800 rounded-[32px] sm:rounded-[40px] shadow-2xl p-4 sm:p-6 flex flex-col justify-between overflow-hidden text-white font-sans select-none border-bevel-dark"
+    >
       {/* Canvas layer for confetti */}
       <canvas
         ref={canvasRef}
         className="absolute inset-0 pointer-events-none z-30 w-full h-full"
       />
 
-      {/* Screen Notch / Camera Island */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 w-28 h-5 bg-black rounded-full border border-white/10 z-40 flex items-center justify-center gap-2">
-        <div className="w-2.5 h-2.5 rounded-full bg-slate-900 border border-slate-700" />
-        <div className="w-1.5 h-1.5 rounded-full bg-blue-900/60" />
+      {/* Screen Landscape Camera Notch / Island (Left side) */}
+      <div className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-16 bg-black rounded-full border border-white/10 z-40 hidden sm:flex flex-col items-center justify-center gap-2">
+        <div className="w-2 h-2 rounded-full bg-slate-900 border border-slate-700" />
+        <div className="w-1 h-1 rounded-full bg-blue-900/60" />
       </div>
 
-      {/* Background Glow */}
+      {/* Ambient Background Glow */}
       <div
-        className="absolute -inset-10 opacity-20 blur-3xl transition-colors duration-500 pointer-events-none"
-        style={{ backgroundColor: activeDeck.color }}
+        className="absolute -inset-10 opacity-25 blur-3xl transition-colors duration-500 pointer-events-none"
+        style={{ backgroundColor: activeDeck?.color || "#FFD600" }}
       />
 
       {/* Header Bar */}
-      <div className="pt-6 px-3 flex justify-between items-center z-10">
-        <span className="text-xs font-black tracking-wider uppercase text-slate-400 flex items-center gap-1.5">
-          <span>{activeDeck.icon}</span> {activeDeck.name}
+      <div className="px-2 sm:px-6 flex justify-between items-center z-10">
+        <span className="text-xs font-black tracking-wider uppercase text-slate-400 flex items-center gap-2">
+          <span className="text-base">{activeDeck?.icon || "🎮"}</span> {activeDeck?.name || activeDeck?.title || "Bollywood"}
         </span>
-        <div className="bg-white/10 border border-white/15 px-2.5 py-1 rounded-full text-xs font-mono font-bold text-amber-400">
-          🎮 Web Demo
+        <div className="bg-white/10 border border-white/15 px-3 py-1 rounded-full text-xs font-mono font-bold text-primary flex items-center gap-1.5">
+          <Sparkles className="w-3.5 h-3.5 text-primary" /> Live Firestore Data
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-2 py-4">
+      {/* Main Interactive Screen Content */}
+      <div className="flex-1 flex flex-col items-center justify-center relative z-10 px-2 sm:px-6 py-2">
         {/* Flash Effect on guess */}
         <AnimatePresence>
           {flashColor && (
@@ -268,105 +310,111 @@ export const InteractiveHeroDemo = () => {
           )}
         </AnimatePresence>
 
+        {/* IDLE STATE */}
         {gameState === "idle" && (
           <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center text-center gap-5 w-full"
+            className="flex flex-col items-center text-center gap-4 w-full max-w-lg"
           >
-            <div className="w-16 h-16 rounded-3xl bg-primary/20 border-2 border-primary flex items-center justify-center text-3xl shadow-lg">
-              {activeDeck.icon}
+            <div className="w-14 h-14 rounded-2xl bg-primary/20 border-2 border-primary flex items-center justify-center text-3xl shadow-lg">
+              {activeDeck?.icon || "🎮"}
             </div>
             <div>
-              <h3 className="text-2xl font-black uppercase tracking-tight text-white">
-                Quick Charades Demo
+              <h3 className="text-xl sm:text-2xl font-black uppercase tracking-tight text-white">
+                Try Forehead Charades Live Demo
               </h3>
-              <p className="text-xs text-slate-400 mt-1 max-w-xs">
-                Pick a deck below and try guessing 15 seconds of cards on screen!
+              <p className="text-xs text-slate-400 mt-1">
+                Select a live Firestore deck below and test out 15 seconds of landscape tilt gameplay!
               </p>
             </div>
 
-            {/* Deck Selector Pills */}
-            <div className="flex gap-2 w-full justify-center">
-              {DEMO_DECKS.map((d) => (
-                <button
-                  key={d.id}
-                  onClick={() => setSelectedDeckId(d.id)}
-                  className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1 cursor-pointer ${
-                    selectedDeckId === d.id
-                      ? "bg-primary text-black scale-105 shadow-md"
-                      : "bg-white/10 text-slate-300 hover:bg-white/20"
-                  }`}
-                >
-                  <span>{d.icon}</span>
-                  <span>{d.name}</span>
-                </button>
-              ))}
+            {/* Live Firestore Deck Selector Pills */}
+            <div className="flex flex-wrap gap-2 w-full justify-center max-h-24 overflow-y-auto p-1">
+              {activeDecksList.slice(0, 6).map((d) => {
+                const deckKey = d.id || d.deckId;
+                const isSelected = (activeDeck?.id || activeDeck?.deckId) === deckKey;
+                return (
+                  <button
+                    key={deckKey}
+                    onClick={() => setSelectedDeckId(deckKey)}
+                    className={`px-3 py-1.5 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                      isSelected
+                        ? "bg-primary text-accent scale-105 shadow-md"
+                        : "bg-white/10 text-slate-300 hover:bg-white/20"
+                    }`}
+                  >
+                    <span>{d.icon || "🎮"}</span>
+                    <span>{d.name || d.title}</span>
+                  </button>
+                );
+              })}
             </div>
 
             <button
               onClick={startGame}
-              className="w-full max-w-xs py-3.5 bg-primary text-accent font-black text-sm uppercase tracking-wider rounded-2xl shadow-xl hover:scale-105 active:scale-95 transition-all cursor-pointer mt-2"
+              className="w-full max-w-xs py-3 rounded-2xl bg-primary text-accent font-black text-xs uppercase tracking-wider shadow-bevel-gold hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-2"
             >
-              🚀 Start 15s Demo
+              <Play className="w-4 h-4 fill-accent" /> Start 15s Landscape Demo
             </button>
           </motion.div>
         )}
 
+        {/* PLAYING STATE */}
         {gameState === "playing" && (
-          <div className="flex flex-col items-center justify-between h-full w-full py-4">
+          <div className="flex flex-col items-center justify-between h-full w-full py-1">
             {/* Top Game Timer Bar */}
-            <div className="w-full flex items-center justify-between bg-black/40 border border-white/10 px-4 py-2 rounded-2xl">
+            <div className="w-full flex items-center justify-between bg-black/50 border border-white/10 px-4 py-1.5 rounded-xl">
               <div className="flex items-center gap-2">
                 <span className="text-xs text-slate-400 font-bold uppercase">
-                  Time:
+                  Time Left:
                 </span>
-                <span className="text-lg font-black font-mono text-primary animate-pulse">
+                <span className="text-base font-black font-mono text-primary animate-pulse">
                   {timeLeft}s
                 </span>
               </div>
-              <div className="flex items-center gap-3 text-xs font-bold">
-                <span className="text-emerald-400">✓ {score}</span>
-                <span className="text-amber-400">✗ {passedCount}</span>
+              <div className="flex items-center gap-4 text-xs font-black">
+                <span className="text-emerald-400">Correct: ✓ {score}</span>
+                <span className="text-amber-400">Pass: ✗ {passedCount}</span>
               </div>
             </div>
 
-            {/* Active Card Cardboard Container */}
+            {/* Active Cardboard Display */}
             <motion.div
               key={wordIndex}
-              initial={{ scale: 0.8, opacity: 0, y: 15 }}
-              animate={{ scale: 1, opacity: 1, y: 0 }}
-              exit={{ scale: 0.8, opacity: 0, y: -15 }}
-              className="w-full bg-gradient-to-b from-slate-900 to-slate-950 border-3 border-primary/40 rounded-3xl p-6 my-auto text-center shadow-2xl flex flex-col justify-center items-center min-h-[160px]"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              className="w-full bg-gradient-to-b from-slate-900 to-slate-950 border-3 border-primary/50 rounded-2xl p-4 my-auto text-center shadow-2xl flex flex-col justify-center items-center min-h-[110px] sm:min-h-[130px]"
             >
-              <span className="text-[0.65rem] uppercase tracking-widest text-primary font-black mb-2 opacity-80">
+              <span className="text-[0.65rem] uppercase tracking-widest text-primary font-black mb-1 opacity-80">
                 GUESS THE CARD:
               </span>
-              <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight drop-shadow-md">
+              <h2 className="text-xl sm:text-3xl font-black text-white leading-tight drop-shadow-md tracking-wide uppercase">
                 {currentDeckWords[wordIndex]}
               </h2>
             </motion.div>
 
             {/* Simulated Physical Tilt Buttons */}
-            <div className="w-full flex flex-col gap-2 z-20">
-              <p className="text-[0.65rem] text-slate-400 uppercase tracking-wider font-extrabold text-center">
-                Simulated Forehead Motion Controls:
-              </p>
-              <div className="grid grid-cols-2 gap-3">
+            <div className="w-full flex flex-col gap-1.5 z-20">
+              <span className="text-[0.65rem] text-slate-400 uppercase tracking-wider font-extrabold text-center">
+                Simulated Forehead Tilt Controls:
+              </span>
+              <div className="grid grid-cols-2 gap-3 max-w-md mx-auto w-full">
                 <button
                   onClick={() => handleGuess(true)}
-                  className="py-3 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-black text-xs uppercase rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <span>👇 Tilt Down</span>
+                  <span>👇 Tilt Down (Correct)</span>
                   <span className="bg-black/20 px-1.5 py-0.5 rounded text-[0.65rem]">
                     +1
                   </span>
                 </button>
                 <button
                   onClick={() => handleGuess(false)}
-                  className="py-3 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                  className="py-2.5 bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs uppercase rounded-xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
                 >
-                  <span>👆 Tilt Up</span>
+                  <span>👆 Tilt Up (Pass)</span>
                   <span className="bg-black/20 px-1.5 py-0.5 rounded text-[0.65rem]">
                     Pass
                   </span>
@@ -376,63 +424,65 @@ export const InteractiveHeroDemo = () => {
           </div>
         )}
 
+        {/* ENDED STATE */}
         {gameState === "ended" && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center text-center gap-4 w-full"
+            className="flex flex-col items-center text-center gap-3 w-full max-w-md"
           >
-            <div className="text-4xl">🎉</div>
+            <div className="text-3xl">🎉</div>
             <div>
-              <h3 className="text-2xl font-black uppercase text-primary tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-black uppercase text-primary tracking-tight">
                 Demo Complete!
               </h3>
-              <p className="text-xs text-slate-400 mt-1">
+              <p className="text-xs text-slate-400 mt-0.5">
                 You scored <strong>{score} points</strong> in 15 seconds!
               </p>
             </div>
 
-            <div className="bg-black/50 border border-white/10 rounded-2xl p-4 w-full flex justify-around text-center my-2">
+            <div className="bg-black/50 border border-white/10 rounded-2xl p-3 w-full flex justify-around text-center my-1">
               <div>
                 <span className="text-[0.65rem] uppercase font-bold text-slate-400 block">
-                  Correct
+                  Correct Cards
                 </span>
-                <span className="text-xl font-black text-emerald-400">
+                <span className="text-lg font-black text-emerald-400">
                   {score}
                 </span>
               </div>
               <div className="border-r border-white/10" />
               <div>
                 <span className="text-[0.65rem] uppercase font-bold text-slate-400 block">
-                  Passed
+                  Passed Cards
                 </span>
-                <span className="text-xl font-black text-amber-400">
+                <span className="text-lg font-black text-amber-400">
                   {passedCount}
                 </span>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2 w-full">
+            <div className="flex gap-2 w-full">
               <button
                 onClick={startGame}
-                className="w-full py-3 bg-primary text-accent font-black text-xs uppercase tracking-wider rounded-xl shadow-lg hover:scale-105 active:scale-95 transition-all cursor-pointer"
+                className="flex-1 py-2.5 bg-primary text-accent font-black text-xs uppercase tracking-wider rounded-xl shadow-md hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center justify-center gap-1"
               >
-                🔄 Play Demo Again
+                <RotateCcw className="w-3.5 h-3.5" /> Play Again
               </button>
               <button
                 onClick={() => setGameState("idle")}
-                className="w-full py-2 bg-white/10 text-slate-300 font-extrabold text-xs rounded-xl hover:bg-white/20 transition-all cursor-pointer"
+                className="flex-1 py-2.5 bg-white/10 text-slate-300 font-extrabold text-xs rounded-xl hover:bg-white/20 transition-all cursor-pointer"
               >
-                ← Select Different Deck
+                ← Switch Deck
               </button>
             </div>
           </motion.div>
         )}
       </div>
 
-      {/* Bottom Home Indicator */}
-      <div className="pb-1 flex justify-center z-10">
-        <div className="w-28 h-1 bg-white/30 rounded-full" />
+      {/* Bottom Bar Accent */}
+      <div className="px-2 sm:px-6 flex justify-between items-center text-[0.65rem] font-bold text-slate-500 z-10">
+        <span>GUESS UP CHARADES</span>
+        <span>REAL-TIME FIRESTORE DATA STREAM</span>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import 'package:guess_up/models/team_match_state.dart';
 import 'package:guess_up/screens/result_screen.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/category_service.dart';
+import 'package:guess_up/services/deck_randomizer.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/game_pause_overlay.dart';
 import 'package:guess_up/widgets/game_top_bar.dart';
@@ -77,7 +78,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _fetchInitialWords();
     _setLandscapeOrientation();
     if (widget.teamMatchState?.isTeamMode == true) {
-      AudioService().stopBackgroundMusic();
+      GameAudioEngine().stopBgm();
     }
   }
 
@@ -85,7 +86,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.paused ||
         state == AppLifecycleState.inactive) {
-      AudioService().pauseBackgroundMusic();
+      GameAudioEngine().pauseBgm();
       if (gameTimerController.value.status == TimerStatus.running) {
         gameTimerController.pause();
         if (mounted) {
@@ -111,12 +112,15 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _fetchInitialWords() async {
-    final shuffled = service.getWordsFromSelectedCategories(
+    List<String> shuffled = await DeckRandomizer.getShuffledWordsAsync(
       widget.selectedCategories,
     );
+    if (shuffled.isEmpty && widget.selectedCategories.isNotEmpty) {
+      shuffled = DeckRandomizer.getShuffledWords(widget.selectedCategories);
+    }
     if (mounted) {
       setState(() {
-        wordsList = shuffled..shuffle();
+        wordsList = shuffled;
         isLoadingWords = false;
       });
     }
@@ -149,10 +153,10 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (_isStartingCountdown) return;
     _isStartingCountdown = true;
     if (widget.teamMatchState?.isTeamMode == true) {
-      AudioService().pauseBackgroundMusic();
+      GameAudioEngine().pauseBgm();
     }
-    AudioService().playStartCountdown();
-    AudioService().lightImpact();
+    GameAudioEngine().playStartBeep();
+    GameAudioEngine().lightImpact();
 
     countdownTimer?.cancel();
     countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
@@ -164,7 +168,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         setState(() {
           getReadyCountdown--;
         });
-        AudioService().lightImpact();
+        GameAudioEngine().lightImpact();
       } else {
         timer.cancel();
         _isStartingCountdown = false;
@@ -173,7 +177,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
           isCountdownRunning = false;
           hasStartTimerEnded = true;
         });
-        AudioService().heavyImpact();
+        GameAudioEngine().heavyImpact();
         gameTimerController.start();
       }
     });
@@ -213,7 +217,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     if (wasRunning) {
       gameTimerController.pause();
     }
-    AudioService().lightImpact();
+    GameAudioEngine().lightImpact();
 
     final bool? shouldExit = await showDialog<bool>(
       context: context,
@@ -288,15 +292,15 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
       if (_currentStreak >= 5) {
         pointsAdded = 3;
-        AudioService().playStreakSound();
-        _triggerFeedback("ON FIRE! 🔥🔥 +3");
+        GameAudioEngine().playStreakSfx();
+        _triggerFeedback("ON FIRE! +3");
       } else if (_currentStreak >= 3) {
         pointsAdded = 2;
-        AudioService().playStreakSound();
-        _triggerFeedback("HOT STREAK! 🔥 +2");
+        GameAudioEngine().playStreakSfx();
+        _triggerFeedback("HOT STREAK! +2");
       } else {
-        AudioService().mediumImpact();
-        AudioService().playCorrect();
+        GameAudioEngine().mediumImpact();
+        GameAudioEngine().playCorrectSfx();
         _triggerFeedback("CORRECT! +1");
       }
 
@@ -306,8 +310,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     } else {
       _currentStreak = 0;
       _consecutivePasses++;
-      AudioService().heavyImpact();
-      AudioService().playPass();
+      GameAudioEngine().heavyImpact();
+      GameAudioEngine().playPassSfx();
 
       if (_consecutivePasses >= 5) {
         _consecutivePasses = 0;
@@ -316,7 +320,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
             score = (score - 1).clamp(0, 9999);
           });
         }
-        _triggerFeedback("5 PASSES! ⚠️ -1");
+        _triggerFeedback("5 PASSES! -1");
       } else {
         _triggerFeedback("PASS");
       }
@@ -341,14 +345,14 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _fetchMoreWords() async {
-    final newWords = service.getWordsFromSelectedCategories(
+    final newWords = await DeckRandomizer.getShuffledWordsAsync(
       widget.selectedCategories,
     );
     final existing = wordsList.toSet();
     final uniqueNew = newWords.where((w) => !existing.contains(w)).toList();
     if (uniqueNew.isNotEmpty && mounted) {
       setState(() {
-        wordsList.addAll(uniqueNew..shuffle());
+        wordsList.addAll(uniqueNew);
       });
     }
   }
@@ -360,7 +364,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _subscription?.cancel();
     countdownTimer?.cancel();
     gameTimerController.dispose();
-    AudioService().playBackgroundMusic();
+    GameAudioEngine().startBgm();
     _setPortraitOrientation();
     super.dispose();
   }
@@ -385,14 +389,13 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
               !isCountdownRunning) {
             if (_lastSecondBeeped != rem) {
               _lastSecondBeeped = rem;
-              // AudioService().playStartCountdown();
-              AudioService().lightImpact();
+              GameAudioEngine().lightImpact();
             }
           }
           if (rem == 0 && !isGameFinished) {
             if (!mounted) return;
-            AudioService().playEndingCountdown();
-            AudioService().heavyImpact();
+            GameAudioEngine().playEndBeep();
+            GameAudioEngine().heavyImpact();
             setState(() => isGameFinished = true);
             _setPortraitOrientation();
             Navigator.of(context).pushReplacement(
@@ -418,10 +421,14 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
             final teamColor =
                 widget.teamMatchState?.currentTeamColor ?? AppTheme.teamAColor;
 
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final bgColor =
+                isDark
+                    ? const Color(0xFF0F0F14)
+                    : AppTheme.lightScaffoldBackground;
+
             return Scaffold(
-              backgroundColor: const Color(
-                0xFF0F0F14,
-              ), // Dark gaming canvas for maximum legibility
+              backgroundColor: bgColor,
               body: Container(
                 decoration:
                     isTeamMode
@@ -568,6 +575,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   Widget _buildMainContent(ThemeData theme) {
+    final isDark = theme.brightness == Brightness.dark;
+
     if (isLoadingWords) {
       return const CircularProgressIndicator();
     }
@@ -633,13 +642,15 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                     vertical: 24,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF1E1E28),
+                    color: isDark ? const Color(0xFF1E1E28) : Colors.white,
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
                       color:
                           isTeamMode
                               ? teamColor.withAlpha(180)
-                              : Colors.amber.withAlpha(180),
+                              : (isDark
+                                  ? Colors.amber.withAlpha(180)
+                                  : Colors.amber.shade700),
                       width: 2,
                     ),
                     boxShadow: [
@@ -825,17 +836,17 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                     textAlign: TextAlign.center,
                     maxLines: 3,
                     softWrap: true,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 84,
                       fontWeight: FontWeight.w900,
-                      color: Colors.white,
+                      color: isDark ? Colors.white : const Color(0xFF0F0C1C),
                       height: 1.15,
                       letterSpacing: 0.5,
                       shadows: [
                         Shadow(
-                          color: Colors.black,
-                          blurRadius: 16,
-                          offset: Offset(0, 4),
+                          color: isDark ? Colors.black : Colors.black12,
+                          blurRadius: isDark ? 16 : 4,
+                          offset: const Offset(0, 4),
                         ),
                       ],
                     ),

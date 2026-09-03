@@ -25,7 +25,7 @@ class _TiltDetectorState extends State<TiltDetector> {
   bool isTiltAllowed = true;
 
   double get passThreshold {
-    switch (StorageService().tiltSensitivity) {
+    switch (GameStorageService().tiltSensitivity) {
       case 'Low':
         return 9.5;
       case 'High':
@@ -37,7 +37,7 @@ class _TiltDetectorState extends State<TiltDetector> {
   }
 
   double get correctThreshold {
-    switch (StorageService().tiltSensitivity) {
+    switch (GameStorageService().tiltSensitivity) {
       case 'Low':
         return 8.5;
       case 'High':

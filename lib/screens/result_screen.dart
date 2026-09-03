@@ -8,7 +8,7 @@ import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/screens/home_screen.dart';
 import 'package:guess_up/screens/team_pass_screen.dart';
 import 'package:guess_up/screens/team_winner_screen.dart';
-import 'package:guess_up/services/word_history_service.dart';
+import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
 
@@ -91,11 +91,16 @@ class _ResultScreenState extends State<ResultScreen> {
         final relevantWords =
             shownWords.where((w) => cat.words.contains(w)).toList();
         if (relevantWords.isNotEmpty) {
-          WordHistoryService.markWordsAsPlayed(
-            cat.id,
-            relevantWords,
-            totalDeckWords: cat.words.length,
+          final existing = GameStorageService().getWordCooldown(cat.id);
+          final updated = List<String>.from(existing)..addAll(relevantWords);
+          final maxCapacity = (cat.words.length * 0.65).ceil().clamp(
+            1,
+            cat.words.length,
           );
+          if (updated.length > maxCapacity) {
+            updated.removeRange(0, updated.length - maxCapacity);
+          }
+          GameStorageService().saveWordCooldown(cat.id, updated);
         }
       }
     }
@@ -245,19 +250,59 @@ class _ResultScreenState extends State<ResultScreen> {
                       children: [
                         // Title
                         Flexible(
-                          child: FittedBox(
-                            fit: BoxFit.scaleDown,
-                            child: Text(
-                              titleText,
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 24,
-                                color:
-                                    isDark
-                                        ? Colors.amber
-                                        : theme.colorScheme.primary,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  titleText,
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 22,
+                                    color:
+                                        isDark
+                                            ? Colors.amber
+                                            : theme.colorScheme.primary,
+                                  ),
+                                ),
                               ),
-                            ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: List.generate(3, (index) {
+                                  int stars =
+                                      _currentScore >= 12
+                                          ? 3
+                                          : (_currentScore >= 6
+                                              ? 2
+                                              : (_currentScore >= 1 ? 1 : 0));
+                                  final isEarned = index < stars;
+                                  return TweenAnimationBuilder<double>(
+                                    tween: Tween(
+                                      begin: 0.0,
+                                      end: isEarned ? 1.0 : 0.4,
+                                    ),
+                                    duration: Duration(
+                                      milliseconds: 350 + (index * 180),
+                                    ),
+                                    curve: Curves.elasticOut,
+                                    builder: (context, scale, child) {
+                                      return Transform.scale(
+                                        scale: scale,
+                                        child: Icon(
+                                          Icons.star_rounded,
+                                          size: 22,
+                                          color:
+                                              isEarned
+                                                  ? Colors.amber
+                                                  : Colors.white24,
+                                        ),
+                                      );
+                                    },
+                                  );
+                                }),
+                              ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 14),

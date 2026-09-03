@@ -1,11 +1,11 @@
 import 'dart:math';
 import 'package:guess_up/models/category.dart';
-import 'package:guess_up/services/word_history_service.dart';
+import 'package:guess_up/services/storage_service.dart';
 
 class DeckRandomizer {
   static final Random _random = Random();
 
-  /// Async shuffled word generator respecting WordHistoryService de-duplication
+  /// Async shuffled word generator respecting GameStorageService word cooldowns
   static Future<List<String>> getShuffledWordsAsync(
     List<Category> selectedCategories,
   ) async {
@@ -15,9 +15,11 @@ class DeckRandomizer {
     int maxCategoryWordCount = 0;
 
     for (final category in selectedCategories) {
-      final unplayed = await WordHistoryService.getUnplayedWords(category);
-      if (unplayed.isNotEmpty) {
-        final shuffled = List<String>.from(unplayed)..shuffle(_random);
+      final cooldown = GameStorageService().getWordCooldown(category.id);
+      final unplayed = category.words.where((w) => !cooldown.contains(w)).toList();
+      final wordsToUse = unplayed.isNotEmpty ? unplayed : category.words;
+      if (wordsToUse.isNotEmpty) {
+        final shuffled = List<String>.from(wordsToUse)..shuffle(_random);
         categoryWordPools[category.id] = shuffled;
         if (shuffled.length > maxCategoryWordCount) {
           maxCategoryWordCount = shuffled.length;

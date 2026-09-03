@@ -50,10 +50,10 @@ export const Story = () => {
             </div>
             <h3 className="text-xl font-bold">2. The Technology</h3>
             <p className="text-sm text-muted-light dark:text-muted-dark leading-relaxed">
-              Built with Flutter, **Guess Up** reads raw hardware accelerometer
-              and gyroscope streams directly. By processing real-time
-              orientation vectors, the game detects subtle tilt-down (Correct)
-              and tilt-up (Pass) motions only while the timer is active.
+              **Guess Up** reads real-time motion sensor and gyroscope streams
+              directly. By processing live orientation vectors, the game detects
+              smooth tilt-down (Correct) and tilt-up (Pass) gestures
+              effortlessly.
             </p>
           </motion.div>
 

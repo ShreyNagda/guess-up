@@ -1,14 +1,16 @@
-import 'package:flutter/cupertino.dart';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:guess_up/models/category.dart';
 import 'package:guess_up/models/team_match_state.dart';
 import 'package:guess_up/screens/game_screen.dart';
-import 'package:guess_up/screens/home_screen.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
+import 'package:guess_up/widgets/arcade_page_route.dart';
+import 'package:guess_up/widgets/bouncy_game_button.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
 class OnboardingScreen extends StatefulWidget {
   final bool isRevisiting;
@@ -29,1075 +31,1064 @@ class OnboardingScreen extends StatefulWidget {
 }
 
 class _OnboardingScreenState extends State<OnboardingScreen> {
-  final StorageService _storageService = StorageService();
-  final PageController _pageController = PageController();
-  int _currentPage = 0;
-  static const int _totalPages = 4;
+  final GameStorageService _storageService = GameStorageService();
+  final GameAudioEngine _audioEngine = GameAudioEngine();
+
+  // Mode 1: Interactive Landscape Motion Practice State
+  StreamSubscription<AccelerometerEvent>? _accelSubscription;
+  int _practiceStage = 1; // 1: Forehead, 2: Tilt Down, 3: Tilt Up, 4: Complete
+  Color _flashColor = Colors.transparent;
+  bool _canDetectGesture = true;
+
+  // Mode 2: Single-Page Rules List State
   bool _dontShowAgain = false;
 
   @override
   void initState() {
     super.initState();
-    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
     _dontShowAgain = _storageService.dontShowHowToPlay;
+
+    if (widget.isRevisiting) {
+      _setPortraitOnly();
+    } else {
+      _setLandscapeOnly();
+      _startAccelerometerListener();
+    }
+  }
+
+  void _setPortraitOnly() {
+    SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  }
+
+  void _setLandscapeOnly() {
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
+    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
+  }
+
+  void _startAccelerometerListener() {
+    _accelSubscription = accelerometerEventStream().listen((event) {
+      if (!_canDetectGesture || widget.isRevisiting || _practiceStage > 3) {
+        return;
+      }
+
+      final double z = event.z;
+
+      // Stage 1: Hold Flat Vertical against Forehead (|z| < 3.5)
+      if (_practiceStage == 1 && z.abs() < 3.5) {
+        _advanceStage(2, Colors.blueAccent, () {
+          _audioEngine.mediumImpact();
+        });
+      }
+      // Stage 2: Tilt Down for Correct (z < -4.5 or screen down)
+      else if (_practiceStage == 2 && z < -4.5) {
+        _advanceStage(3, Colors.greenAccent, () {
+          _audioEngine.playCorrectSfx();
+        });
+      }
+      // Stage 3: Tilt Up to Pass (z > 4.5 or screen up)
+      else if (_practiceStage == 3 && z > 4.5) {
+        _advanceStage(4, Colors.redAccent, () {
+          _audioEngine.playPassSfx();
+        });
+      }
+    });
+  }
+
+  void _advanceStage(int nextStage, Color flash, VoidCallback onTrigger) async {
+    setState(() {
+      _canDetectGesture = false;
+      _flashColor = flash;
+    });
+    _audioEngine.mediumImpact();
+    onTrigger();
+
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    if (mounted) {
+      setState(() {
+        _practiceStage = nextStage;
+        _flashColor = Colors.transparent;
+      });
+      await Future.delayed(const Duration(milliseconds: 500));
+      if (mounted) {
+        setState(() {
+          _canDetectGesture = true;
+        });
+      }
+    }
   }
 
   @override
   void dispose() {
-    _pageController.dispose();
+    _accelSubscription?.cancel();
     super.dispose();
   }
 
-  Future<void> _handleStartPlay() async {
+  Future<void> _handleStartGame() async {
     await _storageService.setDontShowHowToPlay(_dontShowAgain);
     await _storageService.setOnboardingSeen(true);
 
     if (!mounted) return;
 
-    if (widget.selectedCategories != null) {
+    if (widget.selectedCategories != null &&
+        widget.selectedCategories!.isNotEmpty) {
       final time = widget.gameTime ?? _storageService.gameDuration;
       Navigator.of(context).pushReplacement(
-        CupertinoPageRoute(
-          builder:
-              (_) => GameScreen(
-                time: time,
-                selectedCategories: widget.selectedCategories!,
-                teamMatchState: widget.teamMatchState,
-              ),
+        ArcadePageRoute(
+          page: GameScreen(
+            time: time,
+            selectedCategories: widget.selectedCategories!,
+            teamMatchState: widget.teamMatchState,
+          ),
         ),
       );
-    } else if (widget.isRevisiting && Navigator.canPop(context)) {
-      Navigator.of(context).pop();
     } else {
-      Navigator.of(
-        context,
-      ).pushReplacement(CupertinoPageRoute(builder: (_) => const HomeScreen()));
+      _setPortraitOnly();
+      Navigator.of(context).pop();
     }
   }
 
-  void _nextPage() {
-    if (_currentPage < _totalPages - 1) {
-      _pageController.nextPage(
-        duration: const Duration(milliseconds: 350),
-        curve: Curves.easeInOutCubic,
-      );
-    } else {
-      _handleStartPlay();
-    }
+  void _handleExitRules() {
+    _audioEngine.lightImpact();
+    _storageService.setDontShowHowToPlay(_dontShowAgain);
+    _setPortraitOnly();
+    Navigator.of(context).pop();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final isDark = theme.brightness == Brightness.dark;
-    final primaryColor =
-        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
-    final textColor =
-        isDark ? AppTheme.darkTextColor : AppTheme.lightAccentColor;
-    final cardBgColor =
-        isDark ? AppTheme.darkSurfaceColor : AppTheme.lightSurfaceColor;
+    if (widget.isRevisiting) {
+      return _buildSinglePageRulesGuide(context);
+    } else {
+      return _buildInteractiveLandscapePractice(context);
+    }
+  }
+
+  // =========================================================================
+  // TYPE 1: INTERACTIVE LANDSCAPE MOTION PRACTICE (Shown Before Actual Game)
+  // =========================================================================
+  Widget _buildInteractiveLandscapePractice(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor: theme.scaffoldBackgroundColor,
-      body: AmbientBackground(
-        ambientColor: primaryColor,
-        child: SafeArea(
-          child: Column(
-            children: [
-              // Top Bar Header
-              Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0,
-                  vertical: 8.0,
-                ),
-                child: Row(
-                  children: [
-                    if (widget.isRevisiting || Navigator.canPop(context))
-                      IconButton(
-                        icon: const Icon(Icons.arrow_back_ios_new_rounded),
-                        onPressed: () {
-                          if (Navigator.canPop(context)) {
-                            Navigator.of(context).pop();
-                          } else {
-                            Navigator.of(context).pushReplacement(
-                              CupertinoPageRoute(
-                                builder: (_) => const HomeScreen(),
-                              ),
-                            );
-                          }
-                        },
-                      )
-                    else
-                      const SizedBox(width: 48),
+      backgroundColor:
+          isDark ? const Color(0xFF0E0C1C) : const Color(0xFF130E26),
+      body: Stack(
+        children: [
+          // Background Aura
+          Positioned.fill(
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              color: _flashColor.withAlpha(
+                _flashColor == Colors.transparent ? 0 : 70,
+              ),
+            ),
+          ),
 
-                    Expanded(
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: primaryColor.withAlpha(30),
-                            borderRadius: BorderRadius.circular(20),
-                            border: Border.all(
-                              color: primaryColor.withAlpha(80),
-                            ),
-                          ),
-                          child: Text(
-                            "STEP ${_currentPage + 1} OF $_totalPages",
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w900,
-                              color: primaryColor,
-                              letterSpacing: 1.5,
-                            ),
-                          ),
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+              child: Column(
+                children: [
+                  // Top Header Bar
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 6,
                         ),
-                      ),
-                    ),
-
-                    if (_currentPage < _totalPages - 1)
-                      TextButton(
-                        onPressed: _handleStartPlay,
-                        child: Text(
-                          "SKIP",
+                        decoration: BoxDecoration(
+                          color: Colors.amberAccent,
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: const Text(
+                          "PRACTICE MODE",
                           style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            color: textColor.withAlpha(180),
+                            fontWeight: FontWeight.w900,
+                            fontSize: 12,
+                            color: Colors.black,
                             letterSpacing: 1,
                           ),
                         ),
-                      )
-                    else
-                      const SizedBox(width: 48),
-                  ],
-                ),
-              ),
-
-              // Multi-Slide PageView Carousel
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  onPageChanged: (index) {
-                    setState(() => _currentPage = index);
-                  },
-                  physics: const BouncingScrollPhysics(),
-                  children: [
-                    // Slide 1: Forehead Placement
-                    _buildSlide1(
-                      theme,
-                      isDark,
-                      primaryColor,
-                      textColor,
-                      cardBgColor,
-                    ),
-
-                    // Slide 2: Tilt Controls
-                    _buildSlide2(
-                      theme,
-                      isDark,
-                      primaryColor,
-                      textColor,
-                      cardBgColor,
-                    ),
-
-                    // Slide 3: Game Modes
-                    _buildSlide3(
-                      theme,
-                      isDark,
-                      primaryColor,
-                      textColor,
-                      cardBgColor,
-                    ),
-
-                    // Slide 4: Pro Tips & Ready
-                    _buildSlide4(
-                      theme,
-                      isDark,
-                      primaryColor,
-                      textColor,
-                      cardBgColor,
-                    ),
-                  ],
-                ),
-              ),
-
-              // Bottom Control Section
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20.0, 8.0, 20.0, 16.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Page Indicator Dots
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(_totalPages, (index) {
-                        final isActive = index == _currentPage;
-                        return AnimatedContainer(
-                          duration: const Duration(milliseconds: 300),
-                          margin: const EdgeInsets.symmetric(horizontal: 4),
-                          width: isActive ? 28 : 8,
-                          height: 8,
+                      ),
+                      BouncyGameButton(
+                        onTap: _handleStartGame,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 14,
+                            vertical: 6,
+                          ),
                           decoration: BoxDecoration(
-                            color:
-                                isActive
-                                    ? primaryColor
-                                    : textColor.withAlpha(40),
-                            borderRadius: BorderRadius.circular(4),
+                            color: Colors.white.withAlpha(25),
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: Colors.white38),
                           ),
-                        );
-                      }),
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Don't show again toggle
-                    if (!widget.isRevisiting) ...[
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          SizedBox(
-                            height: 24,
-                            width: 24,
-                            child: Checkbox(
-                              value: _dontShowAgain,
-                              onChanged: (val) {
-                                if (val != null) {
-                                  setState(() => _dontShowAgain = val);
-                                }
-                              },
-                              activeColor: primaryColor,
-                              checkColor: AppTheme.darkAccentColor,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(4),
-                              ),
+                          child: const Text(
+                            "SKIP TUTORIAL",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 11,
+                              color: Colors.white,
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          GestureDetector(
-                            onTap: () {
-                              setState(() => _dontShowAgain = !_dontShowAgain);
-                            },
-                            child: Text(
-                              "Don't show this again",
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontWeight: FontWeight.w600,
-                                color: textColor.withAlpha(200),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
                     ],
+                  ),
 
-                    const SizedBox(height: 12),
+                  Expanded(child: Center(child: _buildStageContent(context))),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-                    // Primary CTA Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 54,
-                      child: ElevatedButton(
-                        onPressed: _nextPage,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primaryColor,
-                          foregroundColor: AppTheme.darkAccentColor,
-                          elevation: 6,
-                          shadowColor: primaryColor.withAlpha(100),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(18),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              _currentPage == _totalPages - 1
-                                  ? (widget.isRevisiting
-                                      ? "GOT IT!"
-                                      : "LET'S PLAY! 🎉")
-                                  : "NEXT",
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w900,
-                                letterSpacing: 1.5,
-                              ),
-                            ),
-                            if (_currentPage < _totalPages - 1) ...[
-                              const SizedBox(width: 8),
-                              const Icon(Icons.arrow_forward_rounded, size: 20),
-                            ],
-                          ],
-                        ),
+  Widget _buildStageContent(BuildContext context) {
+    switch (_practiceStage) {
+      case 1:
+        return _buildPracticeCard(
+          stageText: "STEP 1 OF 3",
+          title: "HOLD PHONE ON FOREHEAD",
+          description:
+              "Place your phone vertically against your forehead facing your friends!",
+          icon: Icons.phone_android_rounded,
+          accentColor: Colors.blueAccent,
+          instructionPill: "HOLD FLAT VERTICAL",
+        );
+      case 2:
+        return _buildPracticeCard(
+          stageText: "STEP 2 OF 3",
+          title: "TILT DOWN FOR CORRECT!",
+          description:
+              "Guess the word right? Tilt your phone DOWN towards the floor!",
+          icon: Icons.arrow_downward_rounded,
+          accentColor: Colors.greenAccent,
+          instructionPill: "PHYSICALLY TILT PHONE DOWN NOW",
+        );
+      case 3:
+        return _buildPracticeCard(
+          stageText: "STEP 3 OF 3",
+          title: "TILT UP TO PASS!",
+          description:
+              "Stuck on a word? Tilt your phone UP towards the ceiling to pass!",
+          icon: Icons.arrow_upward_rounded,
+          accentColor: Colors.redAccent,
+          instructionPill: "PHYSICALLY TILT PHONE UP NOW",
+        );
+      case 4:
+      default:
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: const BoxDecoration(
+                color: Colors.greenAccent,
+                shape: BoxShape.circle,
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.greenAccent,
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                Icons.check_rounded,
+                size: 48,
+                color: Colors.black,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              "TUTORIAL COMPLETE!",
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.w900,
+                color: Colors.white,
+                letterSpacing: 1.5,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              "You have mastered the tilt gestures!",
+              style: TextStyle(fontSize: 14, color: Colors.white70),
+            ),
+            const SizedBox(height: 24),
+            BouncyGameButton(
+              onTap: _handleStartGame,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 36,
+                  vertical: 14,
+                ),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFFEA00), Color(0xFFFF9100)],
+                  ),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: Colors.white, width: 2.5),
+                  boxShadow: const [
+                    BoxShadow(color: Color(0xFF8E4800), offset: Offset(0, 4)),
+                  ],
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      "START GAME NOW",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 16,
+                        color: Colors.black,
+                        letterSpacing: 1.2,
                       ),
+                    ),
+                    SizedBox(width: 8),
+                    Icon(
+                      Icons.play_arrow_rounded,
+                      color: Colors.black,
+                      size: 26,
                     ),
                   ],
                 ),
               ),
-            ],
+            ),
+          ],
+        );
+    }
+  }
+
+  Widget _buildPracticeCard({
+    required String stageText,
+    required String title,
+    required String description,
+    required IconData icon,
+    required Color accentColor,
+    required String instructionPill,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(24),
+      decoration: BoxDecoration(
+        color: const Color(0xFF1E1938),
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: accentColor, width: 2.5),
+        boxShadow: const [
+          BoxShadow(
+            color: Colors.black54,
+            blurRadius: 16,
+            offset: Offset(0, 6),
           ),
+        ],
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: accentColor.withAlpha(40),
+              shape: BoxShape.circle,
+              border: Border.all(color: accentColor, width: 2),
+            ),
+            child: Icon(icon, size: 40, color: accentColor),
+          ),
+          const SizedBox(width: 20),
+          Expanded(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  stageText,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                    color: accentColor,
+                    letterSpacing: 1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.white70,
+                    height: 1.3,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withAlpha(120),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: accentColor.withAlpha(120)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      SizedBox(
+                        width: 12,
+                        height: 12,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: accentColor,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        instructionPill,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          color: accentColor,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // =========================================================================
+  // TYPE 2: SINGLE-PAGE RULES LIST OF CARDS (Shown outside game screen)
+  // =========================================================================
+  Widget _buildSinglePageRulesGuide(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    final primaryColor =
+        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
+    final scaffoldBg =
+        isDark ? const Color(0xFF0E0C1C) : const Color(0xFF2832FA);
+    final cardBg = isDark ? const Color(0xFF1E1938) : Colors.white;
+    final cardBorder =
+        isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(15);
+    final textColor = isDark ? Colors.white : const Color(0xFF0F0C1C);
+    final stepHeaderColor =
+        isDark ? AppTheme.darkPrimaryColor : const Color(0xFF8C96C1);
+    final backBtnColor =
+        isDark ? const Color(0xFF261F47) : const Color(0xFF1E24AA);
+
+    return Scaffold(
+      backgroundColor: scaffoldBg,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+        leading: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: BouncyGameButton(
+            onTap: _handleExitRules,
+            child: Container(
+              decoration: BoxDecoration(
+                color: backBtnColor,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color:
+                      isDark
+                          ? AppTheme.darkPrimaryColor.withAlpha(100)
+                          : Colors.white24,
+                ),
+              ),
+              child: Icon(
+                Icons.arrow_back_rounded,
+                color: isDark ? AppTheme.darkPrimaryColor : Colors.white,
+                size: 22,
+              ),
+            ),
+          ),
+        ),
+        title: const Text(
+          "How to Play",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+      ),
+      body: AmbientBackground(
+        ambientColor: isDark ? primaryColor : const Color(0xFF2832FA),
+        child: ListView(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          physics: const BouncingScrollPhysics(),
+          children: [
+            // Step 1: Choose Deck
+            _buildTutorialCard(
+              stepText: "Step 1",
+              child: _buildStep1Content(isDark: isDark, textColor: textColor),
+              isDark: isDark,
+              cardBg: cardBg,
+              cardBorder: cardBorder,
+              stepHeaderColor: stepHeaderColor,
+            ),
+            const SizedBox(height: 16),
+
+            // Step 2: Forehead Placement
+            _buildTutorialCard(
+              stepText: "Step 2",
+              child: _buildStep2Content(isDark: isDark, textColor: textColor),
+              isDark: isDark,
+              cardBg: cardBg,
+              cardBorder: cardBorder,
+              stepHeaderColor: stepHeaderColor,
+            ),
+            const SizedBox(height: 16),
+
+            // Step 3: Friends Clues
+            _buildTutorialCard(
+              stepText: "Step 3",
+              child: _buildStep3Content(isDark: isDark, textColor: textColor),
+              isDark: isDark,
+              cardBg: cardBg,
+              cardBorder: cardBorder,
+              stepHeaderColor: stepHeaderColor,
+            ),
+            const SizedBox(height: 16),
+
+            // Step 4: Tilt Up Pass & Tilt Down Correct Gestures
+            _buildTutorialCard(
+              stepText: "Step 4",
+              child: _buildStep4Content(isDark: isDark, textColor: textColor),
+              isDark: isDark,
+              cardBg: cardBg,
+              cardBorder: cardBorder,
+              stepHeaderColor: stepHeaderColor,
+            ),
+            const SizedBox(height: 16),
+
+            // Step 5: Have Fun & Let's Play!
+            _buildTutorialCard(
+              stepText: "Step 5",
+              child: _buildStep5Content(
+                isDark: isDark,
+                primaryColor: primaryColor,
+              ),
+              isDark: isDark,
+              cardBg: cardBg,
+              cardBorder: cardBorder,
+              stepHeaderColor: stepHeaderColor,
+            ),
+            const SizedBox(height: 20),
+
+            // Don't show again toggle
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Checkbox(
+                  value: _dontShowAgain,
+                  activeColor:
+                      isDark
+                          ? AppTheme.darkPrimaryColor
+                          : const Color(0xFFFF3567),
+                  checkColor: isDark ? Colors.black : Colors.white,
+                  side: BorderSide(
+                    color: isDark ? Colors.white70 : Colors.white70,
+                    width: 1.5,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  onChanged: (val) {
+                    setState(() => _dontShowAgain = val ?? false);
+                  },
+                ),
+                Flexible(
+                  child: Text(
+                    "Don't show tutorial automatically before game",
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: isDark ? Colors.white70 : Colors.white,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+
+            // Bottom Footer Message
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Text(
+                "Thank you for being part of our family and supporting us ❤️",
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.bold,
+                  color: isDark ? Colors.amber.shade200 : Colors.white,
+                  height: 1.35,
+                ),
+              ),
+            ),
+            const SizedBox(height: 28),
+          ],
         ),
       ),
     );
   }
 
-  // --- SLIDE 1: PLACE ON FOREHEAD ---
-  Widget _buildSlide1(
-    ThemeData theme,
-    bool isDark,
-    Color primaryColor,
-    Color textColor,
-    Color cardBgColor,
-  ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: (constraints.maxHeight - 24).clamp(0, double.infinity),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                // Graphic Container
-                Container(
-                  height: 180,
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: cardBgColor,
-                    borderRadius: BorderRadius.circular(28),
-                    border: Border.all(
-                      color: primaryColor.withAlpha(90),
-                      width: 2,
-                    ),
-                    boxShadow: [
-                      BoxShadow(
-                        color: primaryColor.withAlpha(isDark ? 40 : 20),
-                        blurRadius: 20,
-                        spreadRadius: 2,
-                      ),
-                    ],
-                  ),
-                  child: Center(
-                    child: Image.asset(
-                      'assets/images/onboarding/1.webp',
-                      fit: BoxFit.contain,
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                Text(
-                  "PLACE ON FOREHEAD",
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: primaryColor,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Text(
-                  "Hold your phone against your forehead with the screen facing your friends. You can't see the word!",
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: textColor.withAlpha(220),
-                    height: 1.4,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Feature Grid
-                Row(
-                  children: [
-                    Expanded(
-                      child: _buildMiniFeatureCard(
-                        icon: Icons.record_voice_over_rounded,
-                        title: "Friends Give Clues",
-                        description: "They act, dance, or shout out clues!",
-                        primaryColor: primaryColor,
-                        cardBgColor: cardBgColor,
-                        textColor: textColor,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _buildMiniFeatureCard(
-                        icon: Icons.visibility_off_rounded,
-                        title: "No Peeking!",
-                        description: "Keep the screen facing away from you.",
-                        primaryColor: primaryColor,
-                        cardBgColor: cardBgColor,
-                        textColor: textColor,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // --- SLIDE 2: TILT CONTROLS ---
-  Widget _buildSlide2(
-    ThemeData theme,
-    bool isDark,
-    Color primaryColor,
-    Color textColor,
-    Color cardBgColor,
-  ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: (constraints.maxHeight - 24).clamp(0, double.infinity),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "TILT TO SCORE",
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: primaryColor,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Text(
-                  "Hold phone in LANDSCAPE mode against your forehead. Tilt up or down to score!",
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: textColor.withAlpha(220),
-                    height: 1.3,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Tilt Down Card (Green)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color:
-                        isDark ? const Color(0xFF0F2B1D) : Colors.green.shade50,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.greenAccent, width: 2.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.greenAccent.withAlpha(isDark ? 50 : 30),
-                        blurRadius: 14,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: Colors.greenAccent.withAlpha(40),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.south_rounded,
-                              color: Colors.greenAccent,
-                              size: 32,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Text(
-                                      "TILT DOWN",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.greenAccent,
-                                        letterSpacing: 1,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.greenAccent,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Text(
-                                        "CORRECT +1",
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w900,
-                                          color: Colors.black,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  "Tilt phone face-down towards floor when guessed correctly!",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color:
-                                        isDark
-                                            ? Colors.green.shade200
-                                            : Colors.green.shade900,
-                                    height: 1.3,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: InkWell(
-                          onTap: () {
-                            AudioService().mediumImpact();
-                            AudioService().playCorrect();
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.greenAccent.withAlpha(40),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.greenAccent),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.volume_up_rounded, size: 16, color: Colors.greenAccent),
-                                SizedBox(width: 6),
-                                Text(
-                                  "TEST CUE 🔊",
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.greenAccent,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Tilt Up Card (Red)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color:
-                        isDark ? const Color(0xFF331518) : Colors.red.shade50,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(color: Colors.redAccent, width: 2.5),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.redAccent.withAlpha(isDark ? 50 : 30),
-                        blurRadius: 14,
-                        offset: const Offset(0, 4),
-                      ),
-                    ],
-                  ),
-                  child: Column(
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: Colors.redAccent.withAlpha(40),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.north_rounded,
-                              color: Colors.redAccent,
-                              size: 32,
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    const Text(
-                                      "TILT UP",
-                                      style: TextStyle(
-                                        fontSize: 16,
-                                        fontWeight: FontWeight.w900,
-                                        color: Colors.redAccent,
-                                        letterSpacing: 1,
-                                      ),
-                                    ),
-                                    const Spacer(),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                        vertical: 4,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: Colors.redAccent,
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: const Text(
-                                        "PASS (0)",
-                                        style: TextStyle(
-                                          fontSize: 11,
-                                          fontWeight: FontWeight.w900,
-                                          color: Colors.white,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  "Tilt phone face-up towards ceiling to pass if stuck!",
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color:
-                                        isDark
-                                            ? Colors.red.shade200
-                                            : Colors.red.shade900,
-                                    height: 1.3,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 12),
-                      Align(
-                        alignment: Alignment.centerRight,
-                        child: InkWell(
-                          onTap: () {
-                            AudioService().heavyImpact();
-                            AudioService().playPass();
-                          },
-                          borderRadius: BorderRadius.circular(12),
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 6,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.redAccent.withAlpha(40),
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.redAccent),
-                            ),
-                            child: const Row(
-                              mainAxisSize: MainAxisSize.min,
-                              children: [
-                                Icon(Icons.volume_up_rounded, size: 16, color: Colors.redAccent),
-                                SizedBox(width: 6),
-                                Text(
-                                  "TEST CUE 🔊",
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w900,
-                                    color: Colors.redAccent,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // --- SLIDE 3: GAME MODES ---
-  Widget _buildSlide3(
-    ThemeData theme,
-    bool isDark,
-    Color primaryColor,
-    Color textColor,
-    Color cardBgColor,
-  ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: (constraints.maxHeight - 24).clamp(0, double.infinity),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "GAME MODES",
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: primaryColor,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Text(
-                  "Flexible modes for casual quick games or intense team showdowns!",
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: textColor.withAlpha(220),
-                    height: 1.3,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                // Solo Mode Card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: cardBgColor,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: primaryColor.withAlpha(90),
-                      width: 2,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: primaryColor.withAlpha(40),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.bolt_rounded,
-                              color: primaryColor,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            "⚡ Solo Mode",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: textColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        "Mix & Match ANY number of decks together to build your custom mixed party word pool!",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: textColor.withAlpha(200),
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 14),
-
-                // Team Battle Card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(18),
-                  decoration: BoxDecoration(
-                    color: cardBgColor,
-                    borderRadius: BorderRadius.circular(24),
-                    border: Border.all(
-                      color: AppTheme.teamAColor.withAlpha(90),
-                      width: 2,
-                    ),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: AppTheme.teamAColor.withAlpha(40),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.groups_rounded,
-                              color: AppTheme.teamAColor,
-                              size: 24,
-                            ),
-                          ),
-                          const SizedBox(width: 12),
-                          Text(
-                            "⚔️ Team Battle Mode",
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w900,
-                              color: textColor,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(
-                        "Split into Team A vs Team B. Exactly 1 deck is locked for both teams to ensure 100% fair head-to-head competition!",
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: textColor.withAlpha(200),
-                          height: 1.4,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  // --- SLIDE 4: PRO TIPS ---
-  Widget _buildSlide4(
-    ThemeData theme,
-    bool isDark,
-    Color primaryColor,
-    Color textColor,
-    Color cardBgColor,
-  ) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        return SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              minHeight: (constraints.maxHeight - 24).clamp(0, double.infinity),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  "PRO PARTY TIPS",
-                  style: theme.textTheme.headlineSmall?.copyWith(
-                    fontWeight: FontWeight.w900,
-                    color: primaryColor,
-                    letterSpacing: 1.5,
-                  ),
-                ),
-
-                const SizedBox(height: 8),
-
-                Text(
-                  "Keep the game fun, energetic, and fair for everyone!",
-                  textAlign: TextAlign.center,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: textColor.withAlpha(220),
-                    height: 1.3,
-                  ),
-                ),
-
-                const SizedBox(height: 20),
-
-                _buildTipTile(
-                  number: "1",
-                  title: "Act & Clue, No Spelling!",
-                  subtitle:
-                      "No rhyming, no spelling letters, and no pointing at objects in the room!",
-                  primaryColor: primaryColor,
-                  cardBgColor: cardBgColor,
-                  textColor: textColor,
-                ),
-
-                const SizedBox(height: 12),
-
-                _buildTipTile(
-                  number: "2",
-                  title: "Shout Out Loud!",
-                  subtitle:
-                      "Team members can all give clues at the same time for max chaos!",
-                  primaryColor: primaryColor,
-                  cardBgColor: cardBgColor,
-                  textColor: textColor,
-                ),
-
-                const SizedBox(height: 12),
-
-                _buildTipTile(
-                  number: "3",
-                  title: "Beat the Clock!",
-                  subtitle:
-                      "Score as many correct guesses as you can before time expires!",
-                  primaryColor: primaryColor,
-                  cardBgColor: cardBgColor,
-                  textColor: textColor,
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildMiniFeatureCard({
-    required IconData icon,
-    required String title,
-    required String description,
-    required Color primaryColor,
-    required Color cardBgColor,
-    required Color textColor,
+  Widget _buildTutorialCard({
+    required String stepText,
+    required Widget child,
+    required bool isDark,
+    required Color cardBg,
+    required Color cardBorder,
+    required Color stepHeaderColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 22),
       decoration: BoxDecoration(
-        color: cardBgColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: primaryColor.withAlpha(60)),
+        color: cardBg,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: cardBorder, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(isDark ? 80 : 30),
+            blurRadius: 14,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: primaryColor, size: 24),
-          const SizedBox(height: 8),
           Text(
-            title,
+            stepText,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: 17,
               fontWeight: FontWeight.w900,
-              color: textColor,
+              color: stepHeaderColor,
+              letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 4),
-          Text(
-            description,
-            style: TextStyle(
-              fontSize: 11,
-              color: textColor.withAlpha(180),
-              height: 1.3,
-            ),
-          ),
+          const SizedBox(height: 16),
+          child,
         ],
       ),
     );
   }
 
-  Widget _buildTipTile({
-    required String number,
-    required String title,
-    required String subtitle,
+  Widget _buildStep1Content({required bool isDark, required Color textColor}) {
+    return Column(
+      children: [
+        Container(
+          width: 68,
+          height: 68,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFFF9100), Color(0xFFFF3D00)],
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFFFF3D00).withAlpha(80),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Icon(Icons.style_rounded, color: Colors.white, size: 36),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          "Select your favorite category deck to start playing",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+            height: 1.35,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStep2Content({required bool isDark, required Color textColor}) {
+    return Column(
+      children: [
+        Container(
+          width: 68,
+          height: 68,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF29B6F6), Color(0xFF0288D1)],
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF0288D1).withAlpha(80),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.phone_android_rounded,
+            color: Colors.white,
+            size: 36,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          "Place phone on your forehead and guess the words on the screen.",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+            height: 1.35,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStep3Content({required bool isDark, required Color textColor}) {
+    return Column(
+      children: [
+        Container(
+          width: 68,
+          height: 68,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFFAB47BC), Color(0xFF7B1FA2)],
+            ),
+            shape: BoxShape.circle,
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0xFF7B1FA2).withAlpha(80),
+                blurRadius: 12,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: const Icon(
+            Icons.record_voice_over_rounded,
+            color: Colors.white,
+            size: 34,
+          ),
+        ),
+        const SizedBox(height: 14),
+        Text(
+          "Your friends shout clues while you guess before the timer runs out!",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+            height: 1.35,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStep4Content({required bool isDark, required Color textColor}) {
+    return Column(
+      children: [
+        // Pass Section
+        _build3DPhoneGraphic(
+          label: "Pass",
+          screenColor: const Color(0xFFFF3567),
+          arrowColor: const Color(0xFFFF3567),
+          isUp: true,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 14),
+        Text(
+          "Tilt the phone up to pass the word",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+        const SizedBox(height: 20),
+        Divider(
+          color: isDark ? Colors.white24 : Colors.grey.shade200,
+          height: 1,
+          thickness: 1,
+        ),
+        const SizedBox(height: 20),
+
+        // Correct Section
+        _build3DPhoneGraphic(
+          label: "Correct",
+          screenColor: const Color(0xFF00D064),
+          arrowColor: const Color(0xFF00D064),
+          isUp: false,
+          isDark: isDark,
+        ),
+        const SizedBox(height: 14),
+        Text(
+          "Tilt the phone down if you guess correctly",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: textColor,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildStep5Content({
+    required bool isDark,
     required Color primaryColor,
-    required Color cardBgColor,
-    required Color textColor,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: cardBgColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: primaryColor.withAlpha(60)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 36,
-            height: 36,
+    return Column(
+      children: [
+        Text(
+          "Have fun 🥳",
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            color: isDark ? AppTheme.darkPrimaryColor : const Color(0xFFFFC107),
+            letterSpacing: 0.5,
+          ),
+        ),
+        const SizedBox(height: 18),
+        BouncyGameButton(
+          onTap: () {
+            if (widget.selectedCategories != null &&
+                widget.selectedCategories!.isNotEmpty) {
+              _handleStartGame();
+            } else {
+              _handleExitRules();
+            }
+          },
+          child: Container(
+            width: double.infinity,
+            height: 52,
             decoration: BoxDecoration(
-              color: primaryColor,
-              shape: BoxShape.circle,
+              gradient:
+                  isDark
+                      ? const LinearGradient(
+                        colors: [Color(0xFFFFEA00), Color(0xFFFF9100)],
+                      )
+                      : null,
+              color: isDark ? null : const Color(0xFFFF3567),
+              borderRadius: BorderRadius.circular(20),
+              border: isDark ? Border.all(color: Colors.white, width: 2) : null,
+              boxShadow: [
+                BoxShadow(
+                  color:
+                      isDark
+                          ? const Color(0xFF8E4800)
+                          : const Color(0x40FF3567),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
             child: Center(
               child: Text(
-                number,
-                style: const TextStyle(
-                  fontSize: 16,
+                "Let's play!",
+                style: TextStyle(
+                  fontSize: 18,
                   fontWeight: FontWeight.w900,
-                  color: AppTheme.darkAccentColor,
+                  color: isDark ? Colors.black : Colors.white,
+                  letterSpacing: 0.5,
                 ),
               ),
             ),
           ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w900,
-                    color: textColor,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: textColor.withAlpha(180),
-                    height: 1.3,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
+        ),
+      ],
     );
   }
+
+  Widget _build3DPhoneGraphic({
+    required String label,
+    required Color screenColor,
+    required Color arrowColor,
+    required bool isUp,
+    required bool isDark,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        SizedBox(
+          width: 36,
+          height: 48,
+          child: CustomPaint(
+            painter: _CurvedArrowPainter(
+              color: arrowColor,
+              isUp: isUp,
+              isRight: false,
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        Container(
+          width: 165,
+          height: 52,
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF141026) : const Color(0xFF28216A),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color:
+                  isDark
+                      ? AppTheme.darkPrimaryColor.withAlpha(80)
+                      : const Color(0xFF1E1854),
+              width: 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: isDark ? Colors.black54 : const Color(0xFF151040),
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Center(
+            child: Container(
+              width: 145,
+              height: 38,
+              decoration: BoxDecoration(
+                color: screenColor,
+                borderRadius: BorderRadius.circular(10),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withAlpha(40),
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Center(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w900,
+                    color: Colors.white,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 12),
+
+        SizedBox(
+          width: 36,
+          height: 48,
+          child: CustomPaint(
+            painter: _CurvedArrowPainter(
+              color: arrowColor,
+              isUp: isUp,
+              isRight: true,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _CurvedArrowPainter extends CustomPainter {
+  final Color color;
+  final bool isUp;
+  final bool isRight;
+
+  _CurvedArrowPainter({
+    required this.color,
+    required this.isUp,
+    required this.isRight,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint =
+        Paint()
+          ..color = color
+          ..style = PaintingStyle.fill;
+
+    final path = Path();
+    final w = size.width;
+    final h = size.height;
+
+    if (isUp) {
+      if (!isRight) {
+        // Left side curving UP
+        path.moveTo(w * 0.85, h * 0.95);
+        path.quadraticBezierTo(w * 0.05, h * 0.7, w * 0.35, h * 0.25);
+        path.lineTo(w * 0.1, h * 0.4);
+        path.lineTo(w * 0.35, h * 0.05);
+        path.lineTo(w * 0.65, h * 0.3);
+        path.lineTo(w * 0.45, h * 0.25);
+        path.quadraticBezierTo(w * 0.25, h * 0.6, w * 0.85, h * 0.95);
+      } else {
+        // Right side curving UP
+        path.moveTo(w * 0.15, h * 0.95);
+        path.quadraticBezierTo(w * 0.95, h * 0.7, w * 0.65, h * 0.25);
+        path.lineTo(w * 0.35, h * 0.3);
+        path.lineTo(w * 0.65, h * 0.05);
+        path.lineTo(w * 0.9, h * 0.4);
+        path.lineTo(w * 0.55, h * 0.25);
+        path.quadraticBezierTo(w * 0.75, h * 0.6, w * 0.15, h * 0.95);
+      }
+    } else {
+      if (!isRight) {
+        // Left side curving DOWN
+        path.moveTo(w * 0.85, h * 0.05);
+        path.quadraticBezierTo(w * 0.05, h * 0.3, w * 0.35, h * 0.75);
+        path.lineTo(w * 0.1, h * 0.6);
+        path.lineTo(w * 0.35, h * 0.95);
+        path.lineTo(w * 0.65, h * 0.7);
+        path.lineTo(w * 0.45, h * 0.75);
+        path.quadraticBezierTo(w * 0.25, h * 0.4, w * 0.85, h * 0.05);
+      } else {
+        // Right side curving DOWN
+        path.moveTo(w * 0.15, h * 0.05);
+        path.quadraticBezierTo(w * 0.95, h * 0.3, w * 0.65, h * 0.75);
+        path.lineTo(w * 0.35, h * 0.7);
+        path.lineTo(w * 0.65, h * 0.95);
+        path.lineTo(w * 0.9, h * 0.6);
+        path.lineTo(w * 0.55, h * 0.75);
+        path.quadraticBezierTo(w * 0.75, h * 0.4, w * 0.15, h * 0.05);
+      }
+    }
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _CurvedArrowPainter oldDelegate) => false;
 }

@@ -12,58 +12,113 @@ import { FeedbackForm } from "../components/FeedbackForm";
 import { PrivacyPolicy } from "../components/PrivacyPolicy";
 import { AdminAuthModal } from "../components/AdminAuthModal";
 import { UserCheck } from "lucide-react";
+import { normalizeCategory } from "../utils/categoryModel";
 
 const DECKS = [
   {
     deckId: "bollywood_blockbusters",
     icon: "🎬",
     title: "Bollywood Blockbusters",
+    name: "Bollywood Blockbusters",
     subtitle: "Iconic movies, dialogues, & superstars",
-    category: "movies",
-    words:
-      "Sholay, Dilwale Dulhania Le Jayenge, 3 Idiots, KGF, Pathaan, Lagaan, Dangal, Gadar, Bahubali, Kabir Singh, Om Shanti Om, ZNMD, Pushpa, Jawan, Stree 2",
+    description: "Iconic movies, dialogues, & superstars",
+    color: "#FFD600",
+    gradientEnd: "#FF9100",
+    words: [
+      "Sholay",
+      "Dilwale Dulhania Le Jayenge",
+      "3 Idiots",
+      "KGF",
+      "Pathaan",
+      "Lagaan",
+      "Dangal",
+      "Gadar",
+      "Bahubali",
+      "Kabir Singh",
+      "Om Shanti Om",
+      "ZNMD",
+      "Pushpa",
+      "Jawan",
+      "Stree 2",
+    ],
   },
   {
     deckId: "cricket_mania",
     icon: "🏏",
     title: "Cricket Mania",
+    name: "Cricket Mania",
     subtitle: "Legends, IPL moments, & iconic shots",
-    category: "sports",
-    words:
-      "Virat Kohli, MS Dhoni, Sachin Tendulkar, IPL Trophy, Yorker, Super Over, Wankhede, Helicopter Shot, Bouncer, Rohit Sharma, Jasprit Bumrah, World Cup",
+    description: "Legends, IPL moments, & iconic shots",
+    color: "#2196F3",
+    gradientEnd: "#0D47A1",
+    words: [
+      "Virat Kohli",
+      "MS Dhoni",
+      "Sachin Tendulkar",
+      "IPL Trophy",
+      "Yorker",
+      "Super Over",
+      "Wankhede",
+      "Helicopter Shot",
+      "Bouncer",
+      "Rohit Sharma",
+      "Jasprit Bumrah",
+      "World Cup",
+    ],
   },
   {
     deckId: "desi_foodies",
     icon: "🍔",
     title: "Desi Foodies",
+    name: "Desi Foodies",
     subtitle: "Street snacks, delicacies, & cravings",
-    category: "food",
-    words:
-      "Butter Chicken, Pani Puri, Biryani, Samosa, Pav Bhaji, Gulab Jamun, Chole Bhature, Dosa, Vada Pav, Jalebi, Tapri Chai, Momos",
+    description: "Street snacks, delicacies, & cravings",
+    color: "#FF9800",
+    gradientEnd: "#E65100",
+    words: [
+      "Butter Chicken",
+      "Pani Puri",
+      "Biryani",
+      "Samosa",
+      "Pav Bhaji",
+      "Gulab Jamun",
+      "Chole Bhature",
+      "Dosa",
+      "Vada Pav",
+      "Jalebi",
+      "Tapri Chai",
+      "Momos",
+    ],
   },
   {
     deckId: "desi_youth_vibes",
     icon: "😎",
     title: "Desi Youth & Vibes",
+    name: "Desi Youth & Vibes",
     subtitle: "College life, memes, & hostel moments",
-    category: "youth",
-    words:
-      "Bunking Class, Maggi at 2 AM, Auto Rickshaw, Goa Trip Plan, Tapri Chai, Backbenchers, Reel Creator, Jugaad, Shaadi Dance, Street Shopping, Canteen Gossip",
+    description: "College life, memes, & hostel moments",
+    color: "#E91E63",
+    gradientEnd: "#880E4F",
+    words: [
+      "Bunking Class",
+      "Maggi at 2 AM",
+      "Auto Rickshaw",
+      "Goa Trip Plan",
+      "Tapri Chai",
+      "Backbenchers",
+      "Reel Creator",
+      "Jugaad",
+      "Shaadi Dance",
+      "Street Shopping",
+      "Canteen Gossip",
+    ],
   },
-];
-
-const CATEGORY_FILTERS = [
-  { id: "all", label: "All Decks" },
-  { id: "movies", label: "Bollywood" },
-  { id: "sports", label: "Cricket" },
-  { id: "food", label: "Desi Food" },
-  { id: "youth", label: "Youth Vibes" },
 ];
 
 export const LandingPage = () => {
   const [liveDecks, setLiveDecks] = useState([]);
   const [deckSearch, setDeckSearch] = useState("");
-  const [activeCategoryFilter, setActiveCategoryFilter] = useState("all");
+  const [selectedDeckForGame, setSelectedDeckForGame] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -71,24 +126,8 @@ export const LandingPage = () => {
       (snapshot) => {
         const list = [];
         snapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          const nameLower = (data.name || "").toLowerCase();
-          list.push({
-            deckId: docSnap.id,
-            id: docSnap.id,
-            icon: data.icon || "🎮",
-            title: data.name || docSnap.id,
-            subtitle: `${data.words?.length || 0} cards in deck`,
-            words: data.words || [],
-            category:
-              nameLower.includes("movie") || nameLower.includes("bollywood")
-                ? "movies"
-                : nameLower.includes("cricket") || nameLower.includes("sport")
-                  ? "sports"
-                  : nameLower.includes("food") || nameLower.includes("snack")
-                    ? "food"
-                    : "youth",
-          });
+          const norm = normalizeCategory(docSnap.id, docSnap.data());
+          list.push(norm);
         });
         if (list.length > 0) {
           setLiveDecks(list);
@@ -103,36 +142,49 @@ export const LandingPage = () => {
 
   const filteredDecks = baseDecks.filter((deck) => {
     const title = (deck.title || deck.name || "").toLowerCase();
-    const sub = (deck.subtitle || "").toLowerCase();
-    const query = deckSearch.toLowerCase();
-    const matchesSearch = title.includes(query) || sub.includes(query);
-    const matchesCategory =
-      activeCategoryFilter === "all" || deck.category === activeCategoryFilter;
-    return matchesSearch && matchesCategory;
+    const desc = (deck.description || deck.subtitle || "").toLowerCase();
+    const query = deckSearch.toLowerCase().trim();
+    if (!query) return true;
+    return title.includes(query) || desc.includes(query);
   });
+
+  const activeDeck = selectedDeckForGame || baseDecks[0];
+
+  const handlePlayDemoFromHUD = () => {
+    const heroDemoEl = document.getElementById("interactive-hero-demo");
+    if (heroDemoEl) {
+      heroDemoEl.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const handleCreateCustomDeckClick = () => {
+    window.location.href = "/admin";
+  };
 
   return (
     <div className="flex flex-col min-h-screen text-text-light dark:text-text-dark bg-transparent overflow-x-hidden">
       <Header />
 
-      {/* Hero Section */}
-      <Hero />
+      {/* Hero Section with Interactive Demo & Sticky Action HUD */}
+      <Hero
+        activeDeck={activeDeck}
+        onPlayDemoClick={handlePlayDemoFromHUD}
+      />
+
+      {/* Explore Decks Matrix (App Search Bar + 2-Column Supercell 3D Cards) */}
+      <DeckShowcase
+        decks={filteredDecks}
+        searchQuery={deckSearch}
+        onSearchChange={setDeckSearch}
+        onSelectDeckForGame={setSelectedDeckForGame}
+        onCreateCustomDeckClick={handleCreateCustomDeckClick}
+      />
 
       {/* Origin & Developer Story */}
       <Story />
 
       {/* Feature Bento Grid */}
       <BentoGrid />
-
-      {/* Explore Decks Showcase (Interactive Inline Board & Flashcard Simulator) */}
-      <DeckShowcase
-        decks={filteredDecks}
-        categoryFilters={CATEGORY_FILTERS}
-        activeFilter={activeCategoryFilter}
-        onFilterChange={setActiveCategoryFilter}
-        searchQuery={deckSearch}
-        onSearchChange={setDeckSearch}
-      />
 
       {/* Side-by-Side Responsive Forms Container */}
       <section

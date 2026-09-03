@@ -58,7 +58,7 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
     );
 
-    AudioService().heavyImpact();
+    GameAudioEngine().heavyImpact();
   }
 
   @override
@@ -69,7 +69,7 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
   }
 
   void _handleStartTiebreaker() {
-    AudioService().extraLightImpact();
+    GameAudioEngine().extraLightImpact();
     widget.teamState.startTiebreaker();
     Navigator.of(context).pushReplacement(
       CupertinoPageRoute(
@@ -85,7 +85,7 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
   }
 
   void _handleRematch() {
-    AudioService().extraLightImpact();
+    GameAudioEngine().extraLightImpact();
     widget.teamState.resetMatch();
     SystemChrome.setPreferredOrientations([
       DeviceOrientation.landscapeLeft,
@@ -105,21 +105,21 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
   }
 
   void _handleChangeSettings() {
-    AudioService().lightImpact();
+    GameAudioEngine().lightImpact();
     Navigator.of(
       context,
     ).pushReplacement(CupertinoPageRoute(builder: (_) => const SettingsScreen()));
   }
 
   void _handleGoHome() {
-    AudioService().lightImpact();
+    GameAudioEngine().lightImpact();
     Navigator.of(
       context,
     ).pushReplacement(CupertinoPageRoute(builder: (_) => const HomeScreen()));
   }
 
   void _showWordBreakdownModal(BuildContext context) {
-    AudioService().lightImpact();
+    GameAudioEngine().lightImpact();
     final answeredWords =
         widget.lastRoundScoreMap?.entries
             .where((e) => e.value == "Correct" || e.value == "Pass")

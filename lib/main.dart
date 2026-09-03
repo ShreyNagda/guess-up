@@ -1,34 +1,56 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:guess_up/blocs/deck/deck_cubit.dart';
+import 'package:guess_up/blocs/theme/theme_cubit.dart';
+import 'package:guess_up/blocs/theme/theme_state.dart';
 import 'package:guess_up/constants/app_info.dart';
 import 'package:guess_up/screens/animated_splash_screen.dart';
-import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/category_service.dart';
+import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
-import 'package:guess_up/services/theme_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
-import 'package:provider/provider.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
 
   SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
+  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+  SystemChrome.setSystemUIOverlayStyle(
+    const SystemUiOverlayStyle(
+      statusBarColor: Colors.transparent,
+      statusBarIconBrightness: Brightness.light,
+      statusBarBrightness: Brightness.dark,
+      systemNavigationBarColor: Colors.transparent,
+    ),
+  );
 
-  final storageService = StorageService();
+  // 1. Initialize Game Object Storage
+  final storageService = GameStorageService();
   await storageService.init();
 
-  final audioService = AudioService();
-  await audioService.init();
+  // 2. Pre-load Audio RAM Sound Pool Assets in background (non-blocking & fault-tolerant)
+  try {
+    GameAudioEngine().init();
+  } catch (e) {
+    debugPrint("Non-critical audio engine init bypass: $e");
+  }
+
+  final categoryService = CategoryService();
 
   runApp(
-    MultiProvider(
+    MultiBlocProvider(
       providers: [
-        ChangeNotifierProvider(create: (_) => ThemeService()),
-        Provider(create: (_) => CategoryService()),
-        Provider.value(value: storageService),
-        Provider.value(value: audioService),
+        BlocProvider<ThemeCubit>(create: (_) => ThemeCubit(storageService)),
+        BlocProvider<DeckCubit>(
+          create:
+              (_) => DeckCubit(
+                categoryService: categoryService,
+                storageService: storageService,
+              )..loadDecks(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -40,27 +62,29 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final themeService = Provider.of<ThemeService>(context);
-
-    return MaterialApp(
-      title: AppInfo.name,
-      debugShowCheckedModeBanner: false,
-      themeMode: themeService.themeMode,
-      theme: AppTheme.lightTheme,
-      darkTheme: AppTheme.darkTheme,
-      builder: (context, child) {
-        final mediaQuery = MediaQuery.of(context);
-        return MediaQuery(
-          data: mediaQuery.copyWith(
-            textScaler: mediaQuery.textScaler.clamp(
-              minScaleFactor: 0.85,
-              maxScaleFactor: 1.25,
-            ),
-          ),
-          child: child!,
+    return BlocBuilder<ThemeCubit, ThemeState>(
+      builder: (context, themeState) {
+        return MaterialApp(
+          title: AppInfo.name,
+          debugShowCheckedModeBanner: false,
+          themeMode: themeState.themeMode,
+          theme: AppTheme.lightTheme,
+          darkTheme: AppTheme.darkTheme,
+          builder: (context, child) {
+            final mediaQuery = MediaQuery.of(context);
+            return MediaQuery(
+              data: mediaQuery.copyWith(
+                textScaler: mediaQuery.textScaler.clamp(
+                  minScaleFactor: 0.85,
+                  maxScaleFactor: 1.25,
+                ),
+              ),
+              child: child!,
+            );
+          },
+          home: const AnimatedSplashScreen(),
         );
       },
-      home: const AnimatedSplashScreen(),
     );
   }
 }

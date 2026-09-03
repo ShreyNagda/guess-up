@@ -12,6 +12,14 @@ dependencies:
   flutter:
     sdk: flutter
 
+  flutter_bloc: ^9.0.0
+  equatable: ^2.0.7
+  hive: ^2.2.3
+  hive_flutter: ^1.1.0
+  flame_audio: ^2.2.0
+  just_audio: ^0.9.44
+  freezed_annotation: ^2.4.1
+  json_annotation: ^4.9.0
   firebase_core: ^3.13.0
   cloud_firestore: ^5.6.7
   sensors_plus: ^7.1.0
@@ -29,10 +37,16 @@ dependencies:
 dev_dependencies:
   flutter_lints: ^5.0.0
   flutter_launcher_icons: ^0.14.3
+  build_runner: ^2.4.9
+  freezed: ^2.4.7
+  json_serializable: ^6.8.0
+  hive_generator: ^2.0.1
 
 flutter_launcher_icons:
   android: true
-  image_path: "assets/images/logo.png"
+  ios: true
+  image_path: "assets/images/logo-transparent.png"
+  image_path_ios: "assets/images/logo_dark.png"
   adaptive_icon_foreground: "assets/images/logo-transparent.png"
   adaptive_icon_background: "#121212"
 
@@ -55,8 +69,10 @@ flutter:
     - assets/data.json
     - assets/sounds/
     - assets/images/
-    - assets/images/onboarding/
-    - assets/fonts/
+    - assets/images/logo-transparent.png
+    - assets/images/logo_light.png
+    - assets/images/logo_dark.png
+    - assets/images/onboarding/1.webp
 
   fonts:
     - family: Manrope

@@ -3,37 +3,39 @@ import 'package:flutter/material.dart';
 class AppTheme {
   // --- 1. VIBRANT COLOR PALETTE (Yellow & Black) ---
 
-  // Light Theme Palette (High Energy)
-  static const Color lightPrimaryColor = Color(0xFFFFD600); // Electric Yellow
-  static const Color lightAccentColor = Color(0xFF212121); // Deep Black
+  // Light Theme Palette (High Energy Arcade - Crisp High Contrast)
+  static const Color lightPrimaryColor = Color(0xFFFFB700); // Amber Gold
+  static const Color lightAccentColor = Color(
+    0xFF0E0C1C,
+  ); // Deep Charcoal Black
   static const Color lightScaffoldBackground = Color(
-    0xFFFAFAFA,
-  ); // Crisp White/Grey
+    0xFFF4F6FC,
+  ); // Crisp Light Blue/Grey
   static const Color lightSurfaceColor = Colors.white;
-  static const Color lightTextColor = Color(0xFF212121); // Almost Black
+  static const Color lightTextColor = Color(0xFF0F0C1C); // Deep Black Text
 
-  // Dark Theme Palette (Toned Down)
-  static const Color darkPrimaryColor = Color(
-    0xFFFFC107,
-  ); // Amber (Duller Yellow)
-  static const Color darkAccentColor = Color(0xFF121212); // Very Dark Grey
+  // Dark Theme Palette (High Energy Arcade)
+  static const Color darkPrimaryColor = Color(0xFFFFD600); // Electric Gold
+  static const Color darkAccentColor = Color(0xFF130E26); // Dark Arcade Indigo
   static const Color darkScaffoldBackground = Color(
-    0xFF121212,
-  ); // Deep Dark Grey
-  static const Color darkSurfaceColor = Color(0xFF1E1E1E); // Lighter Dark Grey
-  static const Color darkTextColor = Color(0xFFEEEEEE); // Off-White
+    0xFF0E0C1C,
+  ); // Deep Arcade Canvas
+  static const Color darkSurfaceColor = Color(
+    0xFF1E1938,
+  ); // Rich Arcade Violet Surface
+  static const Color darkTextColor = Color(0xFFFFFFFF); // Pure White
 
   // Shared/Utility Colors
   static const Color errorColor = Color(0xFFD32F2F);
-  static const Color hintColor = Color(0xFF9E9E9E);
+  static const Color hintColor = Color(0xFF5A6072);
 
   // --- Soothing Team Mode Palette (Cyan & Magenta) ---
   static Color teamAColor = Colors.cyan.shade200;
   static Color teamBColor = Colors.pink.shade200;
   static const String teamAName = "Team A";
   static const String teamBName = "Team B";
-  static const String teamAEmoji = "🩵";
-  static const String teamBEmoji = "🩷";
+  static const String teamAEmoji = "";
+  static const String teamBEmoji = "";
 
   // --- 2. MODERN TYPESCALE & EMOJI FONT ---
   static const String fontFamily = 'Manrope';

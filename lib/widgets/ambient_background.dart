@@ -1,104 +1,203 @@
-import 'dart:ui';
+import 'dart:math';
 import 'package:flutter/material.dart';
 
-/// A reusable, theme-aware animated ambient background widget with soft blurred color patches.
-class AmbientBackground extends StatelessWidget {
+/// An Industry-Level 2D Arcade Game Ambient Background
+/// Features dynamic floating arcade particles, animated glow blobs, and diagonal mesh grid canvas.
+class AmbientBackground extends StatefulWidget {
   final Color ambientColor;
   final Widget child;
   final Alignment center;
   final double radius;
-  final Duration duration;
 
   const AmbientBackground({
     super.key,
     required this.ambientColor,
     required this.child,
-    this.center = const Alignment(0.0, -0.4),
-    this.radius = 0.85,
-    this.duration = const Duration(milliseconds: 250),
+    this.center = const Alignment(0.0, -0.3),
+    this.radius = 0.95,
   });
+
+  @override
+  State<AmbientBackground> createState() => _AmbientBackgroundState();
+}
+
+class _AmbientBackgroundState extends State<AmbientBackground>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _particleController;
+  final List<_ArcadeParticle> _particles = [];
+  final Random _random = Random();
+
+  @override
+  void initState() {
+    super.initState();
+    _particleController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    )..repeat();
+
+    // Generate 14 floating arcade particles (stars, diamonds, dots)
+    for (int i = 0; i < 14; i++) {
+      _particles.add(
+        _ArcadeParticle(
+          x: _random.nextDouble(),
+          y: _random.nextDouble(),
+          speed: 0.15 + (_random.nextDouble() * 0.25),
+          size: 6 + (_random.nextDouble() * 12),
+          opacity: 0.25 + (_random.nextDouble() * 0.45),
+          isStar: i % 2 == 0,
+        ),
+      );
+    }
+  }
+
+  @override
+  void dispose() {
+    _particleController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color baseBackgroundColor =
-        isDark ? const Color(0xFF121212) : const Color(0xFFF6F7FA);
+        isDark ? const Color(0xFF0E0C1C) : const Color(0xFFF0F3F9);
 
-    return TweenAnimationBuilder<Color?>(
-      tween: ColorTween(begin: ambientColor, end: ambientColor),
-      duration: duration,
-      curve: Curves.easeInOut,
-      builder: (context, animatedColor, builtChild) {
-        final currentColor = animatedColor ?? ambientColor;
-        final int primaryAlpha = isDark ? 65 : 30;
-        final int secondaryAlpha = isDark ? 45 : 18;
+    return RepaintBoundary(
+      child: Stack(
+        children: [
+          // 1. Base Arcade Deep Canvas Color
+          Container(color: baseBackgroundColor),
 
-        return Stack(
-          children: [
-            // Solid Base Color
-            Container(color: baseBackgroundColor),
-
-            // Top-Right Soft Ambient Blob
-            Positioned(
-              top: -60,
-              right: -60,
-              child: _AmbientBlob(
-                color: currentColor.withAlpha(primaryAlpha),
-                size: 300,
+          // 2. Dynamic Radial Color Aura
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            decoration: BoxDecoration(
+              gradient: RadialGradient(
+                center: widget.center,
+                radius: widget.radius,
+                colors: [
+                  widget.ambientColor.withAlpha(isDark ? 110 : 65),
+                  widget.ambientColor.withAlpha(isDark ? 40 : 15),
+                  Colors.transparent,
+                ],
+                stops: const [0.0, 0.55, 1.0],
               ),
             ),
+          ),
 
-            // Bottom-Left Secondary Blob
-            Positioned(
-              bottom: -80,
-              left: -80,
-              child: _AmbientBlob(
-                color: currentColor.withAlpha(secondaryAlpha),
-                size: 300,
-              ),
+          // 3. Diagonal Arcade Mesh Pattern Overlay
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _ArcadeGridPainter(isDark: isDark),
             ),
+          ),
 
-            // Central Soft Radial Aura
-            Container(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: center,
-                  radius: isDark ? radius : (radius + 0.10),
-                  colors: [
-                    currentColor.withAlpha(isDark ? 80 : 45),
-                    Colors.transparent,
-                  ],
-                  stops: const [0.0, 0.75],
-                ),
-              ),
+          // 4. Floating Animated Arcade Particles
+          Positioned.fill(
+            child: AnimatedBuilder(
+              animation: _particleController,
+              builder: (context, _) {
+                return CustomPaint(
+                  painter: _ArcadeParticlePainter(
+                    particles: _particles,
+                    progress: _particleController.value,
+                    particleColor: isDark ? Colors.amberAccent : widget.ambientColor,
+                  ),
+                );
+              },
             ),
+          ),
 
-            // Child Content
-            builtChild ?? const SizedBox.shrink(),
-          ],
-        );
-      },
-      child: child,
+          // 5. Child Foreground Content
+          widget.child,
+        ],
+      ),
     );
   }
 }
 
-class _AmbientBlob extends StatelessWidget {
-  final Color color;
+class _ArcadeParticle {
+  double x;
+  double y;
+  final double speed;
   final double size;
+  final double opacity;
+  final bool isStar;
 
-  const _AmbientBlob({required this.color, required this.size});
+  _ArcadeParticle({
+    required this.x,
+    required this.y,
+    required this.speed,
+    required this.size,
+    required this.opacity,
+    required this.isStar,
+  });
+}
+
+class _ArcadeParticlePainter extends CustomPainter {
+  final List<_ArcadeParticle> particles;
+  final double progress;
+  final Color particleColor;
+
+  _ArcadeParticlePainter({
+    required this.particles,
+    required this.progress,
+    required this.particleColor,
+  });
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: size,
-      height: size,
-      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
-        child: Container(color: Colors.transparent),
-      ),
-    );
+  void paint(Canvas canvas, Size size) {
+    for (final p in particles) {
+      final double currentY = (p.y - (progress * p.speed)) % 1.0;
+      final double px = p.x * size.width;
+      final double py = currentY * size.height;
+
+      final paint = Paint()
+        ..color = particleColor.withAlpha((p.opacity * 255).toInt())
+        ..style = PaintingStyle.fill;
+
+      if (p.isStar) {
+        // Draw 4-point Star
+        final path = Path();
+        final double s = p.size;
+        path.moveTo(px, py - s);
+        path.quadraticBezierTo(px, py, px + s, py);
+        path.quadraticBezierTo(px, py, px, py + s);
+        path.quadraticBezierTo(px, py, px - s, py);
+        path.quadraticBezierTo(px, py, px, py - s);
+        canvas.drawPath(path, paint);
+      } else {
+        // Draw Soft Glowing Circle
+        canvas.drawCircle(Offset(px, py), p.size * 0.4, paint);
+      }
+    }
   }
+
+  @override
+  bool shouldRepaint(covariant _ArcadeParticlePainter oldDelegate) => true;
+}
+
+class _ArcadeGridPainter extends CustomPainter {
+  final bool isDark;
+
+  _ArcadeGridPainter({required this.isDark});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = (isDark ? Colors.white : Colors.black).withAlpha(isDark ? 8 : 12)
+      ..strokeWidth = 1.2;
+
+    const double step = 28.0;
+    for (double i = -size.height; i < size.width + size.height; i += step) {
+      canvas.drawLine(
+        Offset(i, 0),
+        Offset(i + size.height, size.height),
+        paint,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant _ArcadeGridPainter oldDelegate) => false;
 }

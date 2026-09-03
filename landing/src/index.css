@@ -6,29 +6,42 @@
   --font-sans: "Manrope", sans-serif;
 
   --color-primary: #ffd600;
-  --color-primary-dark: #ffc107;
-  --color-accent: #212121;
+  --color-primary-dark: #ffb700;
+  --color-accent: #0e0c1c;
 
-  --color-bg-dark: #121212;
-  --color-bg-light: #fafafa;
+  --color-bg-dark: #0e0c1c;
+  --color-bg-light: #f4f6fc;
 
-  --color-surface-dark: #1e1e1e;
+  --color-surface-dark: #1e1938;
   --color-surface-light: #ffffff;
-  --color-surface-card-dark: #252525;
-  --color-surface-card-light: #f1f1f1;
+  --color-surface-card-dark: #261f47;
+  --color-surface-card-light: #f8fafc;
 
-  --color-text-dark: #eeeeee;
-  --color-text-light: #212121;
-  --color-muted-dark: #9e9e9e;
-  --color-muted-light: #666666;
+  --color-text-dark: #ffffff;
+  --color-text-light: #0f0c1c;
+  --color-muted-dark: #a099c0;
+  --color-muted-light: #5a6072;
 
-  --color-border-dark: #2c2c2c;
-  --color-border-light: #eeeeee;
+  --color-border-dark: rgba(255, 255, 255, 0.12);
+  --color-border-light: rgba(0, 0, 0, 0.1);
 
   --color-error: #d32f2f;
-  --color-success: #388e3c;
+  --color-success: #00e676;
   --color-team-a: #80deea;
   --color-team-b: #f48fb1;
+}
+
+/* Supercell 3D Bevel Shadow Helper Utilities */
+.shadow-bevel-dark {
+  box-shadow: 0px 6px 0px #0c091a;
+}
+
+.shadow-bevel-light {
+  box-shadow: 0px 6px 0px rgba(0, 0, 0, 0.15);
+}
+
+.shadow-bevel-gold {
+  box-shadow: 0px 6px 0px #c7a700;
 }
 
 /* Scrollbar */
@@ -51,14 +64,14 @@
   background-clip: padding-box;
 }
 .light ::-webkit-scrollbar-thumb {
-  background: rgba(33, 33, 33, 0.3);
+  background: rgba(14, 12, 28, 0.3);
 }
 * {
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 214, 0, 0.3) transparent;
 }
 .light * {
-  scrollbar-color: rgba(33, 33, 33, 0.3) transparent;
+  scrollbar-color: rgba(14, 12, 28, 0.3) transparent;
 }
 
 html {

@@ -5,94 +5,117 @@ enum TeamColor { cyan, magenta }
 
 class TeamMatchState {
   final bool isTeamMode;
-  TeamColor currentTeam;
-  int teamCyanScore;
-  int teamMagentaScore;
-  int currentRound;
-  int maxRounds;
-  bool isMatchFinished;
-  bool isTiebreaker;
+  TeamColor _currentTeam;
+  TeamColor? _lastPlayingTeam;
+  int _teamCyanScore;
+  int _teamMagentaScore;
+  int _currentRound;
+  int _maxRounds;
+  bool _isMatchFinished;
+  bool _isTiebreaker;
 
   TeamMatchState({
     this.isTeamMode = false,
-    this.currentTeam = TeamColor.cyan,
-    this.teamCyanScore = 0,
-    this.teamMagentaScore = 0,
-    this.currentRound = 1,
-    this.maxRounds = 3,
-    this.isMatchFinished = false,
-    this.isTiebreaker = false,
-  });
+    TeamColor currentTeam = TeamColor.cyan,
+    int teamCyanScore = 0,
+    int teamMagentaScore = 0,
+    int currentRound = 1,
+    int maxRounds = 3,
+    bool isMatchFinished = false,
+    bool isTiebreaker = false,
+    TeamColor? lastPlayingTeam,
+  })  : _currentTeam = currentTeam,
+        _teamCyanScore = teamCyanScore,
+        _teamMagentaScore = teamMagentaScore,
+        _currentRound = currentRound,
+        _maxRounds = maxRounds,
+        _isMatchFinished = isMatchFinished,
+        _isTiebreaker = isTiebreaker,
+        _lastPlayingTeam = lastPlayingTeam;
+
+  // Getters
+  TeamColor get currentTeam => _currentTeam;
+  TeamColor? get lastPlayingTeam => _lastPlayingTeam;
+  int get teamCyanScore => _teamCyanScore;
+  int get teamMagentaScore => _teamMagentaScore;
+  int get currentRound => _currentRound;
+  int get maxRounds => _maxRounds;
+  bool get isMatchFinished => _isMatchFinished;
+  bool get isTiebreaker => _isTiebreaker;
 
   String get currentTeamName =>
-      currentTeam == TeamColor.cyan
+      _currentTeam == TeamColor.cyan
           ? "${AppTheme.teamAName} ${AppTheme.teamAEmoji}"
           : "${AppTheme.teamBName} ${AppTheme.teamBEmoji}";
 
   String get nextTeamName =>
-      currentTeam == TeamColor.cyan
+      _currentTeam == TeamColor.cyan
           ? "${AppTheme.teamBName} ${AppTheme.teamBEmoji}"
           : "${AppTheme.teamAName} ${AppTheme.teamAEmoji}";
 
   Color get currentTeamColor =>
-      currentTeam == TeamColor.cyan ? AppTheme.teamAColor : AppTheme.teamBColor;
+      _currentTeam == TeamColor.cyan ? AppTheme.teamAColor : AppTheme.teamBColor;
 
   Color get nextTeamColor =>
-      currentTeam == TeamColor.cyan ? AppTheme.teamBColor : AppTheme.teamAColor;
+      _currentTeam == TeamColor.cyan ? AppTheme.teamBColor : AppTheme.teamAColor;
 
   void recordRoundScore(int score) {
-    if (currentTeam == TeamColor.cyan) {
-      teamCyanScore += score;
+    _lastPlayingTeam = _currentTeam;
+    if (_currentTeam == TeamColor.cyan) {
+      _teamCyanScore += score;
     } else {
-      teamMagentaScore += score;
+      _teamMagentaScore += score;
     }
   }
 
+  /// Adjust score of the team that played the last round (or current team if not recorded yet)
   void adjustLastTeamScore(int scoreDiff) {
-    if (isMatchFinished || currentTeam == TeamColor.cyan) {
-      teamMagentaScore = (teamMagentaScore + scoreDiff).clamp(0, 9999);
+    final targetTeam = _lastPlayingTeam ?? _currentTeam;
+    if (targetTeam == TeamColor.cyan) {
+      _teamCyanScore = (_teamCyanScore + scoreDiff).clamp(0, 9999);
     } else {
-      teamCyanScore = (teamCyanScore + scoreDiff).clamp(0, 9999);
+      _teamMagentaScore = (_teamMagentaScore + scoreDiff).clamp(0, 9999);
     }
   }
 
   void startTiebreaker() {
-    isTiebreaker = true;
-    maxRounds = currentRound + 1;
-    currentRound = maxRounds;
-    currentTeam = TeamColor.cyan;
-    isMatchFinished = false;
+    _isTiebreaker = true;
+    _maxRounds = _currentRound + 1;
+    _currentRound = _maxRounds;
+    _currentTeam = TeamColor.cyan;
+    _isMatchFinished = false;
   }
 
   void advanceTurn() {
-    if (currentTeam == TeamColor.magenta) {
-      if (currentRound >= maxRounds) {
-        isMatchFinished = true;
+    if (_currentTeam == TeamColor.magenta) {
+      if (_currentRound >= _maxRounds) {
+        _isMatchFinished = true;
       } else {
-        currentRound++;
-        currentTeam = TeamColor.cyan;
+        _currentRound++;
+        _currentTeam = TeamColor.cyan;
       }
     } else {
-      currentTeam = TeamColor.magenta;
+      _currentTeam = TeamColor.magenta;
     }
   }
 
-  bool get isTie => teamCyanScore == teamMagentaScore;
+  bool get isTie => _teamCyanScore == _teamMagentaScore;
 
   TeamColor get winningTeam {
-    if (teamCyanScore > teamMagentaScore) return TeamColor.cyan;
+    if (_teamCyanScore > _teamMagentaScore) return TeamColor.cyan;
     return TeamColor.magenta;
   }
 
   void resetMatch({int? newMaxRounds}) {
-    currentTeam = TeamColor.cyan;
-    teamCyanScore = 0;
-    teamMagentaScore = 0;
-    currentRound = 1;
+    _currentTeam = TeamColor.cyan;
+    _lastPlayingTeam = null;
+    _teamCyanScore = 0;
+    _teamMagentaScore = 0;
+    _currentRound = 1;
     if (newMaxRounds != null) {
-      maxRounds = newMaxRounds;
+      _maxRounds = newMaxRounds;
     }
-    isMatchFinished = false;
-    isTiebreaker = false;
+    _isMatchFinished = false;
+    _isTiebreaker = false;
   }
 }

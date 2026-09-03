@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:shared_preferences/shared_preferences.dart'; // Import
 import 'package:connectivity_plus/connectivity_plus.dart'; //
 import '../models/category.dart';
+import 'storage_service.dart';
 import 'dart:math';
 
 class CategoryService {
@@ -43,7 +44,7 @@ class CategoryService {
     final prefs = await _prefs;
     await prefs.remove(_cacheKey);
     await prefs.remove(_cacheTimestampKey);
-    print("Category cache cleared.");
+    debugPrint("Category cache cleared.");
   }
 
   /// Load offline fallback categories directly from assets/data.json
@@ -104,7 +105,7 @@ class CategoryService {
   Future<List<Category>> getAllCategories({bool forceRefresh = false}) async {
     // 1. Check in-memory cache (only if not forcing refresh)
     if (_cachedCategories != null && !forceRefresh) {
-      print("✅ [CACHE] Returning categories from IN-MEMORY cache.");
+      debugPrint("✅ [CACHE] Returning categories from IN-MEMORY cache.");
       return List<Category>.from(_cachedCategories!);
     }
 
@@ -113,7 +114,7 @@ class CategoryService {
 
     // If forceRefresh is requested, clear in-memory cache to force fresh Firestore fetch
     if (forceRefresh) {
-      print(
+      debugPrint(
         "ℹ️ [FETCH] User requested force refresh. Clearing cache & querying Firestore.",
       );
       _cachedCategories = null;
@@ -135,19 +136,21 @@ class CategoryService {
                   jsonList.map((json) => Category.fromJson(json)).toList();
               _lastFirestoreFetch =
                   cacheTime; // Sync last fetch with cache time
-              print("✅ [CACHE] Returning categories from SHARED PREFS cache.");
+              debugPrint(
+                "✅ [CACHE] Returning categories from SHARED PREFS cache.",
+              );
               return List<Category>.from(_cachedCategories!);
             } catch (e) {
-              print("⚠️ [CACHE] Error decoding cached categories: $e");
+              debugPrint("⚠️ [CACHE] Error decoding cached categories: $e");
               await clearCache(); // Clear corrupted cache
             }
           }
         } else {
-          print("ℹ️ [CACHE] SharedPreferences cache expired.");
+          debugPrint("ℹ️ [CACHE] SharedPreferences cache expired.");
         }
       }
     } else {
-      print("ℹ️ [FETCH] Force refresh requested. Bypassing cache.");
+      debugPrint("ℹ️ [FETCH] Force refresh requested. Bypassing cache.");
     }
 
     // 3. No valid cache. Check for internet.
@@ -165,7 +168,7 @@ class CategoryService {
 
     // 4. Fetch from Firestore if internet is available
     if (hasInternet) {
-      print(
+      debugPrint(
         "ℹ️ [NETWORK] No valid cache. Fetching from FIRESTORE...",
       ); // Changed
       try {
@@ -188,7 +191,9 @@ class CategoryService {
               fetchedCategories.map((category) => category.toJson()).toList();
           await prefs.setString(_cacheKey, jsonEncode(jsonList));
           await prefs.setInt(_cacheTimestampKey, now.millisecondsSinceEpoch);
-          print("✅ [NETWORK] Categories fetched from FIRESTORE and cached.");
+          debugPrint(
+            "✅ [NETWORK] Categories fetched from FIRESTORE and cached.",
+          );
 
           return fetchedCategories; // Return the fresh list
         }
@@ -199,14 +204,14 @@ class CategoryService {
           'plugin': e.plugin,
           'stackTrace': e.toString(),
         });
-        print("❌ [NETWORK] FirebaseException: ${e.code} - ${e.message}");
+        debugPrint("❌ [NETWORK] FirebaseException: ${e.code} - ${e.message}");
         // Don't return. Fall through to the offline fallback logic.
       } catch (e) {
         debugLogCategoryFetch("Exception during Firestore fetch", {
           'error': e.toString(),
           'errorType': e.runtimeType.toString(),
         });
-        print(
+        debugPrint(
           "❌ [NETWORK] Error fetching from Firestore (server error?): $e",
         ); // Changed
         // Don't return. Fall through to the offline fallback logic.
@@ -226,13 +231,13 @@ class CategoryService {
             jsonList.map((json) => Category.fromJson(json)).toList();
         if (fallbackCategories.isNotEmpty) {
           _cachedCategories = List<Category>.from(fallbackCategories);
-          print(
+          debugPrint(
             "✅ [CACHE-FALLBACK] Returning SHARED PREFS cache because network fetch failed/unavailable.",
           );
           return List<Category>.from(_cachedCategories!);
         }
       } catch (e) {
-        print("⚠️ [CACHE-FALLBACK] Error decoding cached categories: $e");
+        debugPrint("⚠️ [CACHE-FALLBACK] Error decoding cached categories: $e");
       }
     }
 
@@ -241,16 +246,16 @@ class CategoryService {
       final offlineCategories = await loadCategoriesFromDataJson();
       if (offlineCategories.isNotEmpty) {
         _cachedCategories = List<Category>.from(offlineCategories);
-        print(
+        debugPrint(
           "✅ [LOCAL-FALLBACK] Returning categories parsed from assets/data.json.",
         );
         return List<Category>.from(_cachedCategories!);
       }
     } catch (e) {
-      print("⚠️ [LOCAL-FALLBACK] Error reading local data.json: $e");
+      debugPrint("⚠️ [LOCAL-FALLBACK] Error reading local data.json: $e");
     }
 
-    print(
+    debugPrint(
       "ℹ️ [FETCH] No categories fetched from Firestore, cache, or local assets.",
     );
     return [];
@@ -260,7 +265,7 @@ class CategoryService {
     try {
       await _categoryRef?.doc(category.id).set(category.toMap());
     } catch (e) {
-      print("⚠️ Error adding category to Firestore: $e");
+      debugPrint("⚠️ Error adding category to Firestore: $e");
     }
     await clearCache();
   }
@@ -269,7 +274,7 @@ class CategoryService {
     try {
       await _categoryRef?.doc(category.id).update(category.toMap());
     } catch (e) {
-      print("⚠️ Error updating category in Firestore: $e");
+      debugPrint("⚠️ Error updating category in Firestore: $e");
     }
     await clearCache();
   }
@@ -300,7 +305,7 @@ class CategoryService {
     try {
       await _categoryRef?.doc(id).delete();
     } catch (e) {
-      print("⚠️ Error deleting category from Firestore: $e");
+      debugPrint("⚠️ Error deleting category from Firestore: $e");
     }
     await clearCache();
   }
@@ -330,13 +335,39 @@ class CategoryService {
     }
   }
 
+  List<Category> _mergeCustomDecks(List<Category> categories) {
+    final customDecks = GameStorageService().getCustomDecks();
+    if (customDecks.isEmpty) return categories;
+
+    final existingIds = categories.map((c) => c.id).toSet();
+    final merged = List<Category>.from(categories);
+    for (final custom in customDecks) {
+      if (!existingIds.contains(custom.id)) {
+        merged.add(custom);
+      }
+    }
+    return merged;
+  }
+
+  /// Returns categories merged with custom user decks stored in GameStorageService
+  Future<List<Category>> getCategories({bool forceRefresh = false}) async {
+    final categories = await getAllCategories(forceRefresh: forceRefresh);
+    return _mergeCustomDecks(categories);
+  }
+
   Future<List<String>> getWordsFromCategory(String categoryId) async {
-    final category = _cachedCategories?.firstWhere(
-      (cat) => cat.id == categoryId,
-      orElse: () => Category(id: '', name: '', icon: '', words: []),
-    );
-    if (category != null && category.id.isNotEmpty) {
-      return category.words;
+    if (_cachedCategories != null) {
+      for (final cat in _cachedCategories!) {
+        if (cat.id == categoryId) return cat.words;
+      }
+    }
+    final categories = await getAllCategories();
+    for (final cat in categories) {
+      if (cat.id == categoryId) return cat.words;
+    }
+    final customDecks = GameStorageService().getCustomDecks();
+    for (final custom in customDecks) {
+      if (custom.id == categoryId) return custom.words;
     }
     return [];
   }
@@ -353,7 +384,7 @@ class CategoryService {
         'words': FieldValue.arrayUnion([word]),
       });
     } catch (e) {
-      print("⚠️ Error adding word to category in Firestore: $e");
+      debugPrint("⚠️ Error adding word to category in Firestore: $e");
     }
     await clearCache();
   }
@@ -364,7 +395,7 @@ class CategoryService {
         'words': FieldValue.arrayRemove([word]),
       });
     } catch (e) {
-      print("⚠️ Error deleting word from category in Firestore: $e");
+      debugPrint("⚠️ Error deleting word from category in Firestore: $e");
     }
     await clearCache();
   }
@@ -380,7 +411,7 @@ class CategoryService {
         _cachedCategories = List<Category>.from(cached);
         return cached;
       } catch (e) {
-        print("⚠️ [CACHE-FALLBACK] Error decoding cached categories: $e");
+        debugPrint("⚠️ [CACHE-FALLBACK] Error decoding cached categories: $e");
       }
     }
     return [];
@@ -392,7 +423,7 @@ class CategoryService {
     final formattedDetails = details.entries
         .map((e) => '  ${e.key}: ${e.value}')
         .join('\n');
-    print('🔍 [DEBUG] [$timestamp] $message\n$formattedDetails');
+    debugPrint('🔍 [DEBUG] [$timestamp] $message\n$formattedDetails');
   }
 
   /// Helper method to get detailed error information for category fetching

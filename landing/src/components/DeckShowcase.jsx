@@ -3,110 +3,119 @@ import { motion, AnimatePresence } from "motion/react";
 import {
   Sparkles,
   X,
-  Layers,
   ChevronRight,
   ChevronLeft,
   Search,
   Tag,
   Eye,
+  Volume2,
+  VolumeX,
 } from "lucide-react";
+import { normalizeCategory } from "../utils/categoryModel";
+import { ArcadeDeckCard } from "./ArcadeDeckCard";
+
+// Web Audio synth beep helper
+const playBeep = () => {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.12, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.08);
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+    osc.start();
+    osc.stop(ctx.currentTime + 0.08);
+  } catch (_) {}
+};
 
 export const DeckShowcase = ({
   decks = [],
-  categoryFilters = [],
-  activeFilter,
-  onFilterChange,
   searchQuery,
   onSearchChange,
+  onSelectDeckForGame,
+  onCreateCustomDeckClick,
 }) => {
   const [selectedDeck, setSelectedDeck] = useState(null);
   const [cardIndex, setCardIndex] = useState(0);
+  const [soundEnabled, setSoundEnabled] = useState(true);
 
-  const handleSelectDeck = (deck) => {
-    if (selectedDeck?.deckId === deck.deckId || selectedDeck?.id === deck.id) {
-      setSelectedDeck(null); // Toggle collapse
+  // Normalize decks list using Category model contract
+  const normalizedDecks = decks.map((d) => normalizeCategory(d.id || d.deckId, d));
+
+  const handleSelectDeck = (rawDeck) => {
+    const deck = normalizeCategory(rawDeck.id || rawDeck.deckId, rawDeck);
+    if (selectedDeck?.id === deck.id) {
+      setSelectedDeck(null);
     } else {
       setSelectedDeck(deck);
       setCardIndex(0);
+      if (onSelectDeckForGame) onSelectDeckForGame(deck);
     }
   };
 
-  const getWords = (deck) => {
-    if (!deck) return [];
-    if (typeof deck.words === "string") {
-      return deck.words
-        .split(/[\n,]+/)
-        .map((w) => w.trim())
-        .filter(Boolean);
-    }
-    if (Array.isArray(deck.words)) {
-      return deck.words.map((w) => w.toString().trim()).filter(Boolean);
-    }
-    return [];
-  };
+  const selectedWords = selectedDeck ? selectedDeck.words : [];
 
-  const selectedWords = selectedDeck ? getWords(selectedDeck) : [];
+  const triggerFeedback = () => {
+    if (soundEnabled) playBeep();
+    if (navigator.vibrate) navigator.vibrate(25);
+  };
 
   const handleNextCard = () => {
     if (selectedWords.length === 0) return;
+    triggerFeedback();
     setCardIndex((prev) => (prev + 1) % selectedWords.length);
   };
 
   const handlePrevCard = () => {
     if (selectedWords.length === 0) return;
+    triggerFeedback();
     setCardIndex(
-      (prev) => (prev - 1 + selectedWords.length) % selectedWords.length,
+      (prev) => (prev - 1 + selectedWords.length) % selectedWords.length
     );
   };
 
   return (
     <section
-      className="max-w-6xl mx-auto px-4 md:px-8 py-12 md:py-20"
+      className="max-w-4xl mx-auto px-4 sm:px-6 py-8 sm:py-16"
       id="decks"
     >
-      <div className="flex flex-col gap-10">
+      <div className="flex flex-col gap-6">
         {/* Header */}
-        <div className="text-center max-w-2xl mx-auto flex flex-col gap-3">
-          <span className="text-xs uppercase tracking-widest font-black text-primary">
-            Content Catalog
+        <div className="text-center max-w-2xl mx-auto flex flex-col gap-2">
+          <span className="text-xs uppercase tracking-widest font-black text-primary flex items-center justify-center gap-1.5">
+            <Sparkles className="w-4 h-4" /> Arcade Deck Matrix
           </span>
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight uppercase">
-            Explore Word Decks
+          <h2 className="text-3xl sm:text-5xl font-black tracking-tight uppercase">
+            EXPLORE WORD DECKS
           </h2>
-          <p className="text-muted-light dark:text-muted-dark text-base md:text-lg">
-            Click any deck to expand word cards and preview the in-game
-            flashcard player!
+          <p className="text-muted-dark text-sm sm:text-base">
+            Select any deck below to preview cards or launch the live game simulator!
           </p>
         </div>
 
-        {/* Decks Search & Category Filter Controls */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 max-w-4xl mx-auto w-full bg-surface-light dark:bg-surface-dark border-2 border-border-light dark:border-border-dark p-3 px-5 rounded-2xl shadow-sm">
-          <div className="flex items-center gap-2 overflow-x-auto w-full md:w-auto py-1 scrollbar-none">
-            {categoryFilters.map((cat) => (
-              <button
-                key={cat.id}
-                onClick={() => onFilterChange(cat.id)}
-                className={`px-3.5 py-1.5 rounded-xl font-extrabold text-xs transition-all whitespace-nowrap cursor-pointer ${
-                  activeFilter === cat.id
-                    ? "bg-primary text-accent shadow-sm scale-105"
-                    : "bg-surface-card-light dark:bg-surface-card-dark text-muted-light dark:text-muted-dark hover:text-text-light dark:hover:text-text-dark"
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-
-          <div className="w-full md:w-64 shrink-0 relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
-            <input
-              type="text"
-              placeholder="Search decks..."
-              value={searchQuery}
-              onChange={(e) => onSearchChange(e.target.value)}
-              className="w-full text-xs font-semibold pl-9 pr-3 py-2 rounded-xl border border-border-light dark:border-border-dark bg-surface-card-light dark:bg-surface-card-dark outline-none focus:border-primary transition-all placeholder:text-muted-light dark:placeholder:text-muted-dark"
-            />
-          </div>
+        {/* APP SEARCH BAR (MATCHING _buildSearchBar IN home_screen.dart) */}
+        <div className="relative w-full h-12 rounded-[20px] bg-surface-dark border-1.5 border-border-dark p-3.5 flex items-center gap-2.5 shadow-md">
+          <Search className="w-5.5 h-5.5 text-primary shrink-0" />
+          <input
+            type="text"
+            placeholder="Search decks by title or description..."
+            value={searchQuery}
+            onChange={(e) => onSearchChange(e.target.value)}
+            className="w-full text-sm font-bold bg-transparent text-text-dark outline-none placeholder:text-muted-dark"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => onSearchChange("")}
+              className="text-muted-dark hover:text-text-dark cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
 
         {/* INLINE EXPANDED DECK PREVIEW BOARD */}
@@ -117,68 +126,73 @@ export const DeckShowcase = ({
               animate={{ opacity: 1, height: "auto", scale: 1 }}
               exit={{ opacity: 0, height: 0, scale: 0.98 }}
               transition={{ duration: 0.3 }}
-              className="max-w-4xl mx-auto w-full bg-surface-light dark:bg-surface-dark border-3 rounded-3xl p-6 md:p-8 shadow-2xl overflow-hidden flex flex-col gap-6 relative"
+              className="w-full bg-surface-dark border-3 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden flex flex-col gap-6 relative"
               style={{
-                borderColor:
-                  selectedDeck.color ||
-                  selectedDeck.colorHex ||
-                  "var(--color-primary)",
+                borderColor: selectedDeck.color,
               }}
             >
               {/* Top Banner Bar */}
-              <div className="flex items-start justify-between gap-4 border-b border-border-light dark:border-border-dark pb-6">
+              <div className="flex items-start justify-between gap-4 border-b border-border-dark pb-6">
                 <div className="flex items-center gap-4">
                   <div
                     className="w-16 h-16 rounded-2xl flex items-center justify-center font-black text-3xl shrink-0 border-2 shadow-inner"
                     style={{
-                      backgroundColor: (selectedDeck.color || selectedDeck.colorHex)
-                        ? `${selectedDeck.color || selectedDeck.colorHex}25`
-                        : "rgba(255,214,0,0.15)",
-                      borderColor:
-                        selectedDeck.color || selectedDeck.colorHex || "var(--color-primary)",
+                      backgroundColor: `${selectedDeck.color}25`,
+                      borderColor: selectedDeck.color,
                     }}
                   >
-                    {selectedDeck.icon || "🎮"}
+                    {selectedDeck.icon}
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-2xl font-black">
-                        {selectedDeck.title || selectedDeck.name}
-                      </h3>
+                      <h3 className="text-2xl font-black">{selectedDeck.name}</h3>
                       <span className="text-xs font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
                         {selectedWords.length} Cards
                       </span>
                     </div>
-                    <p className="text-xs text-muted-light dark:text-muted-dark mt-1">
-                      {selectedDeck.subtitle ||
-                        selectedDeck.description ||
-                        "Previewing word deck cards below."}
+                    <p className="text-xs text-muted-dark mt-1">
+                      {selectedDeck.description || "Previewing word deck cards below."}
                     </p>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setSelectedDeck(null)}
-                  className="p-2 rounded-xl bg-surface-card-light dark:bg-surface-card-dark text-muted-dark hover:text-text-light dark:hover:text-text-dark transition-all cursor-pointer font-bold text-xs flex items-center gap-1 shrink-0"
+                  className="p-2 rounded-xl bg-surface-card-dark text-muted-dark hover:text-white transition-all cursor-pointer font-bold text-xs flex items-center gap-1 shrink-0"
                 >
                   <X className="w-4 h-4" /> Close Preview
                 </button>
               </div>
 
-              {/* Flashcard Simulator & Cards View (2 Columns on Desktop) */}
+              {/* Flashcard Simulator & Cards View */}
               <div className="grid md:grid-cols-2 gap-6 items-center">
                 {/* Column 1: Interactive Flashcard Simulator */}
-                <div className="bg-surface-card-light dark:bg-surface-card-dark border-2 border-border-light dark:border-border-dark p-6 rounded-2xl flex flex-col items-center justify-between text-center min-h-55 shadow-inner relative overflow-hidden">
-                  <span className="text-[0.65rem] font-black uppercase tracking-widest text-primary flex items-center gap-1 mb-2">
-                    <Sparkles className="w-3.5 h-3.5" /> In-Game Flashcard
-                    Simulator
-                  </span>
+                <div className="bg-surface-card-dark border-2 border-border-dark p-6 rounded-2xl flex flex-col items-center justify-between text-center min-h-55 shadow-inner relative overflow-hidden">
+                  <div className="flex items-center justify-between w-full mb-2">
+                    <span className="text-[0.65rem] font-black uppercase tracking-widest text-primary flex items-center gap-1">
+                      <Sparkles className="w-3.5 h-3.5" /> Flashcard Simulator
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() => setSoundEnabled(!soundEnabled)}
+                      className="p-1 rounded-md text-muted-dark hover:text-primary transition-colors cursor-pointer"
+                      title={soundEnabled ? "Mute sound preview" : "Enable sound preview"}
+                    >
+                      {soundEnabled ? (
+                        <Volume2 className="w-4 h-4 text-primary" />
+                      ) : (
+                        <VolumeX className="w-4 h-4" />
+                      )}
+                    </button>
+                  </div>
 
                   {selectedWords.length > 0 ? (
                     <motion.div
                       key={cardIndex}
-                      initial={{ scale: 0.8, opacity: 0, y: 10 }}
-                      animate={{ scale: 1, opacity: 1, y: 0 }}
+                      initial={{ scale: 0.8, opacity: 0, rotateY: 90 }}
+                      animate={{ scale: 1, opacity: 1, rotateY: 0 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 20 }}
                       className="py-6 px-4 w-full"
                     >
                       <h4 className="text-2xl sm:text-3xl font-black uppercase text-primary tracking-tight">
@@ -199,13 +213,13 @@ export const DeckShowcase = ({
                     <div className="flex items-center gap-4 mt-2">
                       <button
                         onClick={handlePrevCard}
-                        className="p-2.5 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-xs font-black hover:scale-105 transition-all cursor-pointer flex items-center gap-1"
+                        className="p-2.5 rounded-xl bg-surface-dark border border-border-dark text-xs font-black hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1"
                       >
                         <ChevronLeft className="w-4 h-4" /> Prev
                       </button>
                       <button
                         onClick={handleNextCard}
-                        className="px-5 py-2.5 rounded-xl bg-primary text-accent font-black text-xs hover:scale-105 transition-all cursor-pointer flex items-center gap-1 shadow-md"
+                        className="px-5 py-2.5 rounded-xl bg-primary text-accent font-black text-xs hover:scale-105 active:scale-95 transition-all cursor-pointer flex items-center gap-1 shadow-md"
                       >
                         Next Card <ChevronRight className="w-4 h-4" />
                       </button>
@@ -215,19 +229,21 @@ export const DeckShowcase = ({
 
                 {/* Column 2: Word Cards Pills Grid */}
                 <div className="flex flex-col gap-2 max-h-60">
-                  <span className="text-xs font-black uppercase text-muted-light dark:text-muted-dark tracking-wider flex items-center gap-1.5">
-                    <Tag className="w-3.5 h-3.5 text-primary" /> All Deck Words
-                    ({selectedWords.length}):
+                  <span className="text-xs font-black uppercase text-muted-dark tracking-wider flex items-center gap-1.5">
+                    <Tag className="w-3.5 h-3.5 text-primary" /> All Deck Words ({selectedWords.length}):
                   </span>
-                  <div className="overflow-y-auto p-3 rounded-2xl bg-surface-card-light dark:bg-surface-card-dark border border-border-light dark:border-border-dark flex flex-wrap gap-2 max-h-50">
+                  <div className="overflow-y-auto p-3 rounded-2xl bg-surface-card-dark border border-border-dark flex flex-wrap gap-2 max-h-50">
                     {selectedWords.map((word, idx) => (
                       <span
                         key={idx}
-                        onClick={() => setCardIndex(idx)}
+                        onClick={() => {
+                          setCardIndex(idx);
+                          triggerFeedback();
+                        }}
                         className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
                           cardIndex === idx
                             ? "bg-primary text-accent shadow-sm scale-105"
-                            : "bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-light dark:text-text-dark hover:border-primary"
+                            : "bg-surface-dark border border-border-dark text-text-dark hover:border-primary"
                         }`}
                       >
                         {word}
@@ -240,55 +256,26 @@ export const DeckShowcase = ({
           )}
         </AnimatePresence>
 
-        {/* Deck Cards Grid */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-2 gap-6 max-w-4xl mx-auto w-full">
-          {decks.map((deck, idx) => {
-            const isSelected =
-              (selectedDeck?.deckId || selectedDeck?.id) ===
-              (deck.deckId || deck.id);
-            const wordCount = getWords(deck).length;
+        {/* 2-COLUMN SUPERCELL ARCADE DECK CARDS MATRIX SHOWCASE */}
+        <div className="grid grid-cols-2 gap-3.5 sm:gap-5 w-full">
+          {normalizedDecks.map((deck, idx) => {
+            const isSelected = selectedDeck?.id === deck.id;
 
             return (
-              <motion.div
-                key={deck.deckId || deck.id || idx}
-                whileHover={{ scale: 1.02 }}
+              <ArcadeDeckCard
+                key={deck.id || idx}
+                deck={deck}
+                isSelected={isSelected}
                 onClick={() => handleSelectDeck(deck)}
-                className={`bg-surface-light dark:bg-surface-dark border-3 rounded-2xl p-6 flex items-center justify-between gap-4 cursor-pointer shadow-sm hover:shadow-md transition-all ${
-                  isSelected
-                    ? "border-primary ring-2 ring-primary/30"
-                    : "border-border-light dark:border-border-dark"
-                }`}
-              >
-                <div className="flex items-center gap-4">
-                  <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-2xl select-none shrink-0 shadow-inner border-2"
-                    style={{
-                      backgroundColor: (deck.color || deck.colorHex)
-                        ? `${deck.color || deck.colorHex}20`
-                        : "rgba(255,214,0,0.15)",
-                      borderColor: deck.color || deck.colorHex || "var(--color-primary)",
-                    }}
-                  >
-                    {deck.icon || "🎮"}
-                  </div>
-                  <div className="flex flex-col gap-0.5">
-                    <h4 className="font-black text-lg">
-                      {deck.title || deck.name}
-                    </h4>
-                    <p className="text-muted-light dark:text-muted-dark text-xs">
-                      {deck.subtitle || `${wordCount} cards in deck`}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <span className="text-[0.7rem] font-black uppercase tracking-wider px-3 py-1.5 rounded-xl bg-surface-card-light dark:bg-surface-card-dark border border-border-light dark:border-border-dark text-primary flex items-center gap-1">
-                    <Eye className="w-3.5 h-3.5" /> Preview
-                  </span>
-                </div>
-              </motion.div>
+              />
             );
           })}
+
+          {/* Special "+ CREATE DECK" Card in Matrix Grid */}
+          <ArcadeDeckCard
+            isCreateDeck
+            onClick={onCreateCustomDeckClick}
+          />
         </div>
       </div>
     </section>

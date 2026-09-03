@@ -23,6 +23,7 @@ class Category {
   final Map<String, dynamic>? theme;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  final bool isCustom;
 
   Category({
     required this.id,
@@ -42,16 +43,15 @@ class Category {
     this.theme,
     this.createdAt,
     this.updatedAt,
-  });
+    bool? isCustom,
+  }) : isCustom =
+           isCustom ?? (id.startsWith('custom') || id.contains('custom'));
 
   /// Alias for color hex string
   String? get colorHex => color;
 
   /// Alias for title
   String get title => name;
-
-  /// Check if deck is a custom user-created deck
-  bool get isCustom => id.startsWith('custom') || id.contains('custom');
 
   /// Total words count
   int get count => wordsCount ?? words.length;
@@ -195,6 +195,10 @@ class Category {
               : null,
       createdAt: parseDate(data['createdAt']),
       updatedAt: parseDate(data['updatedAt']),
+      isCustom:
+          data['isCustom'] == true ||
+          doc.id.startsWith('custom') ||
+          doc.id.contains('custom'),
     );
   }
 
@@ -249,8 +253,10 @@ class Category {
         json['isTrending']?.toString().toLowerCase() == 'true' ||
         (json['theme'] is Map && json['theme']['isTrending'] == true);
 
+    final String catId = json['id']?.toString() ?? '';
+
     return Category(
-      id: json['id']?.toString() ?? '',
+      id: catId,
       name: titleVal,
       icon: json['icon']?.toString() ?? '🎮',
       words: wordsList,
@@ -277,6 +283,10 @@ class Category {
           json['updatedAt'] != null
               ? DateTime.tryParse(json['updatedAt'].toString())
               : null,
+      isCustom:
+          json['isCustom'] == true ||
+          catId.startsWith('custom') ||
+          catId.contains('custom'),
     );
   }
 
@@ -292,6 +302,7 @@ class Category {
       'isTrending': isTrending,
       'sortOrder': sortOrder,
       'wordsCount': wordsCount ?? words.length,
+      'isCustom': isCustom,
       if (imageUrl != null) 'imageUrl': imageUrl,
       'isAvailable': isAvailable,
       'createdAt': createdAt?.toIso8601String(),

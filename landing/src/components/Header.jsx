@@ -82,7 +82,7 @@ export const Header = () => {
           toggleTheme();
           setIsOpen(false);
         }}
-        className="border-2 border-border-light dark:border-border-dark text-text-light dark:text-text-dark font-bold text-xs px-3 py-1.5 rounded-lg hover:border-primary dark:hover:border-accent hover:bg-black/5 dark:hover:bg-white/5 transition-all uppercase tracking-wider cursor-pointer"
+        className="border-2 border-border-light text-text-light font-bold text-xs px-3 py-1.5 rounded-lg hover:border-primary dark:hover:border-accent hover:bg-black/5 dark:hover:bg-white/5 transition-all uppercase tracking-wider cursor-pointer"
         aria-label="Toggle Theme"
       >
         {theme === "dark" ? "Light" : "Dark"}
@@ -105,7 +105,7 @@ export const Header = () => {
           <Link to="/" className="flex items-center gap-3">
             <img
               className="w-9 h-9 md:w-11 md:h-11 rounded-full shadow-md object-contain bg-black/5 dark:bg-white/5 p-1"
-              src="/images/logo-transparent.png"
+              src="/images/logo.png"
               alt="Guess Up Logo"
             />
             <h1

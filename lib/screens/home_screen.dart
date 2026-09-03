@@ -1,16 +1,20 @@
 import 'dart:async';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:guess_up/blocs/deck/deck_cubit.dart';
 import 'package:guess_up/models/category.dart';
 import 'package:guess_up/models/team_match_state.dart';
+import 'package:guess_up/screens/create_custom_deck_screen.dart';
 import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/screens/onboarding_screen.dart';
-import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/category_service.dart';
+import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
+import 'package:guess_up/widgets/arcade_page_route.dart';
+import 'package:guess_up/widgets/bouncy_game_button.dart';
 import 'package:guess_up/widgets/quick_settings_modal.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,12 +26,8 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final CategoryService _categoryService = CategoryService();
-  final StorageService _storageService = StorageService();
-  final AudioService _audioService = AudioService();
-
-  late PageController _pageController;
-  double _currentPage = 0.0;
-  int _focusedIndex = 0;
+  final GameStorageService _storageService = GameStorageService();
+  final GameAudioEngine _audioEngine = GameAudioEngine();
 
   List<Category> _decks = [];
   Set<String> _selectedDeckIds = {};
@@ -38,16 +38,28 @@ class _HomeScreenState extends State<HomeScreen> {
   late bool _isTeamMode;
   late int _gameDuration;
   late int _teamRounds;
-  bool _isPlayPressed = false;
+
+  String _searchQuery = '';
+  final TextEditingController _searchController = TextEditingController();
 
   final List<int> _timeOptions = [30, 45, 60, 90, 120, 180];
   final List<int> _roundOptions = [3, 5, 7, 10];
+
+  List<Category> get _filteredDecks {
+    if (_searchQuery.trim().isEmpty) return _decks;
+    final q = _searchQuery.trim().toLowerCase();
+    return _decks.where((deck) {
+      final nameMatch = deck.name.toLowerCase().contains(q);
+      final descMatch = deck.categoryDescription.toLowerCase().contains(q);
+      return nameMatch || descMatch;
+    }).toList();
+  }
 
   @override
   void initState() {
     super.initState();
     _setPortraitOnly();
-    _audioService.playBackgroundMusic();
+    _audioEngine.startBgm();
 
     // 1. Load persisted game preferences
     _isTeamMode = _storageService.isTeamMode;
@@ -60,25 +72,12 @@ class _HomeScreenState extends State<HomeScreen> {
       _teamRounds = 3;
     }
 
-    // 2. Initialize PageController
-    _pageController = PageController(viewportFraction: 0.63, initialPage: 0)
-      ..addListener(_handlePageScroll);
-
-    // 3. Load Decks & Listen to real-time decks stream from Firestore
+    // 2. Load Decks & Listen to real-time decks stream
     _subscribeToDecks();
   }
 
   void _setPortraitOnly() {
     SystemChrome.setPreferredOrientations([DeviceOrientation.portraitUp]);
-  }
-
-  void _handlePageScroll() {
-    if (_pageController.hasClients) {
-      setState(() {
-        _currentPage =
-            _pageController.page ?? _pageController.initialPage.toDouble();
-      });
-    }
   }
 
   Future<void> _subscribeToDecks() async {
@@ -89,42 +88,22 @@ class _HomeScreenState extends State<HomeScreen> {
     if (!mounted) return;
 
     final persistedCategoryIds = _storageService.getLastCategoryIds();
-    final Set<String> initialSelected = {};
+    String targetId = combined.isNotEmpty ? combined.first.id : "";
 
     if (persistedCategoryIds.isNotEmpty) {
       for (final id in persistedCategoryIds) {
         if (combined.any((d) => d.id == id)) {
-          initialSelected.add(id);
+          targetId = id;
+          break;
         }
       }
     }
 
-    if (initialSelected.isEmpty && combined.isNotEmpty) {
-      initialSelected.add(combined.first.id);
-    }
-
-    if (_isTeamMode && initialSelected.length > 1) {
-      final first = initialSelected.first;
-      initialSelected.clear();
-      initialSelected.add(first);
-    }
-
-    int targetIndex = 0;
-    if (initialSelected.isNotEmpty) {
-      final idx = combined.indexWhere((d) => d.id == initialSelected.first);
-      if (idx >= 0) targetIndex = idx;
-    }
-
     setState(() {
       _decks = combined;
-      _selectedDeckIds = initialSelected;
-      _focusedIndex = targetIndex;
+      _selectedDeckIds = {targetId};
       _isLoading = false;
     });
-
-    if (targetIndex > 0 && _pageController.hasClients) {
-      _pageController.jumpToPage(targetIndex);
-    }
 
     _decksSubscription = _categoryService.streamDecks().listen((
       firestoreDecks,
@@ -134,12 +113,10 @@ class _HomeScreenState extends State<HomeScreen> {
       final updated = _mergeDecks(currentCustom, firestoreDecks);
       setState(() {
         _decks = updated;
-        _selectedDeckIds.removeWhere((id) => !updated.any((d) => d.id == id));
-        if (_selectedDeckIds.isEmpty && updated.isNotEmpty) {
-          _selectedDeckIds.add(updated.first.id);
-        }
-        if (_focusedIndex >= _decks.length) {
-          _focusedIndex = (_decks.length - 1).clamp(0, _decks.length);
+        if (!_selectedDeckIds.any((id) => updated.any((d) => d.id == id))) {
+          if (updated.isNotEmpty) {
+            _selectedDeckIds = {updated.first.id};
+          }
         }
       });
     });
@@ -155,15 +132,15 @@ class _HomeScreenState extends State<HomeScreen> {
     list.sort((a, b) {
       if (a.isTrending != b.isTrending) return a.isTrending ? -1 : 1;
       if (a.sortOrder != b.sortOrder) return a.sortOrder.compareTo(b.sortOrder);
-      return a.title.compareTo(b.title);
+      return a.name.compareTo(b.name);
     });
     return list;
   }
 
   @override
   void dispose() {
+    _searchController.dispose();
     _decksSubscription?.cancel();
-    _pageController.dispose();
     super.dispose();
   }
 
@@ -178,67 +155,28 @@ class _HomeScreenState extends State<HomeScreen> {
         words: ["Guess Up", "Charades", "Party Time"],
       );
     }
-    final index = _focusedIndex.clamp(0, _decks.length - 1);
-    return _decks[index];
+    final selected =
+        _decks.where((d) => _selectedDeckIds.contains(d.id)).toList();
+    if (selected.isNotEmpty) return selected.first;
+    return _decks.first;
   }
 
   List<Category> get _selectedDecks {
-    return _decks.where((d) => _selectedDeckIds.contains(d.id)).toList();
+    return [_activeDeck];
   }
 
-  void _onDeckSnapped(int index) {
-    if (_focusedIndex != index) {
-      _audioService.extraLightImpact();
-      HapticFeedback.lightImpact();
-      setState(() {
-        _focusedIndex = index;
-      });
-      if (index < _decks.length) {
-        _storageService.setLastDeckId(_decks[index].id);
-      }
-    }
-  }
-
-  void _toggleDeckSelection(Category deck, int cardIndex) {
-    if (_focusedIndex != cardIndex) {
-      if (_pageController.hasClients) {
-        _pageController.animateToPage(
-          cardIndex,
-          duration: const Duration(milliseconds: 250),
-          curve: Curves.easeInOut,
-        );
-      }
-      return;
-    }
-
-    setState(() {
-      if (_isTeamMode) {
-        // Team Mode: strictly single-deck radio lock
-        _selectedDeckIds = {deck.id};
-      } else {
-        // Solo Mode: multi-deck mix & match toggle
-        if (_selectedDeckIds.contains(deck.id)) {
-          _selectedDeckIds.remove(deck.id);
-        } else {
-          _selectedDeckIds.add(deck.id);
-        }
-      }
-    });
-
-    _storageService.setLastCategoryIds(_selectedDeckIds.toList());
-  }
-
-  void _removeDeckFromSelection(String deckId) {
-    _audioService.extraLightImpact();
+  void _selectDeck(Category deck) {
+    _audioEngine.extraLightImpact();
     HapticFeedback.lightImpact();
     setState(() {
-      _selectedDeckIds.remove(deckId);
+      _selectedDeckIds = {deck.id};
     });
-    _storageService.setLastCategoryIds(_selectedDeckIds.toList());
+    _storageService.setLastDeckId(deck.id);
+    _storageService.setLastCategoryIds([deck.id]);
   }
 
   void _showDeckDescriptionModal(Category deck) {
-    _audioService.lightImpact();
+    _audioEngine.lightImpact();
     showModalBottomSheet(
       context: context,
       backgroundColor: Theme.of(context).cardColor,
@@ -291,22 +229,20 @@ class _HomeScreenState extends State<HomeScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            deck.title.toUpperCase(),
-                            style: theme.textTheme.titleMedium?.copyWith(
+                            deck.name.toUpperCase(),
+                            style: theme.textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.w900,
-                              fontSize: 18,
-                              letterSpacing: 1.0,
+                              fontSize: 20,
+                              letterSpacing: 0.5,
                             ),
                           ),
                           const SizedBox(height: 4),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: deckColor.withAlpha(40),
-                              borderRadius: BorderRadius.circular(8),
+                          Text(
+                            "${deck.words.length} Cards • Single Deck Mode",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: theme.hintColor,
+                              fontWeight: FontWeight.w600,
                             ),
                           ),
                         ],
@@ -314,43 +250,36 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ],
                 ),
-                const SizedBox(height: 20),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.scaffoldBackgroundColor,
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: theme.dividerColor.withAlpha(50)),
-                  ),
-                  child: Text(
-                    deck.categoryDescription,
+                const SizedBox(height: 16),
+                if (deck.description != null && deck.description!.isNotEmpty)
+                  Text(
+                    deck.description!,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       height: 1.4,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
+                      color: theme.textTheme.bodyMedium?.color?.withAlpha(210),
                     ),
                   ),
-                ),
-                const SizedBox(height: 20),
+                const SizedBox(height: 24),
                 SizedBox(
                   width: double.infinity,
-                  height: 48,
+                  height: 50,
                   child: ElevatedButton(
-                    onPressed: () => Navigator.of(modalCtx).pop(),
+                    onPressed: () {
+                      Navigator.of(modalCtx).pop();
+                      _selectDeck(deck);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: deckColor,
-                      foregroundColor: Colors.black87,
+                      foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                     ),
                     child: const Text(
-                      "GOT IT",
+                      "SELECT THIS DECK",
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
-                        fontSize: 14,
-                        letterSpacing: 1.0,
+                        letterSpacing: 1,
                       ),
                     ),
                   ),
@@ -364,30 +293,21 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _switchGameMode(bool isTeam) {
-    _audioService.extraLightImpact();
+    _audioEngine.extraLightImpact();
     HapticFeedback.lightImpact();
     setState(() {
       _isTeamMode = isTeam;
-      if (isTeam) {
-        if (_selectedDeckIds.length > 1) {
-          final firstId = _selectedDeckIds.first;
-          _selectedDeckIds = {firstId};
-        } else if (_selectedDeckIds.isEmpty && _decks.isNotEmpty) {
-          _selectedDeckIds = {_activeDeck.id};
-        }
-      }
     });
     _storageService.setTeamMode(isTeam);
-    _storageService.setLastCategoryIds(_selectedDeckIds.toList());
   }
 
   void _handleStartGame() {
     final selected = _selectedDecks;
     if (selected.isEmpty) return;
 
-    _audioService.extraLightImpact();
+    _audioEngine.extraLightImpact();
 
-    _storageService.setLastCategoryIds(_selectedDeckIds.toList());
+    _storageService.setLastCategoryIds([selected.first.id]);
     _storageService.setLastDeckId(selected.first.id);
     _storageService.setGameDuration(_gameDuration);
     _storageService.setTeamMode(_isTeamMode);
@@ -400,91 +320,90 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (_storageService.dontShowHowToPlay) {
       Navigator.of(context).push(
-        CupertinoPageRoute(
-          builder:
-              (_) => GameScreen(
-                time: _gameDuration,
-                selectedCategories: selected,
-                teamMatchState: teamState,
-              ),
+        ArcadePageRoute(
+          page: GameScreen(
+            time: _gameDuration,
+            selectedCategories: selected,
+            teamMatchState: teamState,
+          ),
         ),
       );
     } else {
       Navigator.of(context).push(
-        CupertinoPageRoute(
-          builder:
-              (_) => OnboardingScreen(
-                isRevisiting: false,
-                selectedCategories: selected,
-                gameTime: _gameDuration,
-                teamMatchState: teamState,
-              ),
+        ArcadePageRoute(
+          page: OnboardingScreen(
+            selectedCategories: selected,
+            gameTime: _gameDuration,
+            teamMatchState: teamState,
+          ),
         ),
       );
     }
   }
 
   Future<void> _showExitConfirmationDialog() async {
-    _audioService.lightImpact();
+    _audioEngine.lightImpact();
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor =
         isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
 
-    final shouldExit = await showDialog<bool>(
+    final bool? shouldExit = await showDialog<bool>(
       context: context,
-      barrierDismissible: false,
+      barrierDismissible: true,
       builder: (dialogCtx) {
         return AlertDialog(
-          backgroundColor: isDark ? const Color(0xFF1E1E1E) : Colors.white,
+          backgroundColor: isDark ? AppTheme.darkSurfaceColor : Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(24),
-            side: BorderSide(color: primaryColor.withAlpha(100), width: 2),
+            side: BorderSide(color: primaryColor.withAlpha(80), width: 2),
           ),
-          title: Text(
-            "EXIT GUESS UP?",
-            style: TextStyle(
-              fontWeight: FontWeight.w900,
-              fontSize: 18,
-              color: isDark ? Colors.white : Colors.black,
-              letterSpacing: 1.0,
-            ),
+          title: Row(
+            children: [
+              Icon(Icons.exit_to_app_rounded, color: primaryColor, size: 28),
+              const SizedBox(width: 10),
+              Text(
+                "EXIT GUESS UP?",
+                style: TextStyle(
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                  letterSpacing: 1,
+                  color: isDark ? Colors.white : Colors.black,
+                ),
+              ),
+            ],
           ),
           content: Text(
-            "Are you sure you want to exit the party?",
+            "Are you sure you want to close the game?",
             style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
               color: isDark ? Colors.white70 : Colors.black87,
-              height: 1.3,
+              fontSize: 14,
             ),
           ),
-          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           actions: [
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton(
                     onPressed: () {
-                      _audioService.lightImpact();
+                      _audioEngine.lightImpact();
                       Navigator.of(dialogCtx).pop(false);
                     },
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
                       side: BorderSide(
-                        color: isDark ? Colors.white38 : Colors.black38,
+                        color: primaryColor.withAlpha(100),
                         width: 1.5,
                       ),
+                      padding: const EdgeInsets.symmetric(vertical: 12),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(14),
                       ),
                     ),
                     child: Text(
-                      "KEEP PLAYING",
+                      "CANCEL",
                       style: TextStyle(
-                        fontWeight: FontWeight.w900,
+                        fontWeight: FontWeight.bold,
                         fontSize: 12,
-                        color: isDark ? Colors.white : Colors.black87,
-                        letterSpacing: 0.5,
+                        color: isDark ? Colors.white : Colors.black,
                       ),
                     ),
                   ),
@@ -493,7 +412,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
-                      _audioService.mediumImpact();
+                      _audioEngine.mediumImpact();
                       Navigator.of(dialogCtx).pop(true);
                     },
                     style: ElevatedButton.styleFrom(
@@ -531,7 +450,6 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final activeDeck = _activeDeck;
     final activeColor = activeDeck.themeColor;
-    final selectedDecks = _selectedDecks;
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return PopScope(
@@ -551,9 +469,13 @@ class _HomeScreenState extends State<HomeScreen> {
                 // 1. TOP BAR
                 _buildTopBar(isDark),
                 const SizedBox(height: 6),
-                // 2. CAROUSEL REEL
+
+                // 2. SEARCH BAR (SEARCH BY TITLE OR DESCRIPTION)
+                if (!_isLoading) _buildSearchBar(isDark),
+                const SizedBox(height: 8),
+
+                // 3. 2-COLUMN ARCADE CARD MATRIX SHOWCASE
                 Expanded(
-                  flex: 5,
                   child:
                       _isLoading
                           ? Center(
@@ -565,22 +487,13 @@ class _HomeScreenState extends State<HomeScreen> {
                               strokeWidth: 3,
                             ),
                           )
-                          : _buildCarousel(isDark),
+                          : _buildGridView(isDark),
                 ),
-
-                const SizedBox(height: 4),
-
-                // 2b. INTERACTIVE DECK DOT INDICATOR
-                if (!_isLoading) _buildDeckPageIndicator(isDark),
 
                 const SizedBox(height: 6),
 
-                // 3. DYNAMIC SELECTED DECKS CHIP TRAY WITH MODE GUIDANCE
-                _buildSelectedDecksChipTray(selectedDecks, isDark),
-                const SizedBox(height: 10),
-
-                // 4. STICKY ACTION HUD WITH DROPDOWNS
-                _buildStickyActionHUD(selectedDecks, isDark),
+                // 4. STICKY ACTION HUD WITH DROPDOWNS & HERO PLAY BUTTON
+                _buildStickyActionHUD(activeDeck, isDark),
 
                 const SizedBox(height: 10),
               ],
@@ -591,137 +504,509 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDeckPageIndicator(bool isDark) {
-    if (_decks.isEmpty) return const SizedBox.shrink();
-
-    final inactiveColor = isDark ? Colors.white24 : Colors.black38;
+  Widget _buildTopBar(bool isDark) {
+    final iconColor = isDark ? Colors.amberAccent : Colors.black;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Center(
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: List.generate(_decks.length, (index) {
-              final isFocused = index == _focusedIndex;
+      padding: const EdgeInsets.fromLTRB(16.0, 12.0, 16.0, 8.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          BouncyGameButton(
+            onTap: () => QuickSettingsModal.show(context),
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF261F47) : Colors.white,
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color:
+                      isDark
+                          ? Colors.amberAccent.withAlpha(120)
+                          : Colors.black12,
+                  width: 2,
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Colors.black26,
+                    blurRadius: 6,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Icon(Icons.settings_outlined, size: 22, color: iconColor),
+            ),
+          ),
 
-              return GestureDetector(
-                onTap: () {
-                  if (_pageController.hasClients) {
-                    _audioService.extraLightImpact();
-                    HapticFeedback.lightImpact();
-                    _pageController.animateToPage(
-                      index,
-                      duration: const Duration(milliseconds: 300),
-                      curve: Curves.easeInOutCubic,
-                    );
-                  }
+          // 3D Arcade Title Text Header
+          _buildArcadeTitleText(isDark),
+
+          // Symmetric balancing spacer
+          const SizedBox(width: 44, height: 44),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildArcadeTitleText(bool isDark) {
+    final glowColor =
+        isDark ? Colors.amber.withAlpha(160) : Colors.amber.withAlpha(80);
+    final strokeShadowColor = isDark ? const Color(0xFF0C091A) : Colors.black26;
+
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // 3D Shadow Layer (Bottom Bevel Offset)
+        Text(
+          "GUESS UP",
+          style: TextStyle(
+            fontFamily: 'Manrope',
+            fontSize: 28,
+            fontWeight: FontWeight.w900,
+            letterSpacing: 3.0,
+            color: strokeShadowColor,
+            shadows: [
+              Shadow(
+                color: strokeShadowColor,
+                offset: const Offset(0, 4),
+                blurRadius: 0,
+              ),
+              Shadow(
+                color: glowColor,
+                offset: const Offset(0, 2),
+                blurRadius: 14,
+              ),
+            ],
+          ),
+        ),
+
+        // Gradient Main Text Layer
+        ShaderMask(
+          blendMode: BlendMode.srcIn,
+          shaderCallback: (bounds) {
+            return LinearGradient(
+              colors:
+                  isDark
+                      ? const [Color(0xFFFFF59D), Color(0xFFFFB300)]
+                      : const [Color(0xFF0F0C1C), Color(0xFF2A2359)],
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+            ).createShader(bounds);
+          },
+          child: const Text(
+            "GUESS UP",
+            style: TextStyle(
+              fontFamily: 'Manrope',
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 3.0,
+              color: Colors.white,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearchBar(bool isDark) {
+    final textColor =
+        isDark ? AppTheme.darkTextColor : AppTheme.lightAccentColor;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Container(
+        height: 48,
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E1938) : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color:
+                isDark
+                    ? Colors.white.withAlpha(30)
+                    : Colors.black.withAlpha(25),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withAlpha(isDark ? 60 : 15),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.search_rounded,
+              color: isDark ? Colors.amberAccent : AppTheme.lightPrimaryColor,
+              size: 22,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: TextField(
+                controller: _searchController,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: textColor,
+                ),
+                decoration: InputDecoration(
+                  hintText: "Search decks by title or description...",
+                  hintStyle: TextStyle(
+                    fontSize: 13,
+                    color: textColor.withAlpha(120),
+                  ),
+                  border: InputBorder.none,
+                  isDense: true,
+                ),
+                onChanged: (query) {
+                  setState(() {
+                    _searchQuery = query;
+                  });
                 },
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  margin: const EdgeInsets.symmetric(horizontal: 3),
-                  width: isFocused ? 26 : 8,
-                  height: 8,
+              ),
+            ),
+            if (_searchQuery.isNotEmpty)
+              GestureDetector(
+                onTap: () {
+                  _audioEngine.extraLightImpact();
+                  _searchController.clear();
+                  setState(() {
+                    _searchQuery = "";
+                  });
+                },
+                child: Icon(
+                  Icons.cancel_rounded,
+                  color: textColor.withAlpha(140),
+                  size: 20,
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildCreateCustomDeckCard(bool isDark) {
+    final primaryColor =
+        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
+
+    return BouncyGameButton(
+      onTap: () async {
+        _audioEngine.mediumImpact();
+        final created = await Navigator.of(
+          context,
+        ).push<bool>(ArcadePageRoute(page: const CreateCustomDeckScreen()));
+        if (created == true && mounted) {
+          context.read<DeckCubit>().loadDecks();
+        }
+      },
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          gradient: LinearGradient(
+            colors:
+                isDark
+                    ? [const Color(0xFF261F47), const Color(0xFF191430)]
+                    : [Colors.white, const Color(0xFFF3F4F6)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+          border: Border.all(color: primaryColor.withAlpha(160), width: 2.5),
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? const Color(0xFF0C091A) : Colors.black45,
+              offset: const Offset(0, 6),
+              blurRadius: 0,
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(21),
+          child: Stack(
+            children: [
+              // Top Gloss Highlight Strip
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                height: 36,
+                child: Container(
                   decoration: BoxDecoration(
-                    color: isFocused ? Colors.amber : inactiveColor,
-                    borderRadius: BorderRadius.circular(4),
-                    border:
-                        isFocused
-                            ? Border.all(color: Colors.amber, width: 1)
-                            : null,
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.white.withAlpha(40),
+                        Colors.white.withAlpha(0),
+                      ],
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                    ),
                   ),
                 ),
-              );
-            }),
+              ),
+
+              // Center Content
+              Center(
+                child: Padding(
+                  padding: const EdgeInsets.all(12.0),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: primaryColor.withAlpha(40),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: primaryColor, width: 2),
+                        ),
+                        child: Icon(
+                          Icons.add_rounded,
+                          size: 32,
+                          color: primaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        "CREATE DECK",
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 13,
+                          color: isDark ? Colors.white : Colors.black,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "+ Custom Deck",
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 10,
+                          color: primaryColor,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  Widget _buildTopBar(bool isDark) {
-    final iconColor = isDark ? Colors.white : Colors.black;
-    final titleColor = isDark ? Colors.white : Colors.black;
+  Widget _buildGridView(bool isDark) {
+    final filtered = _filteredDecks;
+    if (filtered.isEmpty) {
+      return Center(
+        child: Text(
+          "No decks found",
+          style: TextStyle(
+            color: isDark ? Colors.white60 : Colors.black54,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      );
+    }
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          IconButton(
-            icon: Icon(Icons.settings_outlined, size: 28, color: iconColor),
-            tooltip: "Settings",
-            onPressed: () => QuickSettingsModal.show(context),
-          ),
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(
-                "GUESS UP",
-                style: TextStyle(
-                  fontFamily: 'Manrope',
-                  fontSize: 24,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: 2,
-                  color: titleColor,
-                  shadows: [
-                    Shadow(
-                      color: (isDark ? AppTheme.darkPrimaryColor : Colors.black)
-                          .withAlpha(isDark ? 140 : 25),
-                      blurRadius: isDark ? 16 : 3,
-                      offset: Offset(0, isDark ? -1 : 1),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          IconButton(
-            icon: Icon(Icons.help_outline_rounded, size: 26, color: iconColor),
-            tooltip: "How to Play",
-            onPressed: () {
-              _audioService.extraLightImpact();
-              Navigator.of(context).push(
-                CupertinoPageRoute(
-                  builder: (_) => const OnboardingScreen(isRevisiting: true),
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildCarousel(bool isDark) {
-    return PageView.builder(
-      controller: _pageController,
+    return GridView.builder(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       physics: const BouncingScrollPhysics(),
-      onPageChanged: _onDeckSnapped,
-      itemCount: _decks.length,
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        childAspectRatio: 0.88,
+        crossAxisSpacing: 12,
+        mainAxisSpacing: 12,
+      ),
+      itemCount: filtered.length + 1,
       itemBuilder: (context, index) {
-        final deck = _decks[index];
-        final double pageOffset = (_currentPage - index);
+        if (index == filtered.length) {
+          return _buildCreateCustomDeckCard(isDark);
+        }
 
-        final double dist = pageOffset.abs().clamp(0.0, 1.0);
-        final double scale = 1.12 - (dist * (1.12 - 0.86));
-        final bool isSelected = _selectedDeckIds.contains(deck.id);
+        final deck = filtered[index];
+        final isSelected = _selectedDeckIds.contains(deck.id);
+        final deckColor = deck.themeColor;
+        final gradientEnd = deck.gradientEndColor;
 
-        final double effectiveOpacity = (1.0 - (dist * 0.30)).clamp(0.70, 1.0);
+        return BouncyGameButton(
+          onTap: () => _selectDeck(deck),
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(24),
+              gradient: LinearGradient(
+                colors: [deckColor, gradientEnd],
+                begin: Alignment.topCenter,
+                end: Alignment.bottomCenter,
+              ),
+              border:
+                  isSelected
+                      ? Border.all(color: Colors.amberAccent, width: 3.5)
+                      : Border.all(
+                        color: Colors.white.withAlpha(90),
+                        width: 2.0,
+                      ),
+              boxShadow: [
+                // 3D Dark Bottom Bevel Offset (Supercell Style)
+                BoxShadow(
+                  color: isDark ? const Color(0xFF0C091A) : Colors.black45,
+                  offset: const Offset(0, 6),
+                  blurRadius: 0,
+                ),
+                if (isSelected)
+                  BoxShadow(
+                    color: Colors.amberAccent.withAlpha(160),
+                    blurRadius: 18,
+                    spreadRadius: 1,
+                  ),
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(21),
+              child: Stack(
+                children: [
+                  // Top High-Gloss Highlight Reflection Strip
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: 36,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.white.withAlpha(55),
+                            Colors.white.withAlpha(0),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                    ),
+                  ),
 
-        return Center(
-          child: AnimatedScale(
-            scale: scale,
-            duration: const Duration(milliseconds: 100),
-            curve: Curves.easeOut,
-            child: Opacity(
-              opacity: effectiveOpacity,
-              child: GestureDetector(
-                onTap: () => _toggleDeckSelection(deck, index),
-                child: _buildDeckCard(deck, isSelected, dist < 0.35, isDark),
+                  // Top Left Selection Status Badge
+                  if (isSelected)
+                    Positioned(
+                      top: 10,
+                      left: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withAlpha(200),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.amberAccent,
+                            width: 1.5,
+                          ),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black38,
+                              blurRadius: 4,
+                              offset: Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: Icon(
+                          Icons.check_circle_rounded,
+                          color: Colors.greenAccent,
+                          size: 14,
+                        ),
+                      ),
+                    ),
+
+                  // Top Right Info Modal Button
+                  Positioned(
+                    top: 10,
+                    right: 10,
+                    child: GestureDetector(
+                      onTap: () => _showDeckDescriptionModal(deck),
+                      child: Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withAlpha(130),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withAlpha(90)),
+                        ),
+                        child: const Icon(
+                          Icons.info_outline_rounded,
+                          color: Colors.white,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ),
+
+                  // Center Content: Emoji, Name & Word Count
+                  Center(
+                    child: Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                        12.0,
+                        24.0,
+                        12.0,
+                        12.0,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            deck.icon.isNotEmpty ? deck.icon : "🎴",
+                            style: const TextStyle(fontSize: 42),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            deck.name.toUpperCase(),
+                            textAlign: TextAlign.center,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 14,
+                              color: Colors.white,
+                              letterSpacing: 0.8,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.black87,
+                                  blurRadius: 6,
+                                  offset: Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withAlpha(110),
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(
+                                color: Colors.white.withAlpha(30),
+                              ),
+                            ),
+                            child: Text(
+                              "${deck.words.length} CARDS",
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 10,
+                                color: Colors.white70,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -730,567 +1015,132 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildDeckCard(
-    Category deck,
-    bool isSelected,
-    bool isFocused,
-    bool isDark,
-  ) {
-    final deckColor = deck.themeColor;
-    final gradientEnd = deck.gradientEndColor;
-    return AspectRatio(
-      aspectRatio: 3 / 4,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(26),
-          gradient: LinearGradient(
-            colors: [deckColor, gradientEnd],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
+  // --- STICKY ACTION HUD ---
+  Widget _buildStickyActionHUD(Category activeDeck, bool isDark) {
+    final primaryGlowColor =
+        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
+    final hudSurface = isDark ? const Color(0xFF1A1A1E) : Colors.white;
+    final borderColor =
+        isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(20);
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: hudSurface,
+        borderRadius: BorderRadius.circular(26),
+        border: Border.all(color: borderColor, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(isDark ? 90 : 30),
+            blurRadius: 18,
+            offset: const Offset(0, 6),
           ),
-          border:
-              isSelected
-                  ? Border.all(color: Colors.white, width: 3.5)
-                  : Border.all(color: Colors.white.withAlpha(70), width: 1.5),
-          boxShadow:
-              isSelected
-                  ? [
-                    BoxShadow(
-                      color: deckColor.withAlpha(220),
-                      blurRadius: 30,
-                      spreadRadius: 4,
-                      offset: const Offset(0, 8),
-                    ),
-                    BoxShadow(
-                      color: Colors.white.withAlpha(120),
-                      blurRadius: 10,
-                      spreadRadius: -2,
-                    ),
-                  ]
-                  : [
-                    BoxShadow(
-                      color: Colors.black.withAlpha(isDark ? 90 : 35),
-                      blurRadius: 14,
-                      offset: const Offset(0, 5),
-                    ),
-                  ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(23),
-          child: Stack(
-            children: [
-              // Top Right Gloss Circle Effect
-              Positioned(
-                top: -35,
-                right: -35,
-                child: Container(
-                  width: 130,
-                  height: 130,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: Colors.white.withAlpha(25),
-                  ),
-                ),
-              ),
-              // Top Left Selection Status Pill
-              if (deck.isTrending)
-                Positioned(
-                  top: 12,
-                  left: 12,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
-                    ),
-                    decoration: BoxDecoration(
-                      color:
-                          isSelected
-                              ? Colors.black.withAlpha(170)
-                              : Colors.black.withAlpha(110),
-                      borderRadius: BorderRadius.circular(14),
-                      border: Border.all(
-                        color:
-                            isSelected
-                                ? Colors.white.withAlpha(200)
-                                : Colors.white.withAlpha(50),
-                        width: 1,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.local_fire_department_rounded,
-                      // size: 14,
-                      color: Colors.orangeAccent,
-                    ),
-                  ),
-                ),
-              // Top Right Deck Details Modal Trigger
-              Positioned(
-                top: 10,
-                right: 10,
-                child: GestureDetector(
-                  onTap: () => _showDeckDescriptionModal(deck),
-                  child: Container(
-                    padding: const EdgeInsets.all(7),
-                    decoration: BoxDecoration(
-                      color: Colors.black.withAlpha(130),
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: Colors.white.withAlpha(90),
-                        width: 1,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.info_outline_rounded,
-                      color: Colors.white,
-                      size: 18,
-                    ),
-                  ),
-                ),
-              ),
-              // Center Deck Icon, Title & Word Count
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16.0, 42.0, 16.0, 16.0),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(deck.icon, style: const TextStyle(fontSize: 54)),
-                        const SizedBox(height: 8),
-                        Text(
-                          deck.title.toUpperCase(),
-                          textAlign: TextAlign.center,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 17,
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.2,
-                            shadows: [
-                              Shadow(
-                                color: Colors.black54,
-                                blurRadius: 8,
-                                offset: Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 3,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black.withAlpha(90),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: Colors.white.withAlpha(40),
-                            ),
-                          ),
-                          child: Text(
-                            "${deck.count} WORDS",
-                            style: TextStyle(
-                              color: Colors.white.withAlpha(230),
-                              fontSize: 10,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.0,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
-    );
-  }
-
-  Widget _buildSelectedDecksChipTray(
-    List<Category> selectedDecks,
-    bool isDark,
-  ) {
-    final titleColor = isDark ? Colors.white70 : Colors.black;
-    final chipBg = isDark ? const Color(0xFF222222) : Colors.white;
-    final int totalCombinedWords = selectedDecks.fold(
-      0,
-      (sum, d) => sum + d.words.length,
-    );
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Header with Guidance Cue & Total Word Count
+          // Mode Toggle + Dropdowns Row
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    _isTeamMode
-                        ? "ACTIVE BATTLE DECK"
-                        : "SELECTED DECKS (${selectedDecks.length})",
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.8,
-                      color: titleColor,
-                    ),
+              // Solo vs Team Segment Switch
+              Expanded(
+                flex: 4,
+                child: Container(
+                  height: 42,
+                  padding: const EdgeInsets.all(3),
+                  decoration: BoxDecoration(
+                    color:
+                        isDark
+                            ? const Color(0xFF26262B)
+                            : const Color(0xFFEFEFEF),
+                    borderRadius: BorderRadius.circular(16),
                   ),
-                  Row(
+                  child: Row(
                     children: [
-                      Icon(
-                        _isTeamMode
-                            ? Icons.shield_rounded
-                            : Icons.stars_rounded,
-                        size: 14,
-                        color:
-                            _isTeamMode
-                                ? (isDark
-                                    ? Colors.amberAccent
-                                    : Colors.deepOrange.shade700)
-                                : (isDark
-                                    ? AppTheme.darkPrimaryColor
-                                    : const Color(0xFFB45309)),
+                      Expanded(
+                        child: BouncyGameButton(
+                          onTap: () => _switchGameMode(false),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color:
+                                  !_isTeamMode
+                                      ? primaryGlowColor
+                                      : Colors.transparent,
+                              borderRadius: BorderRadius.circular(13),
+                            ),
+                            child: Center(
+                              child: Text(
+                                "SOLO",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  color:
+                                      !_isTeamMode
+                                          ? Colors.black
+                                          : (isDark
+                                              ? Colors.white60
+                                              : Colors.black54),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _isTeamMode
-                            ? "1 Deck Locked for Fair Play (Team A vs Team B)"
-                            : "Mix & Match any decks for a custom party pool!",
-                        style: TextStyle(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                          color:
-                              _isTeamMode
-                                  ? (isDark
-                                      ? Colors.amberAccent
-                                      : Colors.deepOrange.shade700)
-                                  : (isDark
-                                      ? AppTheme.darkPrimaryColor
-                                      : const Color(0xFFB45309)),
+                      Expanded(
+                        child: BouncyGameButton(
+                          onTap: () => _switchGameMode(true),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color:
+                                  _isTeamMode
+                                      ? Colors.amber
+                                      : Colors.transparent,
+                              borderRadius: BorderRadius.circular(13),
+                            ),
+                            child: Center(
+                              child: Text(
+                                "TEAM",
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w900,
+                                  color:
+                                      _isTeamMode
+                                          ? Colors.black
+                                          : (isDark
+                                              ? Colors.white60
+                                              : Colors.black54),
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ],
+                ),
               ),
-              if (!_isTeamMode && selectedDecks.length > 1)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: (isDark
-                            ? AppTheme.darkPrimaryColor
-                            : AppTheme.lightPrimaryColor)
-                        .withAlpha(40),
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: (isDark
-                              ? AppTheme.darkPrimaryColor
-                              : AppTheme.lightPrimaryColor)
-                          .withAlpha(100),
-                    ),
-                  ),
-                  child: Text(
-                    "$totalCombinedWords Words Total",
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w900,
-                      color: isDark ? Colors.amberAccent : Colors.black,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 6),
 
-          // Horizontal Chips List
-          SizedBox(
-            height: 38,
-            child:
-                selectedDecks.isEmpty
-                    ? Align(
-                      alignment: Alignment.centerLeft,
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.red.withAlpha(isDark ? 30 : 20),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: Colors.red.withAlpha(100)),
-                        ),
-                        child: const Text(
-                          "⚠️ Tap a deck above to select",
-                          style: TextStyle(
-                            color: Colors.redAccent,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ),
-                    )
-                    : ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemCount: selectedDecks.length,
-                      separatorBuilder: (_, __) => const SizedBox(width: 8),
-                      itemBuilder: (context, index) {
-                        final deck = selectedDecks[index];
-                        final deckColor = deck.themeColor;
+              const SizedBox(width: 8),
 
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 10,
-                            vertical: 4,
-                          ),
-                          decoration: BoxDecoration(
-                            color: chipBg,
-                            borderRadius: BorderRadius.circular(14),
-                            border: Border.all(
-                              color: deckColor.withAlpha(180),
-                              width: 1.5,
-                            ),
-                            boxShadow:
-                                isDark
-                                    ? []
-                                    : [
-                                      BoxShadow(
-                                        color: Colors.black.withAlpha(15),
-                                        blurRadius: 4,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ],
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                deck.icon,
-                                style: const TextStyle(fontSize: 14),
-                              ),
-                              const SizedBox(width: 6),
-                              Text(
-                                "${deck.title} (${deck.count})",
-                                style: TextStyle(
-                                  color: isDark ? Colors.white : Colors.black,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                              ),
-                              if (!_isTeamMode) ...[
-                                const SizedBox(width: 6),
-                                GestureDetector(
-                                  onTap:
-                                      () => _removeDeckFromSelection(deck.id),
-                                  child: Container(
-                                    padding: const EdgeInsets.all(2),
-                                    decoration: BoxDecoration(
-                                      color:
-                                          isDark
-                                              ? Colors.white.withAlpha(30)
-                                              : Colors.black.withAlpha(15),
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: Icon(
-                                      Icons.close_rounded,
-                                      size: 14,
-                                      color:
-                                          isDark
-                                              ? Colors.white70
-                                              : Colors.black87,
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ],
-                          ),
-                        );
-                      },
-                    ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStickyActionHUD(List<Category> selectedDecks, bool isDark) {
-    final bool hasSelection = selectedDecks.isNotEmpty;
-    final int totalDecks = selectedDecks.length;
-    final hudSurface = isDark ? const Color(0xFF1E1E1E) : Colors.white;
-    final primaryGlowColor =
-        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20.0),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // 1. Mode Selector Toggle: [ ⚡ Solo (Mix & Match) ] vs [ ⚔️ Team Battle ]
-          Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              color: hudSurface,
-              borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color:
-                    isDark
-                        ? Colors.white.withAlpha(20)
-                        : Colors.black.withAlpha(15),
-              ),
-              boxShadow:
-                  isDark
-                      ? []
-                      : [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(10),
-                          blurRadius: 8,
-                          offset: const Offset(0, 2),
-                        ),
-                      ],
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => _switchGameMode(false),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color:
-                            !_isTeamMode
-                                ? primaryGlowColor
-                                : Colors.transparent,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.bolt_rounded,
-                              size: 16,
-                              color:
-                                  !_isTeamMode
-                                      ? (isDark ? Colors.black : Colors.black)
-                                      : (isDark
-                                          ? Colors.white60
-                                          : Colors.black87),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              "Solo (Mix & Match)",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 12,
-                                color:
-                                    !_isTeamMode
-                                        ? (isDark ? Colors.black : Colors.black)
-                                        : (isDark
-                                            ? Colors.white60
-                                            : Colors.black87),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => _switchGameMode(true),
-                    child: AnimatedContainer(
-                      duration: const Duration(milliseconds: 180),
-                      padding: const EdgeInsets.symmetric(vertical: 8),
-                      decoration: BoxDecoration(
-                        color:
-                            _isTeamMode ? primaryGlowColor : Colors.transparent,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Center(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(
-                              Icons.groups_rounded,
-                              size: 16,
-                              color:
-                                  _isTeamMode
-                                      ? (isDark ? Colors.black : Colors.black)
-                                      : (isDark
-                                          ? Colors.white60
-                                          : Colors.black87),
-                            ),
-                            const SizedBox(width: 4),
-                            Text(
-                              "Team Battle",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 12,
-                                color:
-                                    _isTeamMode
-                                        ? (isDark ? Colors.black : Colors.black)
-                                        : (isDark
-                                            ? Colors.white60
-                                            : Colors.black87),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 10),
-
-          // 2. Dropdowns Row: Timer Selector + Team Rounds Selector
-          Row(
-            children: [
               // Timer Dropdown Pill
               Expanded(
+                flex: 3,
                 child: _buildDropdownPill<int>(
                   icon: Icons.timer_outlined,
                   value: _gameDuration,
-                  label: "$_gameDuration s Timer",
+                  label: "${_gameDuration}s",
                   items:
-                      _timeOptions.map((t) {
+                      _timeOptions.map((sec) {
                         return DropdownMenuItem<int>(
-                          value: t,
-                          child: Text(
-                            "$t Seconds",
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              fontSize: 13,
-                              color: isDark ? Colors.white : Colors.black,
-                            ),
-                          ),
+                          value: sec,
+                          child: Text("${sec}s"),
                         );
                       }).toList(),
                   onChanged: (newTime) {
                     if (newTime != null) {
-                      _audioService.extraLightImpact();
+                      _audioEngine.extraLightImpact();
                       setState(() => _gameDuration = newTime);
                       _storageService.setGameDuration(newTime);
                     }
@@ -1299,31 +1149,25 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
 
-              // Conditional Team Rounds Dropdown Pill
+              // Round Dropdown Pill (Team Mode Only)
               if (_isTeamMode) ...[
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 Expanded(
+                  flex: 3,
                   child: _buildDropdownPill<int>(
-                    icon: Icons.military_tech_outlined,
+                    icon: Icons.flag_outlined,
                     value: _teamRounds,
-                    label: "$_teamRounds Rounds",
+                    label: "$_teamRounds Rds",
                     items:
-                        _roundOptions.map((r) {
+                        _roundOptions.map((rounds) {
                           return DropdownMenuItem<int>(
-                            value: r,
-                            child: Text(
-                              "$r Rounds",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13,
-                                color: isDark ? Colors.white : Colors.black,
-                              ),
-                            ),
+                            value: rounds,
+                            child: Text("$rounds Rds"),
                           );
                         }).toList(),
                     onChanged: (newRounds) {
                       if (newRounds != null) {
-                        _audioService.extraLightImpact();
+                        _audioEngine.extraLightImpact();
                         setState(() => _teamRounds = newRounds);
                         _storageService.setTeamRounds(newRounds);
                       }
@@ -1337,47 +1181,30 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const SizedBox(height: 12),
 
-          // 3. Primary Play CTA Button
-          GestureDetector(
-            onTapDown:
-                hasSelection
-                    ? (_) => setState(() => _isPlayPressed = true)
-                    : null,
-            onTapUp:
-                hasSelection
-                    ? (_) {
-                      setState(() => _isPlayPressed = false);
-                      _handleStartGame();
-                    }
-                    : null,
-            onTapCancel: () => setState(() => _isPlayPressed = false),
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 100),
-              height: 56,
+          // Primary Hero Play CTA Button
+          BouncyGameButton(
+            onTap: _handleStartGame,
+            child: Container(
+              height: 58,
               width: double.infinity,
-              transform: Matrix4.translationValues(
-                0,
-                _isPlayPressed ? 4 : 0,
-                0,
-              ),
               decoration: BoxDecoration(
-                color:
-                    !hasSelection
-                        ? (isDark
-                            ? const Color(0xFF333333)
-                            : const Color(0xFFD1D5DB))
-                        : primaryGlowColor,
-                borderRadius: BorderRadius.circular(20),
-                boxShadow:
-                    _isPlayPressed || !hasSelection
-                        ? []
-                        : [
-                          BoxShadow(
-                            color: primaryGlowColor.withAlpha(160),
-                            blurRadius: 18,
-                            offset: const Offset(0, 6),
-                          ),
-                        ],
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFFFEA00), Color(0xFFFF9100)],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(color: Colors.white, width: 2.5),
+                boxShadow: const [
+                  // Solid 3D Dark Bottom Push Bevel
+                  BoxShadow(color: Color(0xFF8E4800), offset: Offset(0, 5)),
+                  BoxShadow(
+                    color: Colors.amberAccent,
+                    blurRadius: 16,
+                    spreadRadius: -2,
+                    offset: Offset(0, 2),
+                  ),
+                ],
               ),
               child: Center(
                 child: Padding(
@@ -1389,33 +1216,37 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            !hasSelection
-                                ? "Select at least 1 deck"
-                                : _isTeamMode
-                                ? "TEAM BATTLE (${selectedDecks.first.title.toUpperCase()} • ${_gameDuration}s)"
-                                : "PLAY SOLO ($totalDecks DECKS • ${_gameDuration}s)",
-                            style: TextStyle(
-                              color:
-                                  !hasSelection
-                                      ? (isDark
-                                          ? Colors.white38
-                                          : Colors.black54)
-                                      : Colors.black,
-                              fontSize: 14,
+                            _isTeamMode
+                                ? "START TEAM BATTLE (${activeDeck.name.toUpperCase()} • ${_gameDuration}s)"
+                                : "PLAY NOW (${activeDeck.name.toUpperCase()} • ${_gameDuration}s)",
+                            style: const TextStyle(
+                              color: Colors.black,
+                              fontSize: 15,
                               fontWeight: FontWeight.w900,
-                              letterSpacing: 1.1,
+                              letterSpacing: 1.2,
+                              shadows: [
+                                Shadow(
+                                  color: Colors.white70,
+                                  offset: Offset(0, 1),
+                                ),
+                              ],
                             ),
                           ),
                         ),
                       ),
-                      if (hasSelection) ...[
-                        const SizedBox(width: 8),
-                        const Icon(
-                          Icons.play_arrow_rounded,
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
                           color: Colors.black,
-                          size: 28,
+                          shape: BoxShape.circle,
                         ),
-                      ],
+                        child: const Icon(
+                          Icons.play_arrow_rounded,
+                          color: Colors.amberAccent,
+                          size: 22,
+                        ),
+                      ),
                     ],
                   ),
                 ),

@@ -51,12 +51,18 @@ export const PrivacyPage = () => {
           <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-muted-light dark:text-muted-dark">
             <div className="flex items-center gap-1.5">
               <FileText className="w-4 h-4 text-primary" />
-              <span>Developer: <strong>Shrey Nagda</strong></span>
+              <span>
+                Developer: <strong>Shrey Nagda</strong>
+              </span>
             </div>
             <span>•</span>
-            <div>Effective Date: <strong>August 31, 2026</strong></div>
+            <div>
+              Effective Date: <strong>August 31, 2026</strong>
+            </div>
             <span>•</span>
-            <div>Last Updated: <strong>August 31, 2026</strong></div>
+            <div>
+              Last Updated: <strong>August 31, 2026</strong>
+            </div>
           </div>
         </div>
 
@@ -66,7 +72,9 @@ export const PrivacyPage = () => {
             <div className="w-9 h-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold">
               <Lock className="w-5 h-5" />
             </div>
-            <h4 className="font-extrabold text-sm text-text-light dark:text-text-dark">Zero PII Data</h4>
+            <h4 className="font-extrabold text-sm text-text-light dark:text-text-dark">
+              Zero PII Data
+            </h4>
             <p className="text-xs text-muted-light dark:text-muted-dark leading-relaxed">
               No accounts, emails, phone numbers, or user tracking collected.
             </p>
@@ -76,7 +84,9 @@ export const PrivacyPage = () => {
             <div className="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-500 flex items-center justify-center font-bold">
               <Cpu className="w-5 h-5" />
             </div>
-            <h4 className="font-extrabold text-sm text-text-light dark:text-text-dark">On-Device RAM Sensors</h4>
+            <h4 className="font-extrabold text-sm text-text-light dark:text-text-dark">
+              On-Device RAM Sensors
+            </h4>
             <p className="text-xs text-muted-light dark:text-muted-dark leading-relaxed">
               Tilt gestures read in RAM only. Never recorded or transmitted.
             </p>
@@ -86,9 +96,11 @@ export const PrivacyPage = () => {
             <div className="w-9 h-9 rounded-xl bg-purple-500/15 text-purple-500 flex items-center justify-center font-bold">
               <Database className="w-5 h-5" />
             </div>
-            <h4 className="font-extrabold text-sm text-text-light dark:text-text-dark">TLS Encrypted Sync</h4>
+            <h4 className="font-extrabold text-sm text-text-light dark:text-text-dark">
+              TLS Encrypted Sync
+            </h4>
             <p className="text-xs text-muted-light dark:text-muted-dark leading-relaxed">
-              Google Firebase used for deck updates via secure HTTPS.
+              Secure cloud database used for deck updates via encrypted HTTPS.
             </p>
           </div>
 
@@ -96,7 +108,9 @@ export const PrivacyPage = () => {
             <div className="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center font-bold">
               <Trash2 className="w-5 h-5" />
             </div>
-            <h4 className="font-extrabold text-sm text-text-light dark:text-text-dark">Data Erasure Control</h4>
+            <h4 className="font-extrabold text-sm text-text-light dark:text-text-dark">
+              Data Erasure Control
+            </h4>
             <p className="text-xs text-muted-light dark:text-muted-dark leading-relaxed">
               Clear local preferences anytime via Android Settings.
             </p>
@@ -113,7 +127,7 @@ export const PrivacyPage = () => {
               { id: "sec-1", title: "1. Identity & Scope" },
               { id: "sec-2", title: "2. Zero PII Policy" },
               { id: "sec-3", title: "3. Hardware Sensors" },
-              { id: "sec-4", title: "4. Firebase & Network" },
+              { id: "sec-4", title: "4. Cloud Database & Network" },
               { id: "sec-5", title: "5. Local Storage" },
               { id: "sec-6", title: "6. Data Deletion" },
               { id: "sec-7", title: "7. Children's Privacy" },
@@ -141,10 +155,19 @@ export const PrivacyPage = () => {
               </h2>
             </div>
             <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
-              Welcome to <strong>Guess Up</strong> ("we," "our," or "us"), an interactive party charades mobile application developed and operated by <strong>Shrey Nagda</strong>. Guess Up is designed to deliver a fun, motion-activated party game experience where players place their phone on their forehead while friends shout clues.
+              Welcome to <strong>Guess Up</strong> ("we," "our," or "us"), an
+              interactive party charades mobile application developed and
+              operated by <strong>Shrey Nagda</strong>. Guess Up is designed to
+              deliver a fun, motion-activated party game experience where
+              players place their phone on their forehead while friends shout
+              clues.
             </p>
             <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
-              This Privacy Policy details our data governance practices, hardware permissions, and security measures for the Guess Up mobile application on the Google Play Store. We strictly adhere to Google Play Developer Program Policies and global data protection guidelines.
+              This Privacy Policy details our data governance practices,
+              hardware permissions, and security measures for the Guess Up
+              mobile application on the Google Play Store. We strictly adhere to
+              Google Play Developer Program Policies and global data protection
+              guidelines.
             </p>
           </section>
 
@@ -156,35 +179,57 @@ export const PrivacyPage = () => {
               </h2>
             </div>
             <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
-              Guess Up operates as a standalone offline and online party game. We strictly follow a <strong>Zero Personal Information</strong> policy:
+              Guess Up operates as a standalone offline and online party game.
+              We strictly follow a <strong>Zero Personal Information</strong>{" "}
+              policy:
             </p>
             <div className="grid sm:grid-cols-2 gap-3 pt-1">
               <div className="p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                 <div className="text-xs">
-                  <strong className="text-text-light dark:text-text-dark block font-extrabold mb-0.5">No User Accounts</strong>
-                  <span className="text-muted-light dark:text-muted-dark">No sign-up, email registration, password creation, or social logins required.</span>
+                  <strong className="text-text-light dark:text-text-dark block font-extrabold mb-0.5">
+                    No User Accounts
+                  </strong>
+                  <span className="text-muted-light dark:text-muted-dark">
+                    No sign-up, email registration, password creation, or social
+                    logins required.
+                  </span>
                 </div>
               </div>
               <div className="p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                 <div className="text-xs">
-                  <strong className="text-text-light dark:text-text-dark block font-extrabold mb-0.5">No PII Storage</strong>
-                  <span className="text-muted-light dark:text-muted-dark">We do not collect names, phone numbers, email addresses, physical locations, or contacts.</span>
+                  <strong className="text-text-light dark:text-text-dark block font-extrabold mb-0.5">
+                    No PII Storage
+                  </strong>
+                  <span className="text-muted-light dark:text-muted-dark">
+                    We do not collect names, phone numbers, email addresses,
+                    physical locations, or contacts.
+                  </span>
                 </div>
               </div>
               <div className="p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                 <div className="text-xs">
-                  <strong className="text-text-light dark:text-text-dark block font-extrabold mb-0.5">No Audio/Video Recording</strong>
-                  <span className="text-muted-light dark:text-muted-dark">The App does NOT record audio, access the microphone, capture camera footage, or store media.</span>
+                  <strong className="text-text-light dark:text-text-dark block font-extrabold mb-0.5">
+                    No Audio/Video Recording
+                  </strong>
+                  <span className="text-muted-light dark:text-muted-dark">
+                    The App does NOT record audio, access the microphone,
+                    capture camera footage, or store media.
+                  </span>
                 </div>
               </div>
               <div className="p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                 <div className="text-xs">
-                  <strong className="text-text-light dark:text-text-dark block font-extrabold mb-0.5">No Advertising Tracking</strong>
-                  <span className="text-muted-light dark:text-muted-dark">We do not employ ad tracking SDKs (such as IDFA or AAID tracking) for ad profiling.</span>
+                  <strong className="text-text-light dark:text-text-dark block font-extrabold mb-0.5">
+                    No Advertising Tracking
+                  </strong>
+                  <span className="text-muted-light dark:text-muted-dark">
+                    We do not employ ad tracking SDKs (such as IDFA or AAID
+                    tracking) for ad profiling.
+                  </span>
                 </div>
               </div>
             </div>
@@ -198,7 +243,8 @@ export const PrivacyPage = () => {
               </h2>
             </div>
             <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
-              Guess Up uses on-device motion hardware to provide hands-free gesture control during active game rounds:
+              Guess Up uses on-device motion hardware to provide hands-free
+              gesture control during active game rounds:
             </p>
             <div className="p-5 rounded-2xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark flex flex-col gap-3">
               <div className="flex items-center gap-2 font-bold text-sm text-text-light dark:text-text-dark">
@@ -206,10 +252,17 @@ export const PrivacyPage = () => {
                 <span>Real-Time Forehead Tilt Gesture Detection</span>
               </div>
               <p className="text-xs sm:text-sm text-muted-light dark:text-muted-dark leading-relaxed">
-                The App accesses the device's built-in Accelerometer and Gyroscope hardware strictly in real-time to recognize physical tilt gestures (e.g., tilting the device forward/down to mark a correct answer, or tilting upward to pass).
+                The App accesses the device's built-in Accelerometer and
+                Gyroscope hardware strictly in real-time to recognize physical
+                tilt gestures (e.g., tilting the device forward/down to mark a
+                correct answer, or tilting upward to pass).
               </p>
               <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-xs font-semibold text-text-light dark:text-text-dark">
-                <strong>Crucial Privacy Note:</strong> All sensor data streams are processed strictly in volatile device memory (RAM) during active gameplay. Motion sensor data is NEVER logged to disk, saved locally, or transmitted across the internet to any external server.
+                <strong>Crucial Privacy Note:</strong> All sensor data streams
+                are processed strictly in volatile device memory (RAM) during
+                active gameplay. Motion sensor data is NEVER logged to disk,
+                saved locally, or transmitted across the internet to any
+                external server.
               </div>
             </div>
           </section>
@@ -218,29 +271,41 @@ export const PrivacyPage = () => {
           <section id="sec-4" className="flex flex-col gap-4 scroll-mt-24">
             <div className="flex items-center gap-3 border-b border-border-light dark:border-border-dark pb-3">
               <h2 className="text-xl sm:text-2xl font-black text-primary dark:text-text-dark tracking-tight">
-                4. NETWORK CONNECTIVITY & THIRD-PARTY SERVICES (GOOGLE FIREBASE)
+                4. NETWORK CONNECTIVITY & CLOUD SERVICES
               </h2>
             </div>
             <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
-              Guess Up connects to Google Firebase cloud infrastructure (Cloud Firestore) to download updated trivia word decks, categories, and game parameters:
+              Guess Up connects to secure cloud infrastructure to download
+              updated trivia word decks, categories, and game parameters:
             </p>
             <ul className="list-disc pl-6 flex flex-col gap-2 text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
               <li>
-                <strong>Encrypted Communications:</strong> All network communication between the mobile app and Google Firebase backend is enforced via industry-standard Transport Layer Security (TLS/HTTPS).
+                <strong>Encrypted Communications:</strong> All network
+                communication between the mobile app and cloud backend is
+                enforced via industry-standard Transport Layer Security
+                (TLS/HTTPS).
               </li>
               <li>
-                <strong>Technical Metadata:</strong> When requesting content updates, standard non-identifying technical headers (such as device OS version and IP address) are processed transiently by Google Cloud to establish secure sockets and maintain server health.
+                <strong>Technical Metadata:</strong> When requesting content
+                updates, standard non-identifying technical headers (such as
+                device OS version and IP address) are processed transiently by
+                cloud servers to establish secure sockets and maintain server
+                health.
               </li>
               <li>
-                <strong>Third-Party Policy Link:</strong> Google Firebase is operated by Google LLC. For complete information on Google’s infrastructure privacy practices, please view the{" "}
+                <strong>Cloud Infrastructure Privacy:</strong> Cloud
+                infrastructure is hosted on secure enterprise cloud servers. For
+                complete information on enterprise data infrastructure privacy
+                practices, please view the{" "}
                 <a
                   href="https://policies.google.com/privacy"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-primary font-bold hover:underline inline-flex items-center gap-1"
                 >
-                  Google Privacy Policy <ExternalLink className="w-3.5 h-3.5" />
-                </a>.
+                  Privacy Policy <ExternalLink className="w-3.5 h-3.5" />
+                </a>
+                .
               </li>
             </ul>
           </section>
@@ -253,7 +318,9 @@ export const PrivacyPage = () => {
               </h2>
             </div>
             <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
-              To maintain user convenience across game launches, Guess Up saves non-personal game configuration settings locally on your physical device using native <code>SharedPreferences</code> storage:
+              To maintain user convenience across game launches, Guess Up saves
+              non-personal game configuration settings locally on your physical
+              device using native <code>SharedPreferences</code> storage:
             </p>
             <ul className="list-disc pl-6 flex flex-col gap-1.5 text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
               <li>Sound effects (SFX) toggle status (ON/OFF)</li>
@@ -273,7 +340,8 @@ export const PrivacyPage = () => {
               </h2>
             </div>
             <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
-              In full compliance with Google Play’s Data Deletion Policy requirements:
+              In full compliance with Google Play’s Data Deletion Policy
+              requirements:
             </p>
             <div className="p-5 rounded-2xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark flex flex-col gap-3">
               <div className="flex items-center gap-2 font-extrabold text-sm text-text-light dark:text-text-dark">
@@ -281,14 +349,21 @@ export const PrivacyPage = () => {
                 <span>How to Delete Your Data</span>
               </div>
               <p className="text-xs sm:text-sm text-muted-light dark:text-muted-dark leading-relaxed">
-                Because Guess Up does not store user profiles or personal information on remote servers, no cloud data deletion request is necessary. Users hold 100% control over their local data:
+                Because Guess Up does not store user profiles or personal
+                information on remote servers, no cloud data deletion request is
+                necessary. Users hold 100% control over their local data:
               </p>
               <ol className="list-decimal pl-6 flex flex-col gap-1 text-xs sm:text-sm text-muted-light dark:text-muted-dark leading-relaxed">
                 <li>
-                  <strong>Clear App Storage:</strong> Open Android Device Settings → Apps → Guess Up → Storage & Cache → Tap "Clear Data" or "Clear Storage". This instantly erases all stored local preferences and custom decks.
+                  <strong>Clear App Storage:</strong> Open Android Device
+                  Settings → Apps → Guess Up → Storage & Cache → Tap "Clear
+                  Data" or "Clear Storage". This instantly erases all stored
+                  local preferences and custom decks.
                 </li>
                 <li>
-                  <strong>Uninstall App:</strong> Uninstalling the Guess Up application automatically purges all locally cached app files from your device.
+                  <strong>Uninstall App:</strong> Uninstalling the Guess Up
+                  application automatically purges all locally cached app files
+                  from your device.
                 </li>
               </ol>
             </div>
@@ -302,10 +377,17 @@ export const PrivacyPage = () => {
               </h2>
             </div>
             <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
-              Guess Up is designed for general family audiences, teenagers, and adult party groups. We fully comply with the Children’s Online Privacy Protection Act (COPPA) and international child protection regulations.
+              Guess Up is designed for general family audiences, teenagers, and
+              adult party groups. We fully comply with the Children’s Online
+              Privacy Protection Act (COPPA) and international child protection
+              regulations.
             </p>
             <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
-              We do not knowingly collect, request, or process personal data from children under the age of 13. If you are a parent or guardian and believe that any technical information has been inadvertently submitted, please contact us immediately so we can promptly address your inquiry.
+              We do not knowingly collect, request, or process personal data
+              from children under the age of 13. If you are a parent or guardian
+              and believe that any technical information has been inadvertently
+              submitted, please contact us immediately so we can promptly
+              address your inquiry.
             </p>
           </section>
 
@@ -317,7 +399,9 @@ export const PrivacyPage = () => {
               </h2>
             </div>
             <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
-              If you have any questions, inquiries, or feedback regarding this Privacy Policy or data transparency in Guess Up, please contact the developer:
+              If you have any questions, inquiries, or feedback regarding this
+              Privacy Policy or data transparency in Guess Up, please contact
+              the developer:
             </p>
 
             <div className="p-6 rounded-2xl bg-surface-light dark:bg-surface-dark border-2 border-border-light dark:border-border-dark flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
