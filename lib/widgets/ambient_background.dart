@@ -25,16 +25,13 @@ class AmbientBackground extends StatelessWidget {
         isDark ? const Color(0xFF121212) : const Color(0xFFF6F7FA);
 
     return TweenAnimationBuilder<Color?>(
-      tween: ColorTween(
-        begin: ambientColor,
-        end: ambientColor,
-      ),
+      tween: ColorTween(begin: ambientColor, end: ambientColor),
       duration: duration,
       curve: Curves.easeInOut,
       builder: (context, animatedColor, builtChild) {
         final currentColor = animatedColor ?? ambientColor;
-        final int primaryAlpha = isDark ? 65 : 40;
-        final int secondaryAlpha = isDark ? 45 : 25;
+        final int primaryAlpha = isDark ? 65 : 30;
+        final int secondaryAlpha = isDark ? 45 : 18;
 
         return Stack(
           children: [
@@ -47,7 +44,7 @@ class AmbientBackground extends StatelessWidget {
               right: -60,
               child: _AmbientBlob(
                 color: currentColor.withAlpha(primaryAlpha),
-                size: 260,
+                size: 300,
               ),
             ),
 
@@ -90,20 +87,14 @@ class _AmbientBlob extends StatelessWidget {
   final Color color;
   final double size;
 
-  const _AmbientBlob({
-    required this.color,
-    required this.size,
-  });
+  const _AmbientBlob({required this.color, required this.size});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: size,
       height: size,
-      decoration: BoxDecoration(
-        shape: BoxShape.circle,
-        color: color,
-      ),
+      decoration: BoxDecoration(shape: BoxShape.circle, color: color),
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 70, sigmaY: 70),
         child: Container(color: Colors.transparent),

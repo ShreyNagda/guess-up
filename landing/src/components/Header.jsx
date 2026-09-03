@@ -69,15 +69,13 @@ export const Header = () => {
         </>
       )}
 
-      {/* {!isAdmin && (
-        <Link
-          to="/admin"
-          onClick={() => setIsOpen(false)}
-          className="font-bold text-[0.95rem] hover:text-primary transition-colors"
-        >
-          Admin
-        </Link>
-      )} */}
+      <Link
+        to="/privacy"
+        onClick={() => setIsOpen(false)}
+        className="font-bold text-[0.95rem] hover:text-primary transition-colors"
+      >
+        Privacy
+      </Link>
 
       <button
         onClick={() => {

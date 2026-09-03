@@ -43,6 +43,7 @@ import {
   Wand2,
 } from "lucide-react";
 import { ColorPicker } from "./ColorPicker";
+import { getRandomUnusedColor, getDarkerShade } from "../utils/colorUtils";
 
 const EMOJI_PALETTE = [
   "🎬",
@@ -294,8 +295,12 @@ export const AdminDashboard = () => {
     setDeckName("");
     setDeckIcon("🎮");
     setDeckDesc("");
-    setDeckColor("#FFD600");
-    setDeckGradientEnd("#FF9100");
+
+    const randomPrimary = getRandomUnusedColor(decksList);
+    const darkerEnd = getDarkerShade(randomPrimary);
+    setDeckColor(randomPrimary);
+    setDeckGradientEnd(darkerEnd);
+
     setDeckIsTrending(false);
     setDeckIsAvailable(true);
     setDeckSortOrder(decksList.length);
@@ -387,54 +392,6 @@ export const AdminDashboard = () => {
       alert("Failed to save deck: " + err.message);
     } finally {
       setSavingDeck(false);
-    }
-  };
-
-  const [sanitizing, setSanitizing] = useState(false);
-
-  const handleSanitizeAllFirestoreDecks = async () => {
-    if (decksList.length === 0) return;
-    if (
-      !window.confirm(
-        `Are you sure you want to clean up all ${decksList.length} deck documents in Firestore? This will remove all redundant fields (accentColor, colorHex, title, status, isLocked, lockReason, theme) and standardize document schema across all decks to use "color".`,
-      )
-    ) {
-      return;
-    }
-
-    setSanitizing(true);
-    let successCount = 0;
-
-    try {
-      for (const deck of decksList) {
-        await updateDoc(doc(db, "categories", deck.id), {
-          adminSecret: ADMIN_SECRET_KEY,
-          accentColor: deleteField(),
-          colorHex: deleteField(),
-          title: deleteField(),
-          status: deleteField(),
-          isLocked: deleteField(),
-          lockReason: deleteField(),
-          theme: deleteField(),
-          name: deck.name || deck.id,
-          icon: deck.icon || "🎮",
-          color: deck.color || "#FFD600",
-          gradientEnd: deck.gradientEnd || "#FF9100",
-          isAvailable: deck.isAvailable !== false,
-          isTrending: deck.isTrending === true,
-          sortOrder: typeof deck.sortOrder === "number" ? deck.sortOrder : 0,
-          updatedAt: serverTimestamp(),
-        });
-        successCount++;
-      }
-      alert(
-        `Successfully sanitized ${successCount} deck documents in Firestore!`,
-      );
-    } catch (err) {
-      console.error("Error sanitizing Firestore decks:", err);
-      alert("Sanitization encountered an error: " + err.message);
-    } finally {
-      setSanitizing(false);
     }
   };
 
@@ -791,17 +748,6 @@ export const AdminDashboard = () => {
           )}
 
           <div className="flex items-center gap-2 shrink-0">
-            {activeSection === "decks" && (
-              <button
-                onClick={handleSanitizeAllFirestoreDecks}
-                disabled={sanitizing}
-                className="px-3.5 py-2 rounded-xl border border-primary/40 bg-primary/10 hover:bg-primary/20 text-primary font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50"
-                title="Strip redundant legacy fields (adminSecret, accentColor, color, status, etc.) & standardize document schema in Firestore"
-              >
-                <Wand2 className="w-4 h-4 text-primary" />
-                {sanitizing ? "Cleaning..." : "Clean Firestore Schema"}
-              </button>
-            )}
             <button
               onClick={exportCSV}
               className="px-3.5 py-2 rounded-xl border border-border-dark bg-white/5 hover:bg-white/10 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
@@ -1205,31 +1151,56 @@ export const AdminDashboard = () => {
                 </div>
 
                 {/* Field 3: Colors & Sort Order */}
-                <div className="grid md:grid-cols-3 gap-4 items-end">
-                  <ColorPicker
-                    label="Primary Deck Color"
-                    value={deckColor}
-                    defaultValue="#FFD600"
-                    onChange={(newHex) => setDeckColor(newHex)}
-                  />
-
-                  <ColorPicker
-                    label="Gradient End Color"
-                    value={deckGradientEnd}
-                    defaultValue="#FF9100"
-                    onChange={(newHex) => setDeckGradientEnd(newHex)}
-                  />
-
-                  <div className="flex flex-col gap-2 bg-surface-card-dark/60 p-3.5 rounded-2xl border border-border-dark justify-between h-full">
-                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark tracking-wider">
-                      Sort Order Number
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark tracking-wider flex items-center gap-1.5">
+                      <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />{" "}
+                      Deck Theme & Gradient Colors
                     </label>
-                    <input
-                      type="number"
-                      value={deckSortOrder}
-                      onChange={(e) => setDeckSortOrder(e.target.value)}
-                      className="w-full p-2.5 rounded-xl bg-surface-dark border border-border-dark text-xs font-semibold text-white outline-none focus:border-primary transition-all"
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const randomHex = getRandomUnusedColor(decksList);
+                        setDeckColor(randomHex);
+                        setDeckGradientEnd(getDarkerShade(randomHex));
+                      }}
+                      className="text-[0.7rem] font-black text-primary hover:underline flex items-center gap-1 cursor-pointer bg-primary/10 hover:bg-primary/20 px-2.5 py-1 rounded-lg border border-primary/30 transition-all"
+                      title="Fetch a random vibrant color not used by existing decks"
+                    >
+                      <Wand2 className="w-3 h-3 text-primary" /> Auto-Randomize
+                      Unused
+                    </button>
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-4 items-end">
+                    <ColorPicker
+                      label="Primary Deck Color"
+                      value={deckColor}
+                      defaultValue="#FFD600"
+                      onChange={(newHex) => {
+                        setDeckColor(newHex);
+                        setDeckGradientEnd(getDarkerShade(newHex));
+                      }}
                     />
+
+                    <ColorPicker
+                      label="Gradient End Color"
+                      value={deckGradientEnd}
+                      defaultValue="#FF9100"
+                      onChange={(newHex) => setDeckGradientEnd(newHex)}
+                    />
+
+                    <div className="flex flex-col gap-2 bg-surface-card-dark/60 p-3.5 rounded-2xl border border-border-dark justify-between h-full">
+                      <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark tracking-wider">
+                        Sort Order Number
+                      </label>
+                      <input
+                        type="number"
+                        value={deckSortOrder}
+                        onChange={(e) => setDeckSortOrder(e.target.value)}
+                        className="w-full p-2.5 rounded-xl bg-surface-dark border border-border-dark text-xs font-semibold text-white outline-none focus:border-primary transition-all"
+                      />
+                    </div>
                   </div>
                 </div>
 

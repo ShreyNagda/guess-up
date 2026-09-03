@@ -3,7 +3,7 @@ description: "Guess Up is a mobile-based charades party game, designed especiall
 
 publish_to: "none"
 
-version: 1.0.0+1
+version: 1.0.0+4
 
 environment:
   sdk: ^3.7.2

@@ -16,6 +16,8 @@ class AudioService with WidgetsBindingObserver {
   final AudioPlayer _musicPlayer = AudioPlayer();
   final AudioPlayer _sfxPlayer = AudioPlayer();
 
+  bool _shouldPlayMusic = true;
+
   // Initialize audio players
   Future<void> init() async {
     final AudioContext audioContext = AudioContext(
@@ -54,7 +56,7 @@ class AudioService with WidgetsBindingObserver {
         state == AppLifecycleState.inactive) {
       _musicPlayer.pause();
     } else if (state == AppLifecycleState.resumed) {
-      if (StorageService().isMusicEnabled) {
+      if (StorageService().isMusicEnabled && _shouldPlayMusic) {
         playBackgroundMusic();
       }
     }
@@ -62,6 +64,7 @@ class AudioService with WidgetsBindingObserver {
 
   // --- Music Control ---
   Future<void> playBackgroundMusic({bool forceRestart = false}) async {
+    _shouldPlayMusic = true;
     if (!StorageService().isMusicEnabled) return;
 
     try {
@@ -76,10 +79,12 @@ class AudioService with WidgetsBindingObserver {
   }
 
   Future<void> pauseBackgroundMusic() async {
+    _shouldPlayMusic = false;
     await _musicPlayer.pause();
   }
 
   Future<void> stopBackgroundMusic() async {
+    _shouldPlayMusic = false;
     await _musicPlayer.stop();
   }
 
@@ -103,7 +108,7 @@ class AudioService with WidgetsBindingObserver {
       }
       await _sfxPlayer.play(AssetSource(path), volume: 1.0);
     } catch (e) {
-      print("Error playing SFX: $e");
+      debugPrint("Error playing SFX: $e");
     }
   }
 

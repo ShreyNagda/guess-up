@@ -1,5 +1,6 @@
 import React from "react";
-import { ShieldCheck, Lock, EyeOff, Radio } from "lucide-react";
+import { Link } from "react-router-dom";
+import { ShieldCheck, Lock, EyeOff, Radio, ArrowRight } from "lucide-react";
 
 export const PrivacyPolicy = () => {
   return (
@@ -16,7 +17,7 @@ export const PrivacyPolicy = () => {
             Privacy & Transparency Policy
           </h2>
           <p className="text-sm text-muted-light dark:text-muted-dark">
-            Our 100% Zero-Data Stance for **Guess Up** (Last updated: August
+            Our 100% Zero-Data Stance for <strong>Guess Up</strong> (Last updated: August
             2026)
           </p>
         </div>
@@ -51,6 +52,15 @@ export const PrivacyPolicy = () => {
               during active round timers and never stored or transmitted.
             </p>
           </div>
+        </div>
+
+        <div className="flex justify-center md:justify-start pt-2 border-t border-border-light dark:border-border-dark">
+          <Link
+            to="/privacy"
+            className="px-5 py-3 rounded-xl bg-primary text-accent font-black text-xs inline-flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-md cursor-pointer"
+          >
+            <ShieldCheck className="w-4 h-4" /> View Full Google Play Privacy Policy <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
     </section>

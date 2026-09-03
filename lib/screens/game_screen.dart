@@ -76,6 +76,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _subscription = accelerometerEventStream().listen(_handleAccelerometer);
     _fetchInitialWords();
     _setLandscapeOrientation();
+    if (widget.teamMatchState?.isTeamMode == true) {
+      AudioService().stopBackgroundMusic();
+    }
   }
 
   @override
@@ -145,7 +148,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   void _startGetReadyCountdown() {
     if (_isStartingCountdown) return;
     _isStartingCountdown = true;
-    AudioService().pauseBackgroundMusic();
+    if (widget.teamMatchState?.isTeamMode == true) {
+      AudioService().pauseBackgroundMusic();
+    }
     AudioService().playStartCountdown();
     AudioService().lightImpact();
 
@@ -414,6 +419,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 widget.teamMatchState?.currentTeamColor ?? AppTheme.teamAColor;
 
             return Scaffold(
+              backgroundColor: const Color(
+                0xFF0F0F14,
+              ), // Dark gaming canvas for maximum legibility
               body: Container(
                 decoration:
                     isTeamMode
@@ -619,21 +627,29 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
                 // Phone Forehead Graphic & Main Instruction
                 Container(
-                  margin: EdgeInsets.symmetric(horizontal: 100),
+                  constraints: const BoxConstraints(maxWidth: 640),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
-                    vertical: 22,
+                    horizontal: 32,
+                    vertical: 24,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withAlpha(120),
+                    color: const Color(0xFF1E1E28),
                     borderRadius: BorderRadius.circular(28),
                     border: Border.all(
                       color:
                           isTeamMode
-                              ? teamColor.withAlpha(140)
-                              : Colors.white24,
-                      width: 1.5,
+                              ? teamColor.withAlpha(180)
+                              : Colors.amber.withAlpha(180),
+                      width: 2,
                     ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: (isTeamMode ? teamColor : Colors.amber)
+                            .withAlpha(40),
+                        blurRadius: 20,
+                        spreadRadius: 2,
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [
@@ -809,15 +825,16 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                     textAlign: TextAlign.center,
                     maxLines: 3,
                     softWrap: true,
-                    style: theme.textTheme.displayMedium?.copyWith(
+                    style: const TextStyle(
                       fontSize: 84,
                       fontWeight: FontWeight.w900,
                       color: Colors.white,
                       height: 1.15,
+                      letterSpacing: 0.5,
                       shadows: [
-                        const Shadow(
-                          color: Colors.black87,
-                          blurRadius: 12,
+                        Shadow(
+                          color: Colors.black,
+                          blurRadius: 16,
                           offset: Offset(0, 4),
                         ),
                       ],

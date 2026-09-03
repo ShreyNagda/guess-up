@@ -97,18 +97,27 @@ class GameTopBar extends StatelessWidget {
                   children: [
                     Text(
                       "SCORE",
-                      style: theme.textTheme.labelMedium?.copyWith(
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: theme.hintColor,
+                        color: Colors.white70,
+                        fontSize: 11,
                         letterSpacing: 1.5,
                       ),
                     ),
                     Text(
                       "$score",
-                      style: theme.textTheme.headlineMedium?.copyWith(
+                      style: const TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 36,
+                        color: Colors.white,
                         height: 1.0,
+                        shadows: [
+                          Shadow(
+                            color: Colors.black87,
+                            blurRadius: 8,
+                            offset: Offset(0, 2),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -174,6 +183,7 @@ class GameTopBar extends StatelessWidget {
               icon: Icon(
                 isGamePaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                 size: 44,
+                color: Colors.white,
               ),
               padding: const EdgeInsets.all(12),
               constraints: const BoxConstraints(minWidth: 52, minHeight: 52),

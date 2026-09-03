@@ -61,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     // 2. Initialize PageController
-    _pageController = PageController(viewportFraction: 0.70, initialPage: 0)
+    _pageController = PageController(viewportFraction: 0.63, initialPage: 0)
       ..addListener(_handlePageScroll);
 
     // 3. Load Decks & Listen to real-time decks stream from Firestore
@@ -594,7 +594,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildDeckPageIndicator(bool isDark) {
     if (_decks.isEmpty) return const SizedBox.shrink();
 
-    final inactiveColor = isDark ? Colors.white24 : Colors.black26;
+    final inactiveColor = isDark ? Colors.white24 : Colors.black38;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -606,7 +606,6 @@ class _HomeScreenState extends State<HomeScreen> {
             mainAxisSize: MainAxisSize.min,
             children: List.generate(_decks.length, (index) {
               final isFocused = index == _focusedIndex;
-              final deck = _decks[index];
 
               return GestureDetector(
                 onTap: () {
@@ -627,21 +626,11 @@ class _HomeScreenState extends State<HomeScreen> {
                   width: isFocused ? 26 : 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: isFocused ? deck.themeColor : inactiveColor,
+                    color: isFocused ? Colors.amber : inactiveColor,
                     borderRadius: BorderRadius.circular(4),
                     border:
                         isFocused
-                            ? Border.all(color: Colors.white, width: 1)
-                            : null,
-                    boxShadow:
-                        isFocused
-                            ? [
-                              BoxShadow(
-                                color: deck.themeColor.withAlpha(160),
-                                blurRadius: 6,
-                                spreadRadius: 1,
-                              ),
-                            ]
+                            ? Border.all(color: Colors.amber, width: 1)
                             : null,
                   ),
                 ),
@@ -654,7 +643,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTopBar(bool isDark) {
-    final iconColor = isDark ? Colors.white : Colors.black87;
+    final iconColor = isDark ? Colors.white : Colors.black;
     final titleColor = isDark ? Colors.white : Colors.black;
 
     return Padding(
@@ -674,18 +663,16 @@ class _HomeScreenState extends State<HomeScreen> {
                 "GUESS UP",
                 style: TextStyle(
                   fontFamily: 'Manrope',
-                  fontSize: 20,
+                  fontSize: 24,
                   fontWeight: FontWeight.w900,
-                  letterSpacing: 3,
+                  letterSpacing: 2,
                   color: titleColor,
                   shadows: [
                     Shadow(
-                      color: (isDark
-                              ? AppTheme.darkPrimaryColor
-                              : AppTheme.lightPrimaryColor)
-                          .withAlpha(140),
-                      blurRadius: 12,
-                      offset: const Offset(0, 0),
+                      color: (isDark ? AppTheme.darkPrimaryColor : Colors.black)
+                          .withAlpha(isDark ? 140 : 25),
+                      blurRadius: isDark ? 16 : 3,
+                      offset: Offset(0, isDark ? -1 : 1),
                     ),
                   ],
                 ),
@@ -720,7 +707,7 @@ class _HomeScreenState extends State<HomeScreen> {
         final double pageOffset = (_currentPage - index);
 
         final double dist = pageOffset.abs().clamp(0.0, 1.0);
-        final double scale = 1.10 - (dist * (1.10 - 0.85));
+        final double scale = 1.12 - (dist * (1.12 - 0.86));
         final bool isSelected = _selectedDeckIds.contains(deck.id);
 
         final double effectiveOpacity = (1.0 - (dist * 0.30)).clamp(0.70, 1.0);
@@ -755,7 +742,7 @@ class _HomeScreenState extends State<HomeScreen> {
       aspectRatio: 3 / 4,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+        margin: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(26),
           gradient: LinearGradient(
@@ -808,66 +795,36 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
               // Top Left Selection Status Pill
-              Positioned(
-                top: 12,
-                left: 12,
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 5,
-                  ),
-                  decoration: BoxDecoration(
-                    color:
-                        isSelected
-                            ? Colors.black.withAlpha(170)
-                            : Colors.black.withAlpha(110),
-                    borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
+              if (deck.isTrending)
+                Positioned(
+                  top: 12,
+                  left: 12,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
                       color:
                           isSelected
-                              ? Colors.white.withAlpha(200)
-                              : Colors.white.withAlpha(50),
-                      width: 1,
+                              ? Colors.black.withAlpha(170)
+                              : Colors.black.withAlpha(110),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color:
+                            isSelected
+                                ? Colors.white.withAlpha(200)
+                                : Colors.white.withAlpha(50),
+                        width: 1,
+                      ),
+                    ),
+                    child: const Icon(
+                      Icons.local_fire_department_rounded,
+                      // size: 14,
+                      color: Colors.orangeAccent,
                     ),
                   ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        _isTeamMode
-                            ? (isSelected
-                                ? Icons.military_tech_rounded
-                                : Icons.add_rounded)
-                            : (isSelected
-                                ? Icons.check_circle_rounded
-                                : Icons.add_rounded),
-                        size: 14,
-                        color: isSelected ? Colors.white : Colors.white70,
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        _isTeamMode
-                            ? (isSelected ? "ACTIVE BATTLE" : "SELECT")
-                            : (isSelected ? "ACTIVE" : "SELECT"),
-                        style: TextStyle(
-                          color: isSelected ? Colors.white : Colors.white70,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          letterSpacing: 0.5,
-                        ),
-                      ),
-                      if (deck.isTrending) ...[
-                        const SizedBox(width: 4),
-                        const Icon(
-                          Icons.local_fire_department_rounded,
-                          size: 14,
-                          color: Colors.orangeAccent,
-                        ),
-                      ],
-                    ],
-                  ),
                 ),
-              ),
               // Top Right Deck Details Modal Trigger
               Positioned(
                 top: 10,
@@ -962,7 +919,7 @@ class _HomeScreenState extends State<HomeScreen> {
     List<Category> selectedDecks,
     bool isDark,
   ) {
-    final titleColor = isDark ? Colors.white70 : Colors.black87;
+    final titleColor = isDark ? Colors.white70 : Colors.black;
     final chipBg = isDark ? const Color(0xFF222222) : Colors.white;
     final int totalCombinedWords = selectedDecks.fold(
       0,
@@ -1003,10 +960,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             _isTeamMode
                                 ? (isDark
                                     ? Colors.amberAccent
-                                    : Colors.deepOrange)
+                                    : Colors.deepOrange.shade700)
                                 : (isDark
                                     ? AppTheme.darkPrimaryColor
-                                    : const Color(0xFFD97706)),
+                                    : const Color(0xFFB45309)),
                       ),
                       const SizedBox(width: 4),
                       Text(
@@ -1020,10 +977,10 @@ class _HomeScreenState extends State<HomeScreen> {
                               _isTeamMode
                                   ? (isDark
                                       ? Colors.amberAccent
-                                      : Colors.deepOrange)
+                                      : Colors.deepOrange.shade700)
                                   : (isDark
                                       ? AppTheme.darkPrimaryColor
-                                      : const Color(0xFFD97706)),
+                                      : const Color(0xFFB45309)),
                         ),
                       ),
                     ],
@@ -1054,7 +1011,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 10,
                       fontWeight: FontWeight.w900,
-                      color: isDark ? Colors.amberAccent : Colors.black87,
+                      color: isDark ? Colors.amberAccent : Colors.black,
                     ),
                   ),
                 ),
@@ -1132,7 +1089,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               Text(
                                 "${deck.title} (${deck.count})",
                                 style: TextStyle(
-                                  color: isDark ? Colors.white : Colors.black87,
+                                  color: isDark ? Colors.white : Colors.black,
                                   fontSize: 12,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -1157,7 +1114,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       color:
                                           isDark
                                               ? Colors.white70
-                                              : Colors.black54,
+                                              : Colors.black87,
                                     ),
                                   ),
                                 ),
@@ -1235,7 +1192,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ? (isDark ? Colors.black : Colors.black)
                                       : (isDark
                                           ? Colors.white60
-                                          : Colors.black54),
+                                          : Colors.black87),
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -1248,7 +1205,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ? (isDark ? Colors.black : Colors.black)
                                         : (isDark
                                             ? Colors.white60
-                                            : Colors.black54),
+                                            : Colors.black87),
                               ),
                             ),
                           ],
@@ -1280,7 +1237,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                       ? (isDark ? Colors.black : Colors.black)
                                       : (isDark
                                           ? Colors.white60
-                                          : Colors.black54),
+                                          : Colors.black87),
                             ),
                             const SizedBox(width: 4),
                             Text(
@@ -1293,7 +1250,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         ? (isDark ? Colors.black : Colors.black)
                                         : (isDark
                                             ? Colors.white60
-                                            : Colors.black54),
+                                            : Colors.black87),
                               ),
                             ),
                           ],
@@ -1326,7 +1283,7 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(
                               fontWeight: FontWeight.w800,
                               fontSize: 13,
-                              color: isDark ? Colors.white : Colors.black87,
+                              color: isDark ? Colors.white : Colors.black,
                             ),
                           ),
                         );
@@ -1359,7 +1316,7 @@ class _HomeScreenState extends State<HomeScreen> {
                               style: TextStyle(
                                 fontWeight: FontWeight.w800,
                                 fontSize: 13,
-                                color: isDark ? Colors.white : Colors.black87,
+                                color: isDark ? Colors.white : Colors.black,
                               ),
                             ),
                           );
@@ -1442,7 +1399,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                   !hasSelection
                                       ? (isDark
                                           ? Colors.white38
-                                          : Colors.black38)
+                                          : Colors.black54)
                                       : Colors.black,
                               fontSize: 14,
                               fontWeight: FontWeight.w900,
@@ -1482,7 +1439,7 @@ class _HomeScreenState extends State<HomeScreen> {
     final hudSurface = isDark ? const Color(0xFF1E1E1E) : Colors.white;
     final borderColor =
         isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(20);
-    final textColor = isDark ? Colors.white : Colors.black87;
+    final textColor = isDark ? Colors.white : Colors.black;
 
     return Container(
       height: 42,
@@ -1507,7 +1464,7 @@ class _HomeScreenState extends State<HomeScreen> {
           value: value,
           icon: Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: textColor.withAlpha(180),
+            color: textColor.withAlpha(220),
             size: 20,
           ),
           dropdownColor: isDark ? const Color(0xFF242424) : Colors.white,
