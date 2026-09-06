@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "motion/react";
-import { Sparkles, Compass, Cpu, HeartHandshake, Zap, Flame } from "lucide-react";
+import { Sparkles, Compass, Cpu, HeartHandshake } from "lucide-react";
 
 export const Story = () => {
   return (
@@ -11,7 +11,7 @@ export const Story = () => {
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-black text-xs uppercase tracking-widest">
             <Sparkles className="w-3.5 h-3.5" /> The Origin Story
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-text">
             From Late-Night Prototyping to <br className="hidden sm:inline" />
             <span className="text-primary">Party Unlocks</span>
           </h2>
@@ -27,7 +27,7 @@ export const Story = () => {
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="p-8 rounded-3xl bg-surface/70 border border-border/60 backdrop-blur-md flex flex-col sm:flex-row gap-6 items-start shadow-md hover:border-primary/40 transition-all"
+            className="p-8 rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col sm:flex-row gap-6 items-start shadow-md hover:border-primary/40 transition-all"
           >
             <div className="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-black shrink-0">
               <Compass className="w-7 h-7" />
@@ -47,7 +47,7 @@ export const Story = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="p-8 rounded-3xl bg-surface/70 border border-border/60 backdrop-blur-md flex flex-col sm:flex-row gap-6 items-start shadow-md hover:border-primary/40 transition-all"
+            className="p-8 rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col sm:flex-row gap-6 items-start shadow-md hover:border-primary/40 transition-all"
           >
             <div className="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-black shrink-0">
               <Cpu className="w-7 h-7" />
@@ -67,7 +67,7 @@ export const Story = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="p-8 rounded-3xl bg-surface/70 border border-border/60 backdrop-blur-md flex flex-col sm:flex-row gap-6 items-start shadow-md hover:border-primary/40 transition-all"
+            className="p-8 rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col sm:flex-row gap-6 items-start shadow-md hover:border-primary/40 transition-all"
           >
             <div className="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-black shrink-0">
               <HeartHandshake className="w-7 h-7" />

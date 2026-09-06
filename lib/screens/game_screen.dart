@@ -502,9 +502,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                         left: 20,
                         child: SafeArea(
                           child: IconButton(
-                            icon: const Icon(
+                            icon: Icon(
                               Icons.arrow_back_ios_new_rounded,
-                              color: Colors.white,
+                              color: isDark ? Colors.white : const Color(0xFF0F0C1C),
                               size: 22,
                             ),
                             onPressed: _handleExitGamePressed,
@@ -685,7 +685,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                         textAlign: TextAlign.center,
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w900,
-                          color: isTeamMode ? Colors.white : Colors.amber,
+                          color: isTeamMode
+                              ? (isDark ? Colors.white : const Color(0xFF0F0C1C))
+                              : (isDark ? Colors.amber : const Color(0xFFD97700)),
                           letterSpacing: 1.5,
                           fontSize: 24,
                         ),
@@ -695,7 +697,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                         "Screen facing your friends! Countdown starts automatically when held flat.",
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: Colors.white70,
+                          color: isDark ? Colors.white70 : const Color(0xFF5A6072),
                           height: 1.3,
                         ),
                         softWrap: true,
@@ -774,13 +776,13 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
               color: Colors.amber,
             ),
           ),
-          const Text(
+          Text(
             "GET READY TO GUESS!",
             style: TextStyle(
               fontWeight: FontWeight.w900,
               letterSpacing: 2,
               fontSize: 16,
-              color: Colors.white70,
+              color: isDark ? Colors.white70 : const Color(0xFF332F4C),
             ),
           ),
         ],

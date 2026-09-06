@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { useTheme } from "../context/ThemeContext";
 
-const DECK_EMOJIS = ["🏏", "🎬", "🍔", "🗻", "🎧", "🅰️", "📺"];
+const DECK_EMOJIS = ["🎬", "🏏", "🍔", "😎", "🎵", "🏆", "🎭", "🧠", "🎯"];
 
 export const PatternCanvas = () => {
   const canvasRef = useRef(null);
@@ -10,12 +10,14 @@ export const PatternCanvas = () => {
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
     let animationFrameId;
 
     const resizeCanvas = () => {
-      canvas.width = document.documentElement.clientWidth;
-      canvas.height = document.documentElement.clientHeight;
+      if (!canvas) return;
+      canvas.width = window.innerWidth;
+      canvas.height = window.innerHeight;
     };
 
     window.addEventListener("resize", resizeCanvas);
@@ -24,12 +26,11 @@ export const PatternCanvas = () => {
     const drawPattern = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      ctx.font = "50px Manrope, sans-serif";
-      // We can add transparency to the text or keep it solid and rely on canvas opacity
-      ctx.fillStyle = theme === "light" ? "#212121" : "#EEEEEE";
+      ctx.font = "32px Manrope, sans-serif";
+      ctx.fillStyle = theme === "light" ? "rgba(0, 0, 0, 0.04)" : "rgba(255, 255, 255, 0.04)";
       ctx.textBaseline = "top";
 
-      const spacing = 150;
+      const spacing = 140;
       const cols = Math.ceil(canvas.width / spacing) + 2;
       const rows = Math.ceil(canvas.height / spacing) + 2;
 
@@ -50,7 +51,7 @@ export const PatternCanvas = () => {
         }
       }
 
-      scrollRef.current += 0.001;
+      scrollRef.current += 0.0008;
       animationFrameId = requestAnimationFrame(drawPattern);
     };
 
@@ -65,7 +66,7 @@ export const PatternCanvas = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed top-0 left-0 w-full h-full block z-[-1] opacity-8 dark:opacity-12 pointer-events-none transition-opacity duration-300"
+      className="fixed top-0 left-0 w-full h-full block z-[-1] pointer-events-none transition-opacity duration-500"
     />
   );
 };

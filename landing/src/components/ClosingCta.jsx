@@ -10,10 +10,12 @@ export const ClosingCta = () => {
   };
 
   return (
-    <section className="py-16 md:py-24 border-t border-border/40 relative" id="cta">
+    <section
+      className="py-16 md:py-24 border-t border-border/40 relative"
+      id="cta"
+    >
       <div className="max-w-4xl mx-auto px-6">
-        <div className="bg-gradient-to-r from-[#FFD600] to-[#FF9100] text-accent p-8 sm:p-14 rounded-[36px] shadow-2xl flex flex-col items-center text-center gap-6 relative overflow-hidden">
-          
+        <div className="bg-linear-to-r from-[#FFD600] to-[#FF9100] text-accent p-8 sm:p-14 rounded-[36px] shadow-2xl shadow-card-hover shadow-primary/30 flex flex-col items-center text-center gap-6 relative overflow-hidden">
           <div className="absolute inset-0 bg-white/10 pointer-events-none" />
 
           <span className="px-3.5 py-1 rounded-full bg-accent/15 text-accent font-black text-xs uppercase tracking-widest z-10 border border-accent/20">
@@ -21,11 +23,13 @@ export const ClosingCta = () => {
           </span>
 
           <h2 className="text-3xl sm:text-5xl font-black uppercase tracking-tight leading-tight text-accent z-10">
-            Turn Your Next Gathering Into <br className="hidden sm:inline" /> An Electric Game Night
+            Turn Your Next Gathering Into <br className="hidden sm:inline" /> An
+            Electric Game Night
           </h2>
 
           <p className="font-extrabold text-sm sm:text-base max-w-xl leading-relaxed text-accent/90 z-10">
-            Join hundreds of beta playtesters testing early builds, balancing decks, and unlocking zero-ad party charades.
+            Join hundreds of beta playtesters testing early builds, balancing
+            decks, and unlocking zero-ad party charades.
           </p>
 
           {/* DUAL CTAs */}
@@ -48,9 +52,8 @@ export const ClosingCta = () => {
           {/* Microcopy Friction Reducers */}
           <div className="flex items-center justify-center gap-2 text-[0.7rem] font-bold text-accent/80 z-10 mt-2">
             <ShieldCheck className="w-4 h-4" />
-            <span>⚡ 100% Free • No Credit Card Required • Instant TestFlight / APK Access • Zero Ads</span>
+            <span>⚡ 100% Free • No Credit Card Required • Available on Android & APK Access • Zero Ads</span>
           </div>
-
         </div>
       </div>
     </section>

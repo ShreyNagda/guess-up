@@ -1,9 +1,9 @@
 import React from "react";
-import { Sparkles, ShieldCheck, Flame, Star, Zap } from "lucide-react";
+import { Star, Zap } from "lucide-react";
 
 export const TrustBar = () => {
   return (
-    <section className="py-8 border-y border-border/40 bg-surface/50 backdrop-blur-md relative overflow-hidden">
+    <section className="py-8 border-y border-border/40 bg-surface/50 backdrop-blur-md relative overflow-hidden transition-colors duration-300">
       <div className="max-w-4xl mx-auto px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-center text-center">
           
@@ -17,7 +17,7 @@ export const TrustBar = () => {
 
           {/* Item 2 */}
           <div className="flex flex-col items-center gap-1 p-2 border-l md:border-l border-border/40">
-            <span className="text-2xl sm:text-3xl font-black text-white tracking-tight flex items-center gap-1">
+            <span className="text-2xl sm:text-3xl font-black text-text tracking-tight flex items-center gap-1">
               60 FPS <Zap className="w-5 h-5 text-primary fill-primary" />
             </span>
             <span className="text-[0.7rem] font-black uppercase text-muted tracking-wider">

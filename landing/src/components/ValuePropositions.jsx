@@ -12,7 +12,7 @@ export const ValuePropositions = () => {
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-black text-xs uppercase tracking-widest">
             <Sparkles className="w-3.5 h-3.5" /> BUILT FOR INSTANT LAUGHS
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white">
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-text">
             Everything You Need For <br className="hidden sm:inline" />
             <span className="text-primary">The Ultimate Game Night</span>
           </h2>
@@ -27,7 +27,7 @@ export const ValuePropositions = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             whileHover={{ y: -5 }}
-            className="p-8 rounded-3xl bg-surface-card/60 border border-border/60 backdrop-blur-md flex flex-col gap-4 relative overflow-hidden group hover:border-primary/50 transition-all shadow-md"
+            className="p-8 rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col gap-4 relative overflow-hidden group hover:border-primary/50 transition-all shadow-card shadow-card-hover"
           >
             <span className="text-5xl font-black font-mono text-primary/30 group-hover:text-primary transition-colors">
               01
@@ -35,7 +35,7 @@ export const ValuePropositions = () => {
             <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black">
               <Film className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-extrabold text-white">Culturally Crafted Decks</h3>
+            <h3 className="text-xl font-extrabold text-text">Culturally Crafted Decks</h3>
             <p className="text-xs text-muted leading-relaxed">
               No more generic clues. Pick from handcrafted Indian decks like <strong>Bollywood Buff</strong>, <strong>Cricket Fever</strong>, <strong>Sweet & Spicy</strong>, <strong>Incredible India</strong>, and <strong>Aamchi Mumbai</strong>.
             </p>
@@ -48,7 +48,7 @@ export const ValuePropositions = () => {
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
             whileHover={{ y: -5 }}
-            className="p-8 rounded-3xl bg-surface-card/60 border border-border/60 backdrop-blur-md flex flex-col gap-4 relative overflow-hidden group hover:border-primary/50 transition-all shadow-md"
+            className="p-8 rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col gap-4 relative overflow-hidden group hover:border-primary/50 transition-all shadow-card shadow-card-hover"
           >
             <span className="text-5xl font-black font-mono text-primary/30 group-hover:text-primary transition-colors">
               02
@@ -56,7 +56,7 @@ export const ValuePropositions = () => {
             <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black">
               <Cpu className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-extrabold text-white">Hardware Motion Sensing</h3>
+            <h3 className="text-xl font-extrabold text-text">Hardware Motion Sensing</h3>
             <p className="text-xs text-muted leading-relaxed">
               Our 60 FPS motion algorithm processes orientation vectors live on-device. Nod down for points, tilt up to pass — zero lag, zero tutorial friction.
             </p>
@@ -69,7 +69,7 @@ export const ValuePropositions = () => {
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
             whileHover={{ y: -5 }}
-            className="p-8 rounded-3xl bg-surface-card/60 border border-border/60 backdrop-blur-md flex flex-col gap-4 relative overflow-hidden group hover:border-primary/50 transition-all shadow-md"
+            className="p-8 rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col gap-4 relative overflow-hidden group hover:border-primary/50 transition-all shadow-card shadow-card-hover"
           >
             <span className="text-5xl font-black font-mono text-primary/30 group-hover:text-primary transition-colors">
               03
@@ -77,7 +77,7 @@ export const ValuePropositions = () => {
             <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black">
               <Users className="w-6 h-6" />
             </div>
-            <h3 className="text-xl font-extrabold text-white">Solo & 2-Team Battle Modes</h3>
+            <h3 className="text-xl font-extrabold text-text">Solo & 2-Team Battle Modes</h3>
             <p className="text-xs text-muted leading-relaxed">
               Play quick 1-on-1 rounds or split your party into Team A vs Team B. Custom round timers (30s, 45s, 60s, 90s) fit any party intensity.
             </p>

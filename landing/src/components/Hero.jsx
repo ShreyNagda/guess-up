@@ -1,7 +1,7 @@
 import React from "react";
 import { motion } from "motion/react";
 import { InteractiveHeroDemo } from "./InteractiveHeroDemo";
-import { Sparkles, UserCheck, Play, Flame, ShieldCheck } from "lucide-react";
+import { Sparkles, UserCheck, Play, ShieldCheck } from "lucide-react";
 
 export const Hero = () => {
   const scrollToDemo = () => {
@@ -13,8 +13,8 @@ export const Hero = () => {
 
   return (
     <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden" id="hero">
-      {/* Ambient Glow */}
-      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] sm:w-[800px] h-[500px] bg-gradient-to-b from-primary/20 via-primary/5 to-transparent rounded-full blur-3xl pointer-events-none" />
+      {/* Dynamic Ambient Spotlight Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-150 sm:w-200 h-125 bg-linear-to-b from-primary/20 via-primary/5 to-transparent rounded-full blur-3xl pointer-events-none transition-colors duration-500" />
 
       <div className="max-w-4xl mx-auto px-6 flex flex-col items-center text-center gap-10 relative z-10">
         
@@ -35,14 +35,14 @@ export const Hero = () => {
           transition={{ duration: 0.5, delay: 0.1 }}
           className="flex flex-col items-center gap-5 max-w-3xl"
         >
-          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black leading-[1.08] tracking-tight uppercase text-white">
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black leading-[1.08] tracking-tight uppercase text-text">
             Flip Your Phone. <br className="hidden sm:inline" />
             <span className="text-primary drop-shadow-[0_4px_25px_rgba(255,214,0,0.4)]">
               Hilarious Chaos Unlocked.
             </span>
           </h1>
 
-          <p className="text-base sm:text-xl font-bold text-slate-200 max-w-2xl leading-relaxed">
+          <p className="text-base sm:text-xl font-bold text-text max-w-2xl leading-relaxed">
             Put your phone on your forehead, let your crew enact wild clues, and nod down to score! Handcrafted for Indian youth, house parties, and hostel hangouts.
           </p>
 
@@ -55,7 +55,7 @@ export const Hero = () => {
             {/* High Commitment CTA */}
             <a
               href="#testers"
-              className="w-full sm:w-auto bg-primary text-accent font-black px-8 py-4 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider cursor-pointer"
+              className="w-full sm:w-auto bg-primary text-accent font-black px-8 py-4 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-bevel-gold shadow-primary/20 hover:shadow-2xl hover:shadow-primary/30 flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider cursor-pointer"
             >
               <UserCheck className="w-4 h-4" /> Register For Free Beta Access 🚀
             </a>
@@ -63,7 +63,7 @@ export const Hero = () => {
             {/* Low Commitment CTA */}
             <button
               onClick={scrollToDemo}
-              className="w-full sm:w-auto border border-border bg-surface-card/80 backdrop-blur-md text-white font-black px-8 py-4 rounded-2xl hover:border-primary transition-all flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider cursor-pointer"
+              className="w-full sm:w-auto border border-border bg-surface-card/80 backdrop-blur-md text-text font-black px-8 py-4 rounded-2xl hover:border-primary transition-all shadow-md hover:shadow-xl flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider cursor-pointer"
             >
               <Play className="w-4 h-4 fill-primary text-primary" /> Try Live Interactive Demo 🎮
             </button>
@@ -72,7 +72,7 @@ export const Hero = () => {
           {/* Microcopy Friction Reducer */}
           <div className="flex items-center justify-center gap-2 text-[0.7rem] text-muted font-bold mt-1">
             <ShieldCheck className="w-3.5 h-3.5 text-primary" />
-            <span>100% Free • No Credit Card Required • Instant TestFlight / APK Access</span>
+            <span>100% Free • No Credit Card Required • Available on Android (Google Play & APK)</span>
           </div>
         </motion.div>
 

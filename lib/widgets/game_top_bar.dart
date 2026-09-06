@@ -27,10 +27,16 @@ class GameTopBar extends StatelessWidget {
     // Increased width for the timer circle
     final double timerSize = 70.0;
 
+    final isDark = theme.brightness == Brightness.dark;
+    final topBarTextColor = isDark ? Colors.white : const Color(0xFF0F0C1C);
+    final topBarSubtextColor = isDark ? Colors.white70 : const Color(0xFF5A6072);
+
     final bool isLowTime = remainingTime <= 10;
     final bool isCriticalTime = remainingTime <= 5;
 
-    Color timerColor = isLowTime ? Colors.redAccent : theme.colorScheme.primary;
+    Color timerColor = isLowTime
+        ? Colors.redAccent
+        : (isDark ? theme.colorScheme.primary : const Color(0xFFD97700));
 
     final isTeamMode = teamMatchState?.isTeamMode == true;
     final teamColor = teamMatchState?.currentTeamColor ?? AppTheme.teamAColor;
@@ -69,7 +75,7 @@ class GameTopBar extends StatelessWidget {
                       strokeWidth:
                           isCriticalTime ? (timerSize / 8) : (timerSize / 10),
                       valueColor: AlwaysStoppedAnimation<Color>(timerColor),
-                      backgroundColor: Colors.grey.withAlpha(77),
+                      backgroundColor: isDark ? Colors.grey.withAlpha(77) : Colors.black.withAlpha(30),
                       strokeCap: StrokeCap.round,
                     ),
                   ),
@@ -98,25 +104,25 @@ class GameTopBar extends StatelessWidget {
                   children: [
                     Text(
                       "SCORE",
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.bold,
-                        color: Colors.white70,
+                        color: topBarSubtextColor,
                         fontSize: 11,
                         letterSpacing: 1.5,
                       ),
                     ),
                     RollingScoreTicker(
                       targetScore: score,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 36,
-                        color: Colors.white,
+                        color: topBarTextColor,
                         height: 1.0,
                         shadows: [
                           Shadow(
-                            color: Colors.black87,
+                            color: isDark ? Colors.black87 : Colors.black12,
                             blurRadius: 8,
-                            offset: Offset(0, 2),
+                            offset: const Offset(0, 2),
                           ),
                         ],
                       ),
@@ -184,7 +190,7 @@ class GameTopBar extends StatelessWidget {
               icon: Icon(
                 isGamePaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
                 size: 44,
-                color: Colors.white,
+                color: topBarTextColor,
               ),
               padding: const EdgeInsets.all(12),
               constraints: const BoxConstraints(minWidth: 52, minHeight: 52),

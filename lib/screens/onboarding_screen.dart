@@ -172,82 +172,95 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   // TYPE 1: INTERACTIVE LANDSCAPE MOTION PRACTICE (Shown Before Actual Game)
   // =========================================================================
   Widget _buildInteractiveLandscapePractice(BuildContext context) {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
     return Scaffold(
-      backgroundColor:
-          isDark ? const Color(0xFF0E0C1C) : const Color(0xFF130E26),
-      body: Stack(
-        children: [
-          // Background Aura
-          Positioned.fill(
-            child: AnimatedContainer(
-              duration: const Duration(milliseconds: 300),
-              color: _flashColor.withAlpha(
-                _flashColor == Colors.transparent ? 0 : 70,
+      backgroundColor: theme.scaffoldBackgroundColor,
+      body: AmbientBackground(
+        ambientColor: isDark ? const Color(0xFFFFD600) : const Color(0xFFFFB700),
+        child: Stack(
+          children: [
+            // Background Aura
+            Positioned.fill(
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                color: _flashColor.withAlpha(
+                  _flashColor == Colors.transparent ? 0 : 70,
+                ),
               ),
             ),
-          ),
 
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Column(
-                children: [
-                  // Top Header Bar
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 6,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.amberAccent,
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Text(
-                          "PRACTICE MODE",
-                          style: TextStyle(
-                            fontWeight: FontWeight.w900,
-                            fontSize: 12,
-                            color: Colors.black,
-                            letterSpacing: 1,
-                          ),
-                        ),
-                      ),
-                      BouncyGameButton(
-                        onTap: _handleStartGame,
-                        child: Container(
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                child: Column(
+                  children: [
+                    // Top Header Bar
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Container(
                           padding: const EdgeInsets.symmetric(
                             horizontal: 14,
                             vertical: 6,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.white.withAlpha(25),
+                            color: isDark ? Colors.amberAccent : AppTheme.lightPrimaryColor,
                             borderRadius: BorderRadius.circular(14),
-                            border: Border.all(color: Colors.white38),
+                            boxShadow: [
+                              BoxShadow(
+                                color: (isDark ? Colors.amberAccent : AppTheme.lightPrimaryColor).withAlpha(100),
+                                blurRadius: 8,
+                              ),
+                            ],
                           ),
                           child: const Text(
-                            "SKIP TUTORIAL",
+                            "PRACTICE MODE",
                             style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 11,
-                              color: Colors.white,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 12,
+                              color: Colors.black,
+                              letterSpacing: 1,
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                        BouncyGameButton(
+                          onTap: _handleStartGame,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              color: isDark
+                                  ? Colors.white.withAlpha(25)
+                                  : Colors.black.withAlpha(15),
+                              borderRadius: BorderRadius.circular(14),
+                              border: Border.all(
+                                color: isDark ? Colors.white38 : Colors.black26,
+                              ),
+                            ),
+                            child: Text(
+                              "SKIP TUTORIAL",
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 11,
+                                color: isDark ? Colors.white : AppTheme.lightTextColor,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
 
-                  Expanded(child: Center(child: _buildStageContent(context))),
-                ],
+                    Expanded(child: Center(child: _buildStageContent(context))),
+                  ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -256,6 +269,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     switch (_practiceStage) {
       case 1:
         return _buildPracticeCard(
+          context: context,
           stageText: "STEP 1 OF 3",
           title: "HOLD PHONE ON FOREHEAD",
           description:
@@ -266,6 +280,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         );
       case 2:
         return _buildPracticeCard(
+          context: context,
           stageText: "STEP 2 OF 3",
           title: "TILT DOWN FOR CORRECT!",
           description:
@@ -276,6 +291,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         );
       case 3:
         return _buildPracticeCard(
+          context: context,
           stageText: "STEP 3 OF 3",
           title: "TILT UP TO PASS!",
           description:
@@ -286,6 +302,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         );
       case 4:
       default:
+        final theme = Theme.of(context);
+        final isDark = theme.brightness == Brightness.dark;
+        final textColor = isDark ? Colors.white : AppTheme.lightTextColor;
+        final subtextColor = isDark ? Colors.white70 : const Color(0xFF5A6072);
+
         return Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -309,19 +330,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
+            Text(
               "TUTORIAL COMPLETE!",
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w900,
-                color: Colors.white,
+                color: textColor,
                 letterSpacing: 1.5,
               ),
             ),
             const SizedBox(height: 6),
-            const Text(
+            Text(
               "You have mastered the tilt gestures!",
-              style: TextStyle(fontSize: 14, color: Colors.white70),
+              style: TextStyle(fontSize: 14, color: subtextColor),
             ),
             const SizedBox(height: 24),
             BouncyGameButton(
@@ -369,6 +390,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildPracticeCard({
+    required BuildContext context,
     required String stageText,
     required String title,
     required String description,
@@ -376,17 +398,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     required Color accentColor,
     required String instructionPill,
   }) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    final cardBg = isDark ? const Color(0xFF1E1938) : Colors.white;
+    final textColor = isDark ? Colors.white : AppTheme.lightTextColor;
+    final subtextColor = isDark ? Colors.white70 : const Color(0xFF5A6072);
+
     return Container(
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1938),
+        color: cardBg,
         borderRadius: BorderRadius.circular(28),
-        border: Border.all(color: accentColor, width: 2.5),
-        boxShadow: const [
+        border: Border.all(
+          color: isDark ? accentColor : accentColor.withAlpha(200),
+          width: 2.5,
+        ),
+        boxShadow: [
           BoxShadow(
-            color: Colors.black54,
+            color: isDark ? Colors.black54 : Colors.black12,
             blurRadius: 16,
-            offset: Offset(0, 6),
+            offset: const Offset(0, 6),
           ),
         ],
       ),
@@ -419,19 +449,19 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 const SizedBox(height: 4),
                 Text(
                   title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.w900,
-                    color: Colors.white,
+                    color: textColor,
                     letterSpacing: 0.5,
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
-                    color: Colors.white70,
+                    color: subtextColor,
                     height: 1.3,
                   ),
                 ),
@@ -442,7 +472,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.black.withAlpha(120),
+                    color: isDark ? Colors.black.withAlpha(120) : accentColor.withAlpha(20),
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: accentColor.withAlpha(120)),
                   ),
@@ -487,16 +517,15 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     final primaryColor =
         isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
-    final scaffoldBg =
-        isDark ? const Color(0xFF0E0C1C) : const Color(0xFF2832FA);
+    final scaffoldBg = theme.scaffoldBackgroundColor;
     final cardBg = isDark ? const Color(0xFF1E1938) : Colors.white;
     final cardBorder =
         isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(15);
-    final textColor = isDark ? Colors.white : const Color(0xFF0F0C1C);
+    final textColor = isDark ? Colors.white : AppTheme.lightTextColor;
     final stepHeaderColor =
-        isDark ? AppTheme.darkPrimaryColor : const Color(0xFF8C96C1);
+        isDark ? AppTheme.darkPrimaryColor : const Color(0xFFD97700);
     final backBtnColor =
-        isDark ? const Color(0xFF261F47) : const Color(0xFF1E24AA);
+        isDark ? const Color(0xFF261F47) : Colors.white;
 
     return Scaffold(
       backgroundColor: scaffoldBg,
@@ -516,28 +545,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   color:
                       isDark
                           ? AppTheme.darkPrimaryColor.withAlpha(100)
-                          : Colors.white24,
+                          : Colors.black12,
                 ),
               ),
               child: Icon(
                 Icons.arrow_back_rounded,
-                color: isDark ? AppTheme.darkPrimaryColor : Colors.white,
+                color: isDark ? AppTheme.darkPrimaryColor : AppTheme.lightTextColor,
                 size: 22,
               ),
             ),
           ),
         ),
-        title: const Text(
+        title: Text(
           "How to Play",
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
-            color: Colors.white,
+            color: textColor,
           ),
         ),
       ),
       body: AmbientBackground(
-        ambientColor: isDark ? primaryColor : const Color(0xFF2832FA),
+        ambientColor: primaryColor,
         child: ListView(
           padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           physics: const BouncingScrollPhysics(),
@@ -606,13 +635,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               children: [
                 Checkbox(
                   value: _dontShowAgain,
-                  activeColor:
-                      isDark
-                          ? AppTheme.darkPrimaryColor
-                          : const Color(0xFFFF3567),
-                  checkColor: isDark ? Colors.black : Colors.white,
+                  activeColor: primaryColor,
+                  checkColor: isDark ? Colors.black : Colors.black,
                   side: BorderSide(
-                    color: isDark ? Colors.white70 : Colors.white70,
+                    color: isDark ? Colors.white70 : Colors.black54,
                     width: 1.5,
                   ),
                   shape: RoundedRectangleBorder(
@@ -628,7 +654,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
-                      color: isDark ? Colors.white70 : Colors.white,
+                      color: isDark ? Colors.white70 : textColor,
                     ),
                   ),
                 ),
@@ -645,7 +671,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 style: TextStyle(
                   fontSize: 17,
                   fontWeight: FontWeight.bold,
-                  color: isDark ? Colors.amber.shade200 : Colors.white,
+                  color: isDark ? Colors.amber.shade200 : textColor,
                   height: 1.35,
                 ),
               ),
@@ -877,7 +903,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           style: TextStyle(
             fontSize: 28,
             fontWeight: FontWeight.w900,
-            color: isDark ? AppTheme.darkPrimaryColor : const Color(0xFFFFC107),
+            color: isDark ? AppTheme.darkPrimaryColor : const Color(0xFFD97700),
             letterSpacing: 0.5,
           ),
         ),
@@ -895,33 +921,26 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             width: double.infinity,
             height: 52,
             decoration: BoxDecoration(
-              gradient:
-                  isDark
-                      ? const LinearGradient(
-                        colors: [Color(0xFFFFEA00), Color(0xFFFF9100)],
-                      )
-                      : null,
-              color: isDark ? null : const Color(0xFFFF3567),
+              gradient: const LinearGradient(
+                colors: [Color(0xFFFFEA00), Color(0xFFFF9100)],
+              ),
               borderRadius: BorderRadius.circular(20),
-              border: isDark ? Border.all(color: Colors.white, width: 2) : null,
-              boxShadow: [
+              border: Border.all(color: Colors.white, width: 2.5),
+              boxShadow: const [
                 BoxShadow(
-                  color:
-                      isDark
-                          ? const Color(0xFF8E4800)
-                          : const Color(0x40FF3567),
+                  color: Color(0xFF8E4800),
                   blurRadius: 12,
-                  offset: const Offset(0, 4),
+                  offset: Offset(0, 4),
                 ),
               ],
             ),
-            child: Center(
+            child: const Center(
               child: Text(
                 "Let's play!",
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
-                  color: isDark ? Colors.black : Colors.white,
+                  color: Colors.black,
                   letterSpacing: 0.5,
                 ),
               ),
@@ -959,18 +978,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           width: 165,
           height: 52,
           decoration: BoxDecoration(
-            color: isDark ? const Color(0xFF141026) : const Color(0xFF28216A),
+            color: isDark ? const Color(0xFF141026) : const Color(0xFFF0F2FA),
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color:
                   isDark
                       ? AppTheme.darkPrimaryColor.withAlpha(80)
-                      : const Color(0xFF1E1854),
+                      : Colors.black12,
               width: 2,
             ),
             boxShadow: [
               BoxShadow(
-                color: isDark ? Colors.black54 : const Color(0xFF151040),
+                color: isDark ? Colors.black54 : Colors.black12,
                 offset: const Offset(0, 5),
               ),
             ],

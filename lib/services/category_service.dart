@@ -132,10 +132,11 @@ class CategoryService {
           .snapshots()
           .asyncMap((snapshot) async {
             if (snapshot.docs.isNotEmpty) {
-              final categories = snapshot.docs
-                  .map((doc) => Category.fromDocument(doc))
-                  .where((d) => d.isAvailable)
-                  .toList();
+              final categories =
+                  snapshot.docs
+                      .map((doc) => Category.fromDocument(doc))
+                      .where((d) => d.isAvailable)
+                      .toList();
               // Persist stream update to local device storage in background
               _saveToDeviceStorage(categories);
               return categories;
@@ -156,13 +157,14 @@ class CategoryService {
   Future<List<Category>> getAllCategories({bool forceRefresh = false}) async {
     // 1. Check in-memory cache (if not forcing refresh)
     if (_cachedCategories != null && !forceRefresh) {
-      debugPrint("✅ [DEVICE-STORAGE] Returning categories from IN-MEMORY list.");
+      debugPrint(
+        "✅ [DEVICE-STORAGE] Returning categories from IN-MEMORY list.",
+      );
       return List<Category>.from(_cachedCategories!);
     }
 
     final prefs = await _prefs;
     await _migrateLegacyCacheIfNeeded(prefs);
-    final now = DateTime.now();
 
     if (forceRefresh) {
       debugPrint(
@@ -181,15 +183,18 @@ class CategoryService {
               jsonList.map((json) => Category.fromJson(json)).toList();
           final storedTimestamp = prefs.getInt(_deviceStorageTimestampKey);
           if (storedTimestamp != null) {
-            _lastFirestoreFetch =
-                DateTime.fromMillisecondsSinceEpoch(storedTimestamp);
+            _lastFirestoreFetch = DateTime.fromMillisecondsSinceEpoch(
+              storedTimestamp,
+            );
           }
           debugPrint(
             "✅ [DEVICE-STORAGE] Returning ${_cachedCategories!.length} categories from PERMANENT LOCAL DEVICE STORAGE.",
           );
           return List<Category>.from(_cachedCategories!);
         } catch (e) {
-          debugPrint("⚠️ [DEVICE-STORAGE] Error decoding stored categories: $e");
+          debugPrint(
+            "⚠️ [DEVICE-STORAGE] Error decoding stored categories: $e",
+          );
         }
       }
     }

@@ -16,6 +16,7 @@ import { PrivacyPolicy } from "../components/PrivacyPolicy";
 import { FaqSection } from "../components/FaqSection";
 import { ClosingCta } from "../components/ClosingCta";
 import { AdminAuthModal } from "../components/AdminAuthModal";
+import { PatternCanvas } from "../components/PatternCanvas";
 import { normalizeCategory } from "../utils/categoryModel";
 
 const DECKS = [
@@ -114,7 +115,10 @@ export const LandingPage = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen text-text bg-[#0E0C1C] overflow-x-hidden">
+    <div className="flex flex-col min-h-screen text-text bg-bg transition-colors duration-300 overflow-x-hidden relative">
+      {/* Dynamic Animated Pattern Background Canvas */}
+      <PatternCanvas />
+
       {/* Header */}
       <Header />
 

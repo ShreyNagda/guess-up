@@ -194,7 +194,9 @@ export const AdminDashboard = () => {
         q,
         (snapshot) => {
           const list = [];
-          snapshot.forEach((docSnap) => list.push({ id: docSnap.id, ...docSnap.data() }));
+          snapshot.forEach((docSnap) =>
+            list.push({ id: docSnap.id, ...docSnap.data() }),
+          );
           setTestersList(list);
           setLoadingTesters(false);
         },
@@ -222,7 +224,9 @@ export const AdminDashboard = () => {
         q,
         (snapshot) => {
           const list = [];
-          snapshot.forEach((docSnap) => list.push({ id: docSnap.id, ...docSnap.data() }));
+          snapshot.forEach((docSnap) =>
+            list.push({ id: docSnap.id, ...docSnap.data() }),
+          );
           setFeedbackList(list);
           setLoadingFeedback(false);
         },
@@ -261,13 +265,19 @@ export const AdminDashboard = () => {
               Admin Portal Access
             </h2>
             <p className="text-xs text-muted-dark mt-1.5 leading-relaxed">
-              Sign in with your Firebase Administrator credentials to manage beta testers, user feedback, and game decks.
+              Sign in with your Firebase Administrator credentials to manage
+              beta testers, user feedback, and game decks.
             </p>
           </div>
 
-          <form onSubmit={handleEmbeddedLogin} className="w-full flex flex-col gap-4 text-left">
+          <form
+            onSubmit={handleEmbeddedLogin}
+            className="w-full flex flex-col gap-4 text-left"
+          >
             <div className="flex flex-col gap-1.5">
-              <label className="text-[0.7rem] font-black uppercase text-muted-dark">Admin Email</label>
+              <label className="text-[0.7rem] font-black uppercase text-muted-dark">
+                Admin Email
+              </label>
               <div className="relative">
                 <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
                 <input
@@ -275,14 +285,16 @@ export const AdminDashboard = () => {
                   placeholder="admin@guessup.com"
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary transition-all"
                   required
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-[0.7rem] font-black uppercase text-muted-dark">Password</label>
+              <label className="text-[0.7rem] font-black uppercase text-muted-dark">
+                Password
+              </label>
               <div className="relative">
                 <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
                 <input
@@ -290,7 +302,7 @@ export const AdminDashboard = () => {
                   placeholder="••••••••"
                   value={authPassword}
                   onChange={(e) => setAuthPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary transition-all"
                   required
                 />
               </div>
@@ -316,7 +328,11 @@ export const AdminDashboard = () => {
                 disabled={authSubmitting}
                 className="flex-1 py-3 rounded-2xl bg-primary text-accent font-black text-xs hover:scale-102 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
               >
-                {authSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign In"}
+                {authSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  "Sign In"
+                )}
               </button>
             </div>
           </form>
@@ -631,7 +647,8 @@ export const AdminDashboard = () => {
 
     const category = (item.feedbackType || item.category || "").toLowerCase();
     const matchesCategory =
-      feedbackCategoryFilter === "all" || category.includes(feedbackCategoryFilter);
+      feedbackCategoryFilter === "all" ||
+      category.includes(feedbackCategoryFilter);
 
     const matchesStatus =
       feedbackStatusFilter === "all" ||
@@ -645,7 +662,15 @@ export const AdminDashboard = () => {
   const exportCSV = () => {
     if (activeSection === "decks") {
       if (decksList.length === 0) return;
-      const headers = ["ID (Slug)", "Deck Name", "Icon", "Cards Count", "Trending", "Available", "Words List"];
+      const headers = [
+        "ID (Slug)",
+        "Deck Name",
+        "Icon",
+        "Cards Count",
+        "Trending",
+        "Available",
+        "Words List",
+      ];
       const rows = decksList.map((d) => [
         `"${d.id}"`,
         `"${(d.name || "").replace(/"/g, '""')}"`,
@@ -655,9 +680,14 @@ export const AdminDashboard = () => {
         d.isAvailable ? "YES" : "NO",
         `"${(d.words || []).join("; ").replace(/"/g, '""')}"`,
       ]);
-      downloadCSV(`guessup_decks_export_${new Date().toISOString().split("T")[0]}.csv`, headers, rows);
+      downloadCSV(
+        `guessup_decks_export_${new Date().toISOString().split("T")[0]}.csv`,
+        headers,
+        rows,
+      );
     } else {
-      const data = testersSubTab === "registrations" ? testersList : feedbackList;
+      const data =
+        testersSubTab === "registrations" ? testersList : feedbackList;
       if (data.length === 0) return;
       let headers = [];
       let rows = [];
@@ -673,7 +703,16 @@ export const AdminDashboard = () => {
           `"${item.submittedAt || ""}"`,
         ]);
       } else {
-        headers = ["ID", "Name", "Email", "Category", "Device", "Feedback Note", "Archived", "Submitted Date"];
+        headers = [
+          "ID",
+          "Name",
+          "Email",
+          "Category",
+          "Device",
+          "Feedback Note",
+          "Archived",
+          "Submitted Date",
+        ];
         rows = data.map((item) => [
           `"${item.id || ""}"`,
           `"${(item.name || "").replace(/"/g, '""')}"`,
@@ -685,12 +724,18 @@ export const AdminDashboard = () => {
           `"${item.submittedAt || ""}"`,
         ]);
       }
-      downloadCSV(`guessup_${testersSubTab}_export_${new Date().toISOString().split("T")[0]}.csv`, headers, rows);
+      downloadCSV(
+        `guessup_${testersSubTab}_export_${new Date().toISOString().split("T")[0]}.csv`,
+        headers,
+        rows,
+      );
     }
   };
 
   const downloadCSV = (filename, headers, rows) => {
-    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const csvContent =
+      "data:text/csv;charset=utf-8," +
+      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -708,10 +753,15 @@ export const AdminDashboard = () => {
     }
     if (data.length === 0) return;
 
-    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
+    const dataStr =
+      "data:text/json;charset=utf-8," +
+      encodeURIComponent(JSON.stringify(data, null, 2));
     const link = document.createElement("a");
     link.setAttribute("href", dataStr);
-    link.setAttribute("download", `guessup_${activeSection}_export_${new Date().toISOString().split("T")[0]}.json`);
+    link.setAttribute(
+      "download",
+      `guessup_${activeSection}_export_${new Date().toISOString().split("T")[0]}.json`,
+    );
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -741,13 +791,18 @@ export const AdminDashboard = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black tracking-tight">Admin Master Suite</h1>
+              <h1 className="text-2xl font-black tracking-tight">
+                Admin Master Suite
+              </h1>
               <span className="text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded-full bg-success/20 text-success border border-success/30">
                 Firebase Auth & Firestore
               </span>
             </div>
             <p className="text-xs text-muted-dark mt-0.5">
-              Logged in as <strong className="text-white">{user?.email || "Administrator"}</strong>
+              Logged in as{" "}
+              <strong className="text-white">
+                {user?.email || "Administrator"}
+              </strong>
             </p>
           </div>
         </div>
@@ -775,9 +830,15 @@ export const AdminDashboard = () => {
             <span className="text-xs uppercase font-black tracking-wider text-primary flex items-center gap-2">
               <Layers className="w-4 h-4" /> Section 1: Deck Management
             </span>
-            <span className="text-3xl font-black text-white">{decksList.length} Decks</span>
+            <span className="text-3xl font-black text-white">
+              {decksList.length} Decks
+            </span>
             <span className="text-xs text-muted-dark font-semibold">
-              {decksList.reduce((acc, curr) => acc + (curr.words ? curr.words.length : 0), 0)} word cards configured
+              {decksList.reduce(
+                (acc, curr) => acc + (curr.words ? curr.words.length : 0),
+                0,
+              )}{" "}
+              word cards configured
             </span>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black">
@@ -799,8 +860,12 @@ export const AdminDashboard = () => {
               <Users className="w-4 h-4" /> Section 2: Testers & Feedback
             </span>
             <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-black text-white">{testersList.length} Testers</span>
-              <span className="text-xs text-primary font-bold">({feedbackList.length} notes)</span>
+              <span className="text-3xl font-black text-white">
+                {testersList.length} Testers
+              </span>
+              <span className="text-xs text-primary font-bold">
+                ({feedbackList.length} notes)
+              </span>
             </div>
             <span className="text-xs text-muted-dark font-semibold">
               Beta list signups & user feedback entries
@@ -830,7 +895,8 @@ export const AdminDashboard = () => {
                   : "text-muted-dark hover:text-white"
               }`}
             >
-              <Users className="w-3.5 h-3.5" /> Beta Testers ({testersList.length})
+              <Users className="w-3.5 h-3.5" /> Beta Testers (
+              {testersList.length})
             </button>
             <button
               onClick={() => setTestersSubTab("feedback")}
@@ -840,7 +906,8 @@ export const AdminDashboard = () => {
                   : "text-muted-dark hover:text-white"
               }`}
             >
-              <MessageSquare className="w-3.5 h-3.5" /> Feedback Notes ({feedbackList.length})
+              <MessageSquare className="w-3.5 h-3.5" /> Feedback Notes (
+              {feedbackList.length})
             </button>
           </div>
         )}
@@ -854,7 +921,7 @@ export const AdminDashboard = () => {
               placeholder={`Search ${activeSection}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-card border border-border text-text text-xs font-semibold placeholder:text-muted outline-none focus:border-primary transition-all"
+              className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-card border border-border/80 text-xs font-semibold outline-none focus:border-primary transition-all"
             />
           </div>
 
@@ -900,7 +967,8 @@ export const AdminDashboard = () => {
         <div className="flex flex-col gap-6">
           {loadingDecks ? (
             <div className="flex items-center justify-center p-12 text-muted-dark gap-3 text-sm bg-surface-dark border-2 border-border-dark rounded-3xl">
-              <RefreshCw className="w-5 h-5 animate-spin text-primary" /> Syncing Firestore decks catalog...
+              <RefreshCw className="w-5 h-5 animate-spin text-primary" />{" "}
+              Syncing Firestore decks catalog...
             </div>
           ) : filteredDecks.length === 0 ? (
             <div className="text-center p-12 text-muted-dark bg-surface-dark border-2 border-border-dark rounded-3xl">
@@ -919,27 +987,40 @@ export const AdminDashboard = () => {
                   key={deck.id}
                   whileHover={{ y: -4 }}
                   className="bg-surface-dark border-2 border-border-dark rounded-3xl p-6 flex flex-col justify-between gap-6 shadow-md relative overflow-hidden group"
-                  style={{ borderColor: deck.color ? `${deck.color}40` : "var(--color-border-dark)" }}
+                  style={{
+                    borderColor: deck.color
+                      ? `${deck.color}40`
+                      : "var(--color-border-dark)",
+                  }}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div
                         className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-2xl border-2 shadow-inner"
                         style={{
-                          backgroundColor: deck.color ? `${deck.color}20` : "rgba(255,214,0,0.15)",
+                          backgroundColor: deck.color
+                            ? `${deck.color}20`
+                            : "rgba(255,214,0,0.15)",
                           borderColor: deck.color || "var(--color-primary)",
                         }}
                       >
                         {deck.icon || "🎮"}
                       </div>
                       <div>
-                        <h3 className="font-extrabold text-lg text-white flex items-center gap-2">{deck.name}</h3>
-                        <span className="text-[0.7rem] font-mono text-muted-dark block">id: {deck.id}</span>
+                        <h3 className="font-extrabold text-lg text-white flex items-center gap-2">
+                          {deck.name}
+                        </h3>
+                        <span className="text-[0.7rem] font-mono text-muted-dark block">
+                          id: {deck.id}
+                        </span>
                       </div>
                     </div>
 
                     {deck.isTrending && (
-                      <span className="p-1.5 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs" title="Trending 🔥">
+                      <span
+                        className="p-1.5 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs"
+                        title="Trending 🔥"
+                      >
                         <Flame className="w-4 h-4" />
                       </span>
                     )}
@@ -947,11 +1028,13 @@ export const AdminDashboard = () => {
 
                   <div className="flex flex-col gap-2">
                     <p className="text-xs text-muted-dark leading-relaxed line-clamp-2">
-                      {deck.description || "No description provided for this deck."}
+                      {deck.description ||
+                        "No description provided for this deck."}
                     </p>
                     <div className="flex items-center justify-between pt-2 border-t border-border-dark text-xs font-bold">
                       <span className="text-primary flex items-center gap-1">
-                        <Tag className="w-3.5 h-3.5" /> {deck.words ? deck.words.length : 0} Word Cards
+                        <Tag className="w-3.5 h-3.5" />{" "}
+                        {deck.words ? deck.words.length : 0} Word Cards
                       </span>
                       <button
                         onClick={() => openAddWordsModal(deck)}
@@ -964,9 +1047,15 @@ export const AdminDashboard = () => {
 
                   <div className="flex items-center justify-between p-3 rounded-2xl bg-surface-card-dark/60 border border-border-dark">
                     <div className="flex items-center gap-2">
-                      {deck.isAvailable ? <Eye className="w-4 h-4 text-success" /> : <EyeOff className="w-4 h-4 text-muted-dark" />}
+                      {deck.isAvailable ? (
+                        <Eye className="w-4 h-4 text-success" />
+                      ) : (
+                        <EyeOff className="w-4 h-4 text-muted-dark" />
+                      )}
                       <span className="text-xs font-bold text-white">
-                        {deck.isAvailable ? "Visible to Players" : "Hidden from Players"}
+                        {deck.isAvailable
+                          ? "Visible to Players"
+                          : "Hidden from Players"}
                       </span>
                     </div>
                     <Switch
@@ -1005,11 +1094,14 @@ export const AdminDashboard = () => {
           {testersSubTab === "registrations" ? (
             loadingTesters ? (
               <div className="flex items-center justify-center p-12 text-muted-dark gap-3 text-sm bg-surface-dark border-2 border-border-dark rounded-3xl">
-                <RefreshCw className="w-5 h-5 animate-spin text-primary" /> Loading beta testers...
+                <RefreshCw className="w-5 h-5 animate-spin text-primary" />{" "}
+                Loading beta testers...
               </div>
             ) : filteredTesters.length === 0 ? (
               <div className="text-center p-12 text-muted-dark bg-surface-dark border-2 border-border-dark rounded-3xl">
-                <p className="text-sm font-bold">No beta testers registered yet.</p>
+                <p className="text-sm font-bold">
+                  No beta testers registered yet.
+                </p>
                 <button
                   onClick={openCreateTesterModal}
                   className="mt-4 px-5 py-2.5 rounded-xl bg-primary text-accent font-black text-xs inline-flex items-center gap-2 cursor-pointer"
@@ -1033,13 +1125,21 @@ export const AdminDashboard = () => {
                     </thead>
                     <tbody className="divide-y divide-border-dark">
                       {filteredTesters.map((item, index) => (
-                        <tr key={item.id || index} className="hover:bg-white/5 transition-colors">
+                        <tr
+                          key={item.id || index}
+                          className="hover:bg-white/5 transition-colors"
+                        >
                           <td className="py-4 px-6 font-black text-white flex items-center gap-2">
-                            <User className="w-4 h-4 text-primary" /> {item.name || "Anonymous"}
+                            <User className="w-4 h-4 text-primary" />{" "}
+                            {item.name || "Anonymous"}
                           </td>
                           <td className="py-4 px-6 font-semibold text-primary">
-                            <a href={`mailto:${item.email}`} className="hover:underline flex items-center gap-1.5">
-                              <Mail className="w-3.5 h-3.5 text-muted-dark" /> {item.email}
+                            <a
+                              href={`mailto:${item.email}`}
+                              className="hover:underline flex items-center gap-1.5"
+                            >
+                              <Mail className="w-3.5 h-3.5 text-muted-dark" />{" "}
+                              {item.email}
                             </a>
                           </td>
                           <td className="py-4 px-6 font-bold">
@@ -1048,10 +1148,13 @@ export const AdminDashboard = () => {
                             </span>
                           </td>
                           <td className="py-4 px-6 text-muted-dark font-medium flex items-center gap-1">
-                            <Smartphone className="w-3.5 h-3.5 text-muted" /> {item.deviceType || item.device || "iOS"}
+                            <Smartphone className="w-3.5 h-3.5 text-muted" />{" "}
+                            {item.deviceType || item.device || "iOS"}
                           </td>
                           <td className="py-4 px-6 text-muted-dark">
-                            {item.submittedAt ? new Date(item.submittedAt).toLocaleDateString() : "Recent"}
+                            {item.submittedAt
+                              ? new Date(item.submittedAt).toLocaleDateString()
+                              : "Recent"}
                           </td>
                           <td className="py-4 px-6 text-right space-x-2">
                             <button
@@ -1082,7 +1185,9 @@ export const AdminDashboard = () => {
               {/* Feedback Filters */}
               <div className="flex flex-wrap items-center justify-between gap-4 bg-surface-dark border-2 border-border-dark p-4 rounded-2xl">
                 <div className="flex items-center gap-2 overflow-x-auto">
-                  <span className="text-xs font-black uppercase text-muted-dark mr-2">Category:</span>
+                  <span className="text-xs font-black uppercase text-muted-dark mr-2">
+                    Category:
+                  </span>
                   {["all", "bug", "feature", "deck", "general"].map((cat) => (
                     <button
                       key={cat}
@@ -1093,13 +1198,21 @@ export const AdminDashboard = () => {
                           : "bg-surface-card-dark text-muted-dark hover:text-white border border-border-dark"
                       }`}
                     >
-                      {cat === "bug" ? "Bug Reports" : cat === "feature" ? "Feature Requests" : cat === "deck" ? "Deck Ideas" : cat}
+                      {cat === "bug"
+                        ? "Bug Reports"
+                        : cat === "feature"
+                          ? "Feature Requests"
+                          : cat === "deck"
+                            ? "Deck Ideas"
+                            : cat}
                     </button>
                   ))}
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase text-muted-dark mr-2">Status:</span>
+                  <span className="text-xs font-black uppercase text-muted-dark mr-2">
+                    Status:
+                  </span>
                   {["all", "active", "archived"].map((st) => (
                     <button
                       key={st}
@@ -1118,11 +1231,14 @@ export const AdminDashboard = () => {
 
               {loadingFeedback ? (
                 <div className="flex items-center justify-center p-12 text-muted-dark gap-3 text-sm bg-surface-dark border-2 border-border-dark rounded-3xl">
-                  <RefreshCw className="w-5 h-5 animate-spin text-primary" /> Loading feedback notes...
+                  <RefreshCw className="w-5 h-5 animate-spin text-primary" />{" "}
+                  Loading feedback notes...
                 </div>
               ) : filteredFeedback.length === 0 ? (
                 <div className="text-center p-12 text-muted-dark bg-surface-dark border-2 border-border-dark rounded-3xl">
-                  <p className="text-sm font-bold">No feedback entries match criteria.</p>
+                  <p className="text-sm font-bold">
+                    No feedback entries match criteria.
+                  </p>
                 </div>
               ) : (
                 <div className="bg-surface-dark border-2 border-border-dark rounded-3xl overflow-hidden shadow-lg">
@@ -1139,16 +1255,27 @@ export const AdminDashboard = () => {
                       </thead>
                       <tbody className="divide-y divide-border-dark">
                         {filteredFeedback.map((item, index) => (
-                          <tr key={item.id || index} className={`hover:bg-white/5 transition-colors ${item.archived ? "opacity-60" : ""}`}>
+                          <tr
+                            key={item.id || index}
+                            className={`hover:bg-white/5 transition-colors ${item.archived ? "opacity-60" : ""}`}
+                          >
                             <td className="py-4 px-6 shrink-0">
-                              <div className="font-black text-white">{item.name || "Anonymous"}</div>
-                              <a href={`mailto:${item.email}`} className="text-primary font-semibold hover:underline flex items-center gap-1">
-                                <Mail className="w-3 h-3 text-muted-dark" /> {item.email}
+                              <div className="font-black text-white">
+                                {item.name || "Anonymous"}
+                              </div>
+                              <a
+                                href={`mailto:${item.email}`}
+                                className="text-primary font-semibold hover:underline flex items-center gap-1"
+                              >
+                                <Mail className="w-3 h-3 text-muted-dark" />{" "}
+                                {item.email}
                               </a>
                             </td>
                             <td className="py-4 px-6 shrink-0">
                               <span className="px-2.5 py-1 rounded-full bg-surface-card-dark text-muted-dark border border-border-dark font-bold text-[0.65rem] uppercase block w-max">
-                                {item.feedbackType || item.category || "General"}
+                                {item.feedbackType ||
+                                  item.category ||
+                                  "General"}
                               </span>
                               <span className="text-[0.65rem] text-muted-dark mt-1 block">
                                 Device: {item.deviceType || "Web"}
@@ -1170,7 +1297,9 @@ export const AdminDashboard = () => {
                             </td>
                             <td className="py-4 px-6 text-right shrink-0 space-x-2">
                               <button
-                                onClick={() => handleToggleArchiveFeedback(item)}
+                                onClick={() =>
+                                  handleToggleArchiveFeedback(item)
+                                }
                                 className={`p-2 rounded-xl border transition-all cursor-pointer inline-flex ${
                                   item.archived
                                     ? "bg-primary/15 text-primary border-primary/30 hover:bg-primary hover:text-accent"
@@ -1222,56 +1351,66 @@ export const AdminDashboard = () => {
                   <User className="w-6 h-6" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-white">{editingTester ? "Edit Beta Tester" : "Add Beta Tester"}</h3>
-                  <p className="text-xs text-muted-dark">Manage tester credentials and badge status.</p>
+                  <h3 className="text-xl font-black text-white">
+                    {editingTester ? "Edit Beta Tester" : "Add Beta Tester"}
+                  </h3>
+                  <p className="text-xs text-muted-dark">
+                    Manage tester credentials and badge status.
+                  </p>
                 </div>
               </div>
 
               <form onSubmit={handleSaveTester} className="flex flex-col gap-4">
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Tester Name *</label>
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
+                    Tester Name *
+                  </label>
                   <input
                     type="text"
                     placeholder="Full Name (e.g. Rahul Sharma)"
                     value={testerName}
                     onChange={(e) => setTesterName(e.target.value)}
                     required
-                    className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+                    className="w-full p-3 rounded-2xl bg-surface-card-dark border text-xs font-semibold outline-none focus:border-primary transition-all"
                   />
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Email Address *</label>
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
+                    Email Address *
+                  </label>
                   <input
                     type="email"
                     placeholder="rahul@example.com"
                     value={testerEmail}
                     onChange={(e) => setTesterEmail(e.target.value)}
                     required
-                    className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+                    className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary transition-all"
                   />
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Device Type</label>
+                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
+                      Device Type
+                    </label>
                     <select
                       value={testerDevice}
                       onChange={(e) => setTesterDevice(e.target.value)}
-                      className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold outline-none focus:border-primary transition-all"
+                      className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary transition-all"
                     >
-                      <option value="iOS">iOS (iPhone/iPad)</option>
                       <option value="Android">Android</option>
-                      <option value="Web">Web Browser</option>
                     </select>
                   </div>
 
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Role Badge</label>
+                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
+                      Role Badge
+                    </label>
                     <select
                       value={testerRole}
                       onChange={(e) => setTesterRole(e.target.value)}
-                      className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold outline-none focus:border-primary transition-all"
+                      className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary transition-all"
                     >
                       <option value="Beta Tester">Beta Tester</option>
                       <option value="Alpha Crew">Alpha Crew</option>
@@ -1293,7 +1432,11 @@ export const AdminDashboard = () => {
                     disabled={savingTester}
                     className="flex-1 py-3 rounded-2xl bg-primary text-accent font-black text-xs hover:scale-102 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {savingTester ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Tester"}
+                    {savingTester ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Save Tester"
+                    )}
                   </button>
                 </div>
               </form>
@@ -1325,10 +1468,13 @@ export const AdminDashboard = () => {
                 </div>
                 <div>
                   <h3 className="text-xl font-black text-white">
-                    {editingDeck ? `Deck Info: ${editingDeck.name}` : "Create New Category Deck"}
+                    {editingDeck
+                      ? `Deck Info: ${editingDeck.name}`
+                      : "Create New Category Deck"}
                   </h3>
                   <p className="text-xs text-muted-dark">
-                    Configure deck metadata, dynamic slug, emoji picker, and view existing words.
+                    Configure deck metadata, dynamic slug, emoji picker, and
+                    view existing words.
                   </p>
                 </div>
               </div>
@@ -1336,20 +1482,24 @@ export const AdminDashboard = () => {
               <form onSubmit={handleSaveDeck} className="flex flex-col gap-6">
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Deck Title / Name *</label>
+                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
+                      Deck Title / Name *
+                    </label>
                     <input
                       type="text"
                       placeholder="e.g. Bollywood Blockbusters"
                       value={deckName}
                       onChange={(e) => handleNameChange(e.target.value)}
                       required
-                      className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+                      className="w-full p-3 rounded-2xl bg-surface-card-dark border text-xs font-semibold outline-none focus:border-primary transition-all"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Deck ID / Slug *</label>
+                      <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
+                        Deck ID / Slug *
+                      </label>
                       {!editingDeck && (
                         <button
                           type="button"
@@ -1366,11 +1516,15 @@ export const AdminDashboard = () => {
                       value={deckId}
                       onChange={(e) => {
                         setAutoSlug(false);
-                        setDeckId(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_"));
+                        setDeckId(
+                          e.target.value
+                            .toLowerCase()
+                            .replace(/[^a-z0-9_]/g, "_"),
+                        );
                       }}
                       disabled={!!editingDeck}
                       required
-                      className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-mono font-semibold placeholder:text-muted-dark outline-none focus:border-primary disabled:opacity-50 transition-all"
+                      className="w-full p-3 rounded-2xl bg-surface-card-dark border text-xs font-mono font-semibold outline-none focus:border-primary disabled:opacity-50 transition-all"
                     />
                   </div>
                 </div>
@@ -1378,7 +1532,8 @@ export const AdminDashboard = () => {
                 {/* Emoji Selection Palette */}
                 <div className="flex flex-col gap-2">
                   <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark flex items-center gap-1.5">
-                    <Smile className="w-3.5 h-3.5 text-primary" /> Choose Emoji Icon *
+                    <Smile className="w-3.5 h-3.5 text-primary" /> Choose Emoji
+                    Icon *
                   </label>
                   <div className="flex flex-wrap gap-2 p-3 rounded-2xl bg-surface-card-dark border border-border-dark">
                     {EMOJI_PALETTE.map((emoji) => (
@@ -1387,7 +1542,9 @@ export const AdminDashboard = () => {
                         type="button"
                         onClick={() => setDeckIcon(emoji)}
                         className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center transition-all cursor-pointer ${
-                          deckIcon === emoji ? "bg-primary scale-110 shadow-md" : "hover:bg-white/10"
+                          deckIcon === emoji
+                            ? "bg-primary scale-110 shadow-md"
+                            : "hover:bg-white/10"
                         }`}
                       >
                         {emoji}
@@ -1397,27 +1554,45 @@ export const AdminDashboard = () => {
                 </div>
 
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Description</label>
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
+                    Description
+                  </label>
                   <textarea
                     rows={2}
                     placeholder="Brief overview of this deck's content..."
                     value={deckDesc}
                     onChange={(e) => setDeckDesc(e.target.value)}
-                    className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all resize-none"
+                    className="w-full p-3 rounded-2xl bg-surface-card-dark border text-xs font-semibold outline-none focus:border-primary transition-all resize-none"
                   />
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
-                  <ColorPicker label="Primary Color" color={deckColor} onChange={setDeckColor} />
-                  <ColorPicker label="Gradient End Color" color={deckGradientEnd} onChange={setDeckGradientEnd} />
+                  <ColorPicker
+                    label="Primary Color"
+                    color={deckColor}
+                    onChange={setDeckColor}
+                  />
+                  <ColorPicker
+                    label="Gradient End Color"
+                    color={deckGradientEnd}
+                    onChange={setDeckGradientEnd}
+                  />
                 </div>
 
                 <div className="flex items-center justify-between p-4 rounded-2xl bg-surface-card-dark border border-border-dark">
                   <div className="flex flex-col">
-                    <span className="text-xs font-bold text-white">Visible to Players</span>
-                    <span className="text-[0.65rem] text-muted-dark">Toggle whether this deck appears on the mobile app & web</span>
+                    <span className="text-xs font-bold text-white">
+                      Visible to Players
+                    </span>
+                    <span className="text-[0.65rem] text-muted-dark">
+                      Toggle whether this deck appears on the mobile app & web
+                    </span>
                   </div>
-                  <Switch checked={deckIsAvailable} onChange={setDeckIsAvailable} ariaLabel="Deck Visibility" />
+                  <Switch
+                    checked={deckIsAvailable}
+                    onChange={setDeckIsAvailable}
+                    ariaLabel="Deck Visibility"
+                  />
                 </div>
 
                 {/* Words Editor */}
@@ -1426,7 +1601,9 @@ export const AdminDashboard = () => {
                     <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
                       Cards Word List ({currentDeckWords.length} Words)
                     </label>
-                    <span className="text-[0.65rem] text-muted-dark">Separate with commas or newlines</span>
+                    <span className="text-[0.65rem] text-muted-dark">
+                      Separate with commas or newlines
+                    </span>
                   </div>
 
                   <textarea
@@ -1434,7 +1611,7 @@ export const AdminDashboard = () => {
                     placeholder="Enter words separated by commas (e.g. Sholay, DDLJ, 3 Idiots)..."
                     value={deckWordsInput}
                     onChange={(e) => setDeckWordsInput(e.target.value)}
-                    className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+                    className="w-full p-3 rounded-2xl bg-surface-card-dark border text-xs font-semibold outline-none focus:border-primary transition-all"
                   />
                 </div>
 
@@ -1451,7 +1628,11 @@ export const AdminDashboard = () => {
                     disabled={savingDeck}
                     className="flex-1 py-3 rounded-2xl bg-primary text-accent font-black text-xs hover:scale-102 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {savingDeck ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Deck"}
+                    {savingDeck ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Save Deck"
+                    )}
                   </button>
                 </div>
               </form>
@@ -1482,30 +1663,45 @@ export const AdminDashboard = () => {
                   {editingDeck.icon || "🎮"}
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-white">Add Words to "{editingDeck.name}"</h3>
-                  <p className="text-xs text-muted-dark">Current deck word count: {editingDeck.words ? editingDeck.words.length : 0} cards</p>
+                  <h3 className="text-xl font-black text-white">
+                    Add Words to "{editingDeck.name}"
+                  </h3>
+                  <p className="text-xs text-muted-dark">
+                    Current deck word count:{" "}
+                    {editingDeck.words ? editingDeck.words.length : 0} cards
+                  </p>
                 </div>
               </div>
 
-              <form onSubmit={handleSaveNewWordsOnly} className="flex flex-col gap-4">
+              <form
+                onSubmit={handleSaveNewWordsOnly}
+                className="flex flex-col gap-4"
+              >
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Enter New Words *</label>
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
+                    Enter New Words *
+                  </label>
                   <textarea
                     rows={4}
                     placeholder="Enter words separated by commas or newlines (e.g. Word 1, Word 2)..."
                     value={newWordsInput}
                     onChange={(e) => setNewWordsInput(e.target.value)}
                     required
-                    className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+                    className="w-full p-3 rounded-2xl bg-surface-card-dark border  text-xs font-semibold outline-none focus:border-primary transition-all"
                   />
                 </div>
 
                 {parsedNewWordsList.length > 0 && (
                   <div className="p-3 rounded-2xl bg-surface-card-dark border border-border-dark flex flex-col gap-1">
-                    <span className="text-[0.65rem] font-bold uppercase text-primary">Previewing ({parsedNewWordsList.length} new words):</span>
+                    <span className="text-[0.65rem] font-bold uppercase text-primary">
+                      Previewing ({parsedNewWordsList.length} new words):
+                    </span>
                     <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
                       {parsedNewWordsList.map((w, idx) => (
-                        <span key={idx} className="px-2 py-0.5 rounded-lg bg-white/10 text-white text-[0.65rem] font-mono">
+                        <span
+                          key={idx}
+                          className="px-2 py-0.5 rounded-lg bg-white/10 text-white text-[0.65rem] font-mono"
+                        >
                           {w}
                         </span>
                       ))}
@@ -1526,7 +1722,11 @@ export const AdminDashboard = () => {
                     disabled={savingNewWords}
                     className="flex-1 py-3 rounded-2xl bg-primary text-accent font-black text-xs hover:scale-102 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {savingNewWords ? <Loader2 className="w-4 h-4 animate-spin" /> : "Append Words"}
+                    {savingNewWords ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      "Append Words"
+                    )}
                   </button>
                 </div>
               </form>
@@ -1548,9 +1748,12 @@ export const AdminDashboard = () => {
               <div className="w-12 h-12 rounded-2xl bg-error/15 text-error border border-error/30 flex items-center justify-center">
                 <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-black text-white">Delete "{deleteConfirmDeck.name}"?</h3>
+              <h3 className="text-xl font-black text-white">
+                Delete "{deleteConfirmDeck.name}"?
+              </h3>
               <p className="text-xs text-muted-dark leading-relaxed">
-                This action will permanently delete this category deck and all associated word cards from Firestore.
+                This action will permanently delete this category deck and all
+                associated word cards from Firestore.
               </p>
               <div className="flex gap-3 w-full mt-2">
                 <button
@@ -1584,9 +1787,12 @@ export const AdminDashboard = () => {
               <div className="w-12 h-12 rounded-2xl bg-error/15 text-error border border-error/30 flex items-center justify-center">
                 <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-black text-white">Remove Tester "{deleteConfirmTester.name}"?</h3>
+              <h3 className="text-xl font-black text-white">
+                Remove Tester "{deleteConfirmTester.name}"?
+              </h3>
               <p className="text-xs text-muted-dark leading-relaxed">
-                This action will permanently remove this tester from the beta list in Firestore.
+                This action will permanently remove this tester from the beta
+                list in Firestore.
               </p>
               <div className="flex gap-3 w-full mt-2">
                 <button
@@ -1620,9 +1826,12 @@ export const AdminDashboard = () => {
               <div className="w-12 h-12 rounded-2xl bg-error/15 text-error border border-error/30 flex items-center justify-center">
                 <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-black text-white">Delete Feedback Note?</h3>
+              <h3 className="text-xl font-black text-white">
+                Delete Feedback Note?
+              </h3>
               <p className="text-xs text-muted-dark leading-relaxed">
-                This action will permanently delete this feedback entry from Firestore.
+                This action will permanently delete this feedback entry from
+                Firestore.
               </p>
               <div className="flex gap-3 w-full mt-2">
                 <button

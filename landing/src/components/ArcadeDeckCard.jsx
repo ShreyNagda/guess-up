@@ -14,15 +14,15 @@ export const ArcadeDeckCard = ({
         whileHover={{ scale: 1.03 }}
         whileTap={{ scale: 0.97 }}
         onClick={onClick}
-        className="relative rounded-3xl p-5 cursor-pointer bg-linear-to-b from-surface dark:to-[#191430] border-2.5 border-primary/60 shadow-bevel-light dark:shadow-bevel-dark flex flex-col items-center justify-center min-h-42.5 overflow-hidden group select-none"
+        className="relative rounded-3xl p-5 cursor-pointer bg-gradient-to-b from-surface dark:to-[#191430] border-2 border-primary/60 shadow-bevel-light dark:shadow-bevel-dark shadow-card shadow-card-hover flex flex-col items-center justify-center min-h-[170px] overflow-hidden group select-none"
       >
         {/* Top Gloss Highlight Strip */}
-        <div className="absolute top-0 left-0 right-0 h-9 bg-linear-to-b from-white/20 to-transparent pointer-events-none" />
+        <div className="absolute top-0 left-0 right-0 h-9 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
 
         {/* Center Content */}
         <div className="flex flex-col items-center gap-2.5 text-center relative z-10">
           <div className="w-12 h-12 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center text-primary group-hover:scale-110 transition-transform shadow-inner">
-            <Plus className="w-7 h-7 stroke-3" />
+            <Plus className="w-7 h-7" strokeWidth={3} />
           </div>
 
           <div>
@@ -47,7 +47,7 @@ export const ArcadeDeckCard = ({
       whileHover={{ scale: 1.03 }}
       whileTap={{ scale: 0.97 }}
       onClick={onClick}
-      className={`relative rounded-3xl p-5 cursor-pointer shadow-bevel-dark flex flex-col justify-between min-h-42.5 overflow-hidden transition-all duration-200 select-none ${
+      className={`relative rounded-3xl p-5 cursor-pointer shadow-bevel-dark shadow-card shadow-card-hover flex flex-col justify-between min-h-[170px] overflow-hidden transition-all duration-200 select-none ${
         isSelected
           ? "ring-4 ring-primary shadow-xl scale-[1.02]"
           : "hover:shadow-2xl"
@@ -57,12 +57,12 @@ export const ArcadeDeckCard = ({
       }}
     >
       {/* Top Gloss Highlight Strip */}
-      <div className="absolute top-0 left-0 right-0 h-9 bg-linear-to-b from-white/35 to-transparent pointer-events-none" />
+      <div className="absolute top-0 left-0 right-0 h-9 bg-gradient-to-b from-white/35 to-transparent pointer-events-none" />
 
       {/* Selected Checkmark Badge */}
       {isSelected && (
         <div className="absolute top-3 right-3 w-7 h-7 rounded-full bg-accent text-primary flex items-center justify-center shadow-md z-20">
-          <Check className="w-4.5 h-4.5 stroke-3" />
+          <Check className="w-4 h-4" strokeWidth={3} />
         </div>
       )}
 

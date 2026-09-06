@@ -288,7 +288,7 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
         centerTitle: true,
       ),
       body: AmbientBackground(
-        ambientColor: startColor,
+        ambientColor: const Color(0xFFFFEA00),
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(
@@ -449,7 +449,7 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
 
                       // 3. KEYBOARD EMOJI INPUT
                       _buildInputLabel(
-                        "DECK EMOJI ICON (TYPE FROM KEYBOARD)",
+                        "DECK EMOJI ICON (SINGLE EMOJI)",
                         isDark,
                       ),
                       const SizedBox(height: 6),
@@ -457,13 +457,6 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
                         isDark: isDark,
                         child: Row(
                           children: [
-                            // Container(
-                            //   padding: const EdgeInsets.all(12),
-                            //   child: Text(
-                            //     _selectedIcon.isNotEmpty ? _selectedIcon : "🎴",
-                            //     style: const TextStyle(fontSize: 26),
-                            //   ),
-                            // ),
                             Expanded(
                               child: TextField(
                                 controller: _customEmojiController,
@@ -483,6 +476,7 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
                                     vertical: 14,
                                   ),
                                   border: InputBorder.none,
+                                  counterText: "",
                                 ),
                                 maxLength: 1,
                                 maxLengthEnforcement:
@@ -521,8 +515,11 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
                                           : Colors.white,
                                   borderRadius: BorderRadius.circular(16),
                                   border: Border.all(
-                                    color: startColor,
-                                    width: 2,
+                                    color:
+                                        isDark
+                                            ? Colors.white24
+                                            : Colors.black12,
+                                    width: 1.5,
                                   ),
                                 ),
                                 child: Row(
@@ -577,7 +574,13 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
                                           ? const Color(0xFF1E1938)
                                           : Colors.white,
                                   borderRadius: BorderRadius.circular(16),
-                                  border: Border.all(color: endColor, width: 2),
+                                  border: Border.all(
+                                    color:
+                                        isDark
+                                            ? Colors.white24
+                                            : Colors.black12,
+                                    width: 1.5,
+                                  ),
                                 ),
                                 child: Row(
                                   children: [
@@ -747,11 +750,16 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
                     height: 54,
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(colors: [startColor, endColor]),
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFEA00), Color(0xFFFF9100)],
+                      ),
                       borderRadius: BorderRadius.circular(20),
                       border: Border.all(color: Colors.white, width: 2.5),
-                      boxShadow: [
-                        BoxShadow(color: endColor, offset: const Offset(0, 4)),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0xFF8E4800),
+                          offset: Offset(0, 4),
+                        ),
                       ],
                     ),
                     child: const Center(

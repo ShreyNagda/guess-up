@@ -62,7 +62,8 @@ export const AdminAuthModal = () => {
               Firebase Admin Sign In
             </h3>
             <p className="text-xs text-muted leading-relaxed">
-              Sign in with your administrator Firebase account credentials to access game decks, tester management, and feedback analytics.
+              Sign in with your administrator Firebase account credentials to
+              access game decks, tester management, and feedback analytics.
             </p>
           </div>
 
@@ -76,7 +77,7 @@ export const AdminAuthModal = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 autoFocus
-                className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-surface-card border border-border text-sm font-semibold text-text placeholder:text-muted outline-none focus:border-primary transition-all"
+                className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-surface-card border text-sm font-semibold outline-none focus:border-primary transition-all"
               />
             </div>
 
@@ -87,7 +88,7 @@ export const AdminAuthModal = () => {
                 placeholder="Password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-surface-card border border-border text-sm font-semibold text-text placeholder:text-muted outline-none focus:border-primary transition-all"
+                className="w-full pl-11 pr-4 py-3.5 rounded-xl bg-surface-card border text-sm font-semibold outline-none focus:border-primary transition-all"
               />
             </div>
 

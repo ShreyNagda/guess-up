@@ -1,8 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { collection, onSnapshot, addDoc, serverTimestamp, query, orderBy } from "firebase/firestore";
+import {
+  collection,
+  onSnapshot,
+  addDoc,
+  serverTimestamp,
+  query,
+  orderBy,
+} from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { Users, UserCheck, Sparkles, Smartphone, CheckCircle2, X, Plus, Star } from "lucide-react";
+import { UserCheck, Smartphone, CheckCircle2, X, Star } from "lucide-react";
 import { useToast } from "../context/ToastContext";
 
 const SAMPLE_TESTERS = [
@@ -10,8 +17,9 @@ const SAMPLE_TESTERS = [
     id: "s1",
     name: "Rohan Gupta",
     role: "Alpha Playtester",
-    deviceType: "iOS",
-    quote: "Finally a charades game that actually understands Indian pop culture! Bollywood Buff had our entire hostel floor screaming.",
+    deviceType: "Android",
+    quote:
+      "Finally a charades game that actually understands Indian pop culture! Bollywood Buff had our entire hostel floor screaming.",
     submittedAt: new Date().toISOString(),
   },
   {
@@ -19,15 +27,17 @@ const SAMPLE_TESTERS = [
     name: "Ananya Verma",
     role: "Beta Tester",
     deviceType: "Android",
-    quote: "The tilt sensing is butter smooth. We played 2-Team Battle mode with 8 friends and didn't hit a single ad during our 2-hour game night.",
+    quote:
+      "The tilt sensing is butter smooth. We played 2-Team Battle mode with 8 friends and didn't hit a single ad during our 2-hour game night.",
     submittedAt: new Date().toISOString(),
   },
   {
     id: "s3",
     name: "Aarav Sharma",
     role: "Top Contributor",
-    deviceType: "iOS",
-    quote: "Making our own custom deck with inside jokes about our college gang made this the best party game we've ever played.",
+    deviceType: "Android",
+    quote:
+      "Making our own custom deck with inside jokes about our college gang made this the best party game we've ever played.",
     submittedAt: new Date().toISOString(),
   },
 ];
@@ -38,7 +48,7 @@ export const TestersWall = () => {
   const [isJoinModalOpen, setIsJoinModalOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [deviceType, setDeviceType] = useState("iOS");
+  const [deviceType, setDeviceType] = useState("Android");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [joinedSuccess, setJoinedSuccess] = useState(false);
   const toast = useToast();
@@ -61,7 +71,7 @@ export const TestersWall = () => {
           console.warn("Firestore testers fallback:", err);
           setTesters(SAMPLE_TESTERS);
           setLoading(false);
-        }
+        },
       );
     } catch (_) {
       setTesters(SAMPLE_TESTERS);
@@ -73,7 +83,8 @@ export const TestersWall = () => {
   const handleJoinBetaSubmit = async (e) => {
     e.preventDefault();
     if (!name.trim() || !email.trim()) {
-      if (toast?.addToast) toast.addToast("Please fill in your name and email.", "error");
+      if (toast?.addToast)
+        toast.addToast("Please fill in your name and email.", "error");
       return;
     }
 
@@ -91,7 +102,8 @@ export const TestersWall = () => {
       await addDoc(collection(db, "testers"), payload);
       setIsSubmitting(false);
       setJoinedSuccess(true);
-      if (toast?.addToast) toast.addToast("Welcome to the Beta Wall! 🎉", "success");
+      if (toast?.addToast)
+        toast.addToast("Welcome to the Beta Wall! 🎉", "success");
       setTimeout(() => {
         setIsJoinModalOpen(false);
         setJoinedSuccess(false);
@@ -103,7 +115,8 @@ export const TestersWall = () => {
       setTesters((prev) => [payload, ...prev]);
       setIsSubmitting(false);
       setJoinedSuccess(true);
-      if (toast?.addToast) toast.addToast("Joined Beta Wall successfully!", "success");
+      if (toast?.addToast)
+        toast.addToast("Joined Beta Wall successfully!", "success");
       setTimeout(() => {
         setIsJoinModalOpen(false);
         setJoinedSuccess(false);
@@ -121,19 +134,23 @@ export const TestersWall = () => {
   };
 
   return (
-    <section className="py-16 md:py-24 border-t border-border/40 relative overflow-hidden" id="testers">
+    <section
+      className="py-16 md:py-24 border-t border-border/40 relative overflow-hidden"
+      id="testers"
+    >
       <div className="max-w-4xl mx-auto px-6 flex flex-col gap-10 relative z-10">
-        
         {/* Header */}
         <div className="text-center flex flex-col items-center gap-3">
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-black text-xs uppercase tracking-widest">
             <Star className="w-3.5 h-3.5 fill-primary" /> COMMUNITY HALL OF FAME
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-white">
-            Tested & Approved By <span className="text-primary">Real Party Buffs</span>
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight text-text">
+            Tested & Approved By{" "}
+            <span className="text-primary">Real Party Buffs</span>
           </h2>
           <p className="text-muted text-xs sm:text-sm max-w-xl leading-relaxed">
-            Meet the beta playtesters shaping our game balance, deck content, and motion thresholds.
+            Meet the beta playtesters shaping our game balance, deck content,
+            and motion thresholds.
           </p>
 
           <button
@@ -158,7 +175,7 @@ export const TestersWall = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.3, delay: (idx % 3) * 0.08 }}
-                className="p-6 rounded-3xl bg-surface-card/60 border border-border/60 backdrop-blur-md flex flex-col justify-between gap-4 shadow-sm hover:border-primary/50 transition-all"
+                className="p-6 rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col justify-between gap-4 shadow-card shadow-card-hover hover:border-primary/50 transition-all"
               >
                 <div className="flex flex-col gap-3">
                   <div className="flex items-center justify-between">
@@ -170,8 +187,11 @@ export const TestersWall = () => {
                     </span>
                   </div>
 
-                  <p className="text-xs text-slate-300 leading-relaxed italic">
-                    "{tester.quote || "Guess Up completely changed our Friday house party vibe. Zero ads and hilarious Desi decks!"}"
+                  <p className="text-xs text-muted leading-relaxed italic">
+                    "
+                    {tester.quote ||
+                      "Guess Up completely changed our Friday house party vibe. Zero ads and hilarious Desi decks!"}
+                    "
                   </p>
                 </div>
 
@@ -180,10 +200,9 @@ export const TestersWall = () => {
                     {getInitials(tester.name)}
                   </div>
                   <div className="flex flex-col min-w-0">
-                    <h3 className="font-extrabold text-xs text-white truncate">{tester.name || "Anonymous Tester"}</h3>
-                    <span className="text-[0.65rem] text-muted flex items-center gap-1">
-                      <Smartphone className="w-3 h-3 text-muted" /> {tester.deviceType || tester.device || "iOS"}
-                    </span>
+                    <h3 className="font-extrabold text-xs text-text truncate">
+                      {tester.name || "Anonymous Tester"}
+                    </h3>
                   </div>
                 </div>
               </motion.div>
@@ -200,11 +219,11 @@ export const TestersWall = () => {
               initial={{ opacity: 0, scale: 0.9, y: 20 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="relative w-full max-w-md bg-[#0E0C1C] border-2 border-border/60 p-6 sm:p-8 rounded-3xl shadow-2xl text-white"
+              className="relative w-full max-w-md bg-surface border-2 border-border p-6 sm:p-8 rounded-3xl shadow-2xl text-text"
             >
               <button
                 onClick={() => setIsJoinModalOpen(false)}
-                className="absolute top-4 right-4 p-2 rounded-xl bg-surface-card hover:bg-surface-card/80 text-muted hover:text-white transition-all cursor-pointer"
+                className="absolute top-4 right-4 p-2 rounded-xl bg-surface-card hover:bg-surface-card/80 text-muted hover:text-text transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -215,7 +234,9 @@ export const TestersWall = () => {
                     <CheckCircle2 className="w-8 h-8" />
                   </div>
                   <h3 className="text-xl font-black">Welcome Aboard!</h3>
-                  <p className="text-muted text-xs">You've been added to the Guess Up Testers Wall.</p>
+                  <p className="text-muted text-xs">
+                    You've been added to the Guess Up Testers Wall.
+                  </p>
                 </div>
               ) : (
                 <>
@@ -223,48 +244,45 @@ export const TestersWall = () => {
                     <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary">
                       <UserCheck className="w-6 h-6" />
                     </div>
-                    <h3 className="text-2xl font-black tracking-tight uppercase">Join Beta Wall</h3>
+                    <h3 className="text-2xl font-black tracking-tight uppercase text-text">
+                      Join Beta Wall
+                    </h3>
                     <p className="text-xs text-muted">
-                      Get featured on our Wall of Fame & receive instant TestFlight / APK access.
+                      Get featured on our Wall of Fame & receive early Play
+                      Store / APK updates.
                     </p>
                   </div>
 
-                  <form onSubmit={handleJoinBetaSubmit} className="flex flex-col gap-4">
+                  <form
+                    onSubmit={handleJoinBetaSubmit}
+                    className="flex flex-col gap-4"
+                  >
                     <div className="flex flex-col gap-1">
-                      <label className="text-[0.7rem] font-black uppercase text-muted">Full Name *</label>
+                      <label className="text-[0.7rem] font-black uppercase text-muted">
+                        Full Name *
+                      </label>
                       <input
                         type="text"
                         placeholder="e.g. Rahul Sharma"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         required
-                        className="w-full p-3.5 rounded-2xl bg-surface-card border border-border text-white text-xs font-semibold placeholder:text-muted outline-none focus:border-primary transition-all"
+                        className="w-full p-3.5 rounded-2xl bg-surface-card border border-border text-text text-xs font-semibold placeholder:text-muted outline-none focus:border-primary transition-all"
                       />
                     </div>
 
                     <div className="flex flex-col gap-1">
-                      <label className="text-[0.7rem] font-black uppercase text-muted">Email Address *</label>
+                      <label className="text-[0.7rem] font-black uppercase text-muted">
+                        Email Address *
+                      </label>
                       <input
                         type="email"
                         placeholder="rahul@example.com"
                         value={email}
                         onChange={(e) => setEmail(e.target.value)}
                         required
-                        className="w-full p-3.5 rounded-2xl bg-surface-card border border-border text-white text-xs font-semibold placeholder:text-muted outline-none focus:border-primary transition-all"
+                        className="w-full p-3.5 rounded-2xl bg-surface-card border border-border text-text text-xs font-semibold placeholder:text-muted outline-none focus:border-primary transition-all"
                       />
-                    </div>
-
-                    <div className="flex flex-col gap-1">
-                      <label className="text-[0.7rem] font-black uppercase text-muted">Testing Device</label>
-                      <select
-                        value={deviceType}
-                        onChange={(e) => setDeviceType(e.target.value)}
-                        className="w-full p-3.5 rounded-2xl bg-surface-card border border-border text-white text-xs font-semibold outline-none focus:border-primary transition-all"
-                      >
-                        <option value="iOS">iOS (iPhone / iPad)</option>
-                        <option value="Android">Android Device</option>
-                        <option value="Web">Web Browser</option>
-                      </select>
                     </div>
 
                     <button

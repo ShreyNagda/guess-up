@@ -8,7 +8,7 @@ import { useToast } from "../context/ToastContext";
 export const FeedbackForm = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [deviceType, setDeviceType] = useState("iOS");
+  const [deviceType, setDeviceType] = useState("Android");
   const [feedbackType, setFeedbackType] = useState("Feedback");
   const [feedbackText, setFeedbackText] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -57,7 +57,7 @@ export const FeedbackForm = () => {
   return (
     <section className="py-16 md:py-24 border-t border-border/40 relative" id="feedback">
       <div className="max-w-4xl mx-auto px-6">
-        <div className="bg-surface/80 border border-border/60 backdrop-blur-md p-8 sm:p-12 rounded-3xl shadow-xl flex flex-col gap-8">
+        <div className="bg-surface/80 border border-border/60 backdrop-blur-md p-8 sm:p-12 rounded-3xl shadow-card shadow-card-hover flex flex-col gap-8">
           <div className="text-center max-w-xl mx-auto flex flex-col gap-2">
             <span className="text-xs uppercase tracking-widest font-black text-primary inline-flex items-center justify-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/30">
               <MessageSquare className="w-3.5 h-3.5" /> Playtester Feedback Hub
@@ -114,7 +114,7 @@ export const FeedbackForm = () => {
                       placeholder="e.g. Rahul Sharma"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-surface-card border border-border text-text text-xs font-semibold placeholder:text-muted outline-none focus:border-primary transition-all"
+                      className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-surface-card border border-border/80 text-xs font-semibold outline-none focus:border-primary transition-all"
                     />
                   </div>
                 </div>
@@ -129,46 +129,27 @@ export const FeedbackForm = () => {
                       placeholder="rahul@example.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-surface-card border border-border text-text text-xs font-semibold placeholder:text-muted outline-none focus:border-primary transition-all"
+                      className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-surface-card border border-border/80 text-xs font-semibold outline-none focus:border-primary transition-all"
                     />
                   </div>
                 </div>
               </div>
 
-              <div className="grid sm:grid-cols-2 gap-4">
-                {/* Field 3: Device Type */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.7rem] font-black uppercase text-muted">Device Type</label>
-                  <div className="relative">
-                    <Smartphone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                    <select
-                      value={deviceType}
-                      onChange={(e) => setDeviceType(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-surface-card border border-border text-text text-xs font-semibold outline-none focus:border-primary transition-all appearance-none"
-                    >
-                      <option value="iOS">iOS (iPhone / iPad)</option>
-                      <option value="Android">Android Device</option>
-                      <option value="Web">Web Browser</option>
-                    </select>
-                  </div>
-                </div>
-
-                {/* Field 4: Feedback Category */}
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.7rem] font-black uppercase text-muted">Category</label>
-                  <div className="relative">
-                    <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
-                    <select
-                      value={feedbackType}
-                      onChange={(e) => setFeedbackType(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-surface-card border border-border text-text text-xs font-semibold outline-none focus:border-primary transition-all appearance-none"
-                    >
-                      <option value="Feedback">General Feedback</option>
-                      <option value="Bug Report">Bug Report</option>
-                      <option value="Feature Request">Feature Request</option>
-                      <option value="Deck Idea">Deck Idea</option>
-                    </select>
-                  </div>
+              {/* Field 3: Feedback Category */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[0.7rem] font-black uppercase text-muted">Category</label>
+                <div className="relative">
+                  <Sparkles className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
+                  <select
+                    value={feedbackType}
+                    onChange={(e) => setFeedbackType(e.target.value)}
+                    className="w-full pl-10 pr-4 py-3.5 rounded-2xl bg-surface-card border border-border/80 text-xs font-semibold outline-none focus:border-primary transition-all appearance-none"
+                  >
+                    <option value="Feedback">General Feedback</option>
+                    <option value="Bug Report">Bug Report</option>
+                    <option value="Feature Request">Feature Request</option>
+                    <option value="Deck Idea">Deck Idea</option>
+                  </select>
                 </div>
               </div>
 
@@ -180,7 +161,7 @@ export const FeedbackForm = () => {
                   placeholder="Share your thoughts, describe a bug, or suggest new category decks..."
                   value={feedbackText}
                   onChange={(e) => setFeedbackText(e.target.value)}
-                  className="w-full p-4 rounded-2xl bg-surface-card border border-border text-text text-xs font-semibold placeholder:text-muted outline-none focus:border-primary transition-all resize-none"
+                  className="w-full p-4 rounded-2xl bg-surface-card border border-border/80 text-xs font-semibold outline-none focus:border-primary transition-all resize-none"
                 />
               </div>
 
