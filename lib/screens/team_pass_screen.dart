@@ -151,7 +151,7 @@ class _TeamPassScreenState extends State<TeamPassScreen> {
                             child: Column(
                               children: [
                                 Text(
-                                  "${AppTheme.teamAName} ${AppTheme.teamAEmoji}",
+                                  state.teamCyanDisplayName,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -188,7 +188,7 @@ class _TeamPassScreenState extends State<TeamPassScreen> {
                             child: Column(
                               children: [
                                 Text(
-                                  "${AppTheme.teamBName} ${AppTheme.teamBEmoji}",
+                                  state.teamMagentaDisplayName,
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                   ),

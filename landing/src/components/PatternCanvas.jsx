@@ -1,8 +1,6 @@
 import React, { useEffect, useRef } from "react";
 import { useTheme } from "../context/ThemeContext";
 
-const DECK_EMOJIS = ["🎬", "🏏", "🍔", "😎", "🎵", "🏆", "🎭", "🧠", "🎯"];
-
 export const PatternCanvas = () => {
   const canvasRef = useRef(null);
   const { theme } = useTheme();
@@ -26,11 +24,16 @@ export const PatternCanvas = () => {
     const drawPattern = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-      ctx.font = "32px Manrope, sans-serif";
-      ctx.fillStyle = theme === "light" ? "rgba(0, 0, 0, 0.04)" : "rgba(255, 255, 255, 0.04)";
-      ctx.textBaseline = "top";
+      const color =
+        theme === "light"
+          ? "rgba(15, 12, 28, 0.04)"
+          : "rgba(255, 255, 255, 0.04)";
 
-      const spacing = 140;
+      ctx.fillStyle = color;
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+
+      const spacing = 120;
       const cols = Math.ceil(canvas.width / spacing) + 2;
       const rows = Math.ceil(canvas.height / spacing) + 2;
 
@@ -39,19 +42,43 @@ export const PatternCanvas = () => {
 
       for (let i = 0; i < cols; i++) {
         for (let j = 0; j < rows; j++) {
-          const emojiIdx = (i + j) % DECK_EMOJIS.length;
-
           let x = i * spacing + offsetX - spacing;
           let y = j * spacing + offsetY - spacing;
 
           x = x % (cols * spacing);
           y = y % (rows * spacing);
 
-          ctx.fillText(DECK_EMOJIS[emojiIdx], x, y);
+          const shapeType = (i + j) % 4;
+
+          ctx.beginPath();
+          if (shapeType === 0) {
+            // Plus Cross
+            ctx.moveTo(x - 6, y);
+            ctx.lineTo(x + 6, y);
+            ctx.moveTo(x, y - 6);
+            ctx.lineTo(x, y + 6);
+            ctx.stroke();
+          } else if (shapeType === 1) {
+            // Small Circle Ring
+            ctx.arc(x, y, 4, 0, Math.PI * 2);
+            ctx.stroke();
+          } else if (shapeType === 2) {
+            // Diamond Accent
+            ctx.moveTo(x, y - 5);
+            ctx.lineTo(x + 5, y);
+            ctx.lineTo(x, y + 5);
+            ctx.lineTo(x - 5, y);
+            ctx.closePath();
+            ctx.stroke();
+          } else {
+            // Solid Dot
+            ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
       }
 
-      scrollRef.current += 0.0008;
+      scrollRef.current += 0.0006;
       animationFrameId = requestAnimationFrame(drawPattern);
     };
 
@@ -70,3 +97,4 @@ export const PatternCanvas = () => {
     />
   );
 };
+

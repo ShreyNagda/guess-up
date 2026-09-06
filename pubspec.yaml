@@ -3,7 +3,7 @@ description: "Guess Up is a mobile-based charades party game, designed especiall
 
 publish_to: "none"
 
-version: 1.1.0+5
+version: 1.2.0+6
 
 environment:
   sdk: ^3.7.2
@@ -17,11 +17,11 @@ dependencies:
   hive: ^2.2.3
   hive_flutter: ^1.1.0
   flame_audio: ^2.2.0
-  just_audio: ^0.9.44
+  just_audio: ^0.10.6
   freezed_annotation: ^2.4.1
   json_annotation: ^4.9.0
-  firebase_core: ^3.13.0
-  cloud_firestore: ^5.6.7
+  firebase_core: ^4.14.0
+  cloud_firestore: ^6.9.0
   sensors_plus: ^7.1.0
   timer_controller: ^1.0.0
   audioplayers: ^6.4.0
@@ -33,9 +33,11 @@ dependencies:
   flutter_native_splash: ^2.4.4
   confetti: ^0.8.0
   url_launcher: ^6.3.1
+  share_plus: ^13.3.0
+  path_provider: ^2.1.5
 
 dev_dependencies:
-  flutter_lints: ^5.0.0
+  flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3
   build_runner: ^2.4.9
   freezed: ^2.4.7
@@ -53,12 +55,12 @@ flutter_launcher_icons:
 flutter_native_splash:
   color: "#ffffff"
   color_dark: "#000000"
-  image: "assets/images/guessup-icon.png"
-  image_dark: "assets/images/guessup-icon.png"
+  image: "assets/images/guessup-splash-icon.png"
+  image_dark: "assets/images/guessup-splash-icon.png"
   android_gravity: center
   android_12:
-    image: "assets/images/guessup-icon.png"
-    image_dark: "assets/images/guessup-icon.png"
+    image: "assets/images/guessup-splash-icon.png"
+    image_dark: "assets/images/guessup-splash-icon.png"
 
 flutter:
   uses-material-design: true
@@ -67,7 +69,6 @@ flutter:
     - assets/data.json
     - assets/sounds/
     - assets/images/
-    - assets/images/onboarding/1.webp
 
   fonts:
     - family: Manrope

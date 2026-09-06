@@ -35,7 +35,7 @@ export const normalizeCategory = (docId, data = {}) => {
         ? data.wordsCount
         : wordsList.length,
     description: (data.description || data.subtitle || data.desc || "").trim(),
-    subtitle: (data.description || data.subtitle || `${wordsList.length} cards in deck`).trim(),
+    subtitle: (data.description || data.subtitle || "Fun party deck inside").trim(),
     color: primaryColor,
     colorHex: primaryColor,
     gradientEnd,
@@ -70,7 +70,7 @@ export const getDarkerShade = (hexColor = "#FFD600") => {
     b = Math.max(0, b);
 
     return `#${((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1)}`;
-  } catch (_) {
+  } catch {
     return "#FF9100";
   }
 };

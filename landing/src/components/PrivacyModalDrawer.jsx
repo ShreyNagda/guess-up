@@ -1,6 +1,6 @@
 import React from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ShieldCheck, Lock, EyeOff, Radio, X, Check, ExternalLink } from "lucide-react";
+import { ShieldCheck, Lock, EyeOff, Radio, X, ExternalLink } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const PrivacyModalDrawer = ({ isOpen, onClose }) => {

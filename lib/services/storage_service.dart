@@ -64,6 +64,26 @@ class GameStorageService {
   Future<void> setTeamRounds(int rounds) async =>
       await _settingsBox.put('teamRounds', rounds);
 
+  String get teamCyanName =>
+      _settingsBox.get('teamCyanName', defaultValue: 'Team Cyan');
+  Future<void> setTeamCyanName(String val) async =>
+      await _settingsBox.put('teamCyanName', val);
+
+  String get teamCyanEmoji =>
+      _settingsBox.get('teamCyanEmoji', defaultValue: '⚡');
+  Future<void> setTeamCyanEmoji(String val) async =>
+      await _settingsBox.put('teamCyanEmoji', val);
+
+  String get teamMagentaName =>
+      _settingsBox.get('teamMagentaName', defaultValue: 'Team Magenta');
+  Future<void> setTeamMagentaName(String val) async =>
+      await _settingsBox.put('teamMagentaName', val);
+
+  String get teamMagentaEmoji =>
+      _settingsBox.get('teamMagentaEmoji', defaultValue: '🔥');
+  Future<void> setTeamMagentaEmoji(String val) async =>
+      await _settingsBox.put('teamMagentaEmoji', val);
+
   bool get hasSeenOnboarding =>
       _settingsBox.get('hasSeenOnboarding', defaultValue: false);
   Future<void> setOnboardingSeen(bool val) async =>

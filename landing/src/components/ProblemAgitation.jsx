@@ -5,10 +5,10 @@ import { XCircle, CheckCircle2, AlertTriangle } from "lucide-react";
 export const ProblemAgitation = () => {
   return (
     <section
-      className="py-16 md:py-24 border-t border-border/40 relative"
-      id="problems"
+      className="py-8 sm:py-16 md:py-24 border-t border-border/40 relative"
+      id="problem"
     >
-      <div className="max-w-4xl mx-auto px-6 flex flex-col gap-12">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col gap-6 sm:gap-12">
         {/* Header */}
         <div className="text-center flex flex-col items-center gap-3">
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-red-500/10 border border-red-500/30 text-red-400 font-black text-xs uppercase tracking-widest">
@@ -50,9 +50,7 @@ export const ProblemAgitation = () => {
 
             <div className="flex flex-col gap-5 text-xs text-muted">
               <div className="flex items-start gap-3">
-                <span className="text-red-400 font-black text-base shrink-0">
-                  ❌
-                </span>
+                <XCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-text block font-extrabold text-sm mb-0.5">
                     Unskippable 30-Second Video Ads
@@ -64,9 +62,7 @@ export const ProblemAgitation = () => {
               </div>
 
               <div className="flex items-start gap-3">
-                <span className="text-red-400 font-black text-base shrink-0">
-                  ❌
-                </span>
+                <XCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-text block font-extrabold text-sm mb-0.5">
                     Irrelevant Western Decks
@@ -77,9 +73,7 @@ export const ProblemAgitation = () => {
               </div>
 
               <div className="flex items-start gap-3">
-                <span className="text-red-400 font-black text-base shrink-0">
-                  ❌
-                </span>
+                <XCircle className="w-5 h-5 text-red-400 shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-text block font-extrabold text-sm mb-0.5">
                     Clunky Screen Tapping
@@ -116,9 +110,7 @@ export const ProblemAgitation = () => {
 
             <div className="flex flex-col gap-5 text-xs text-muted">
               <div className="flex items-start gap-3">
-                <span className="text-primary font-black text-base shrink-0">
-                  ✅
-                </span>
+                <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-text block font-extrabold text-sm mb-0.5">
                     100% Uninterrupted Ad-Free Gameplay
@@ -129,9 +121,7 @@ export const ProblemAgitation = () => {
               </div>
 
               <div className="flex items-start gap-3">
-                <span className="text-primary font-black text-base shrink-0">
-                  ✅
-                </span>
+                <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-text block font-extrabold text-sm mb-0.5">
                     Handcrafted Indian Pop Culture
@@ -142,9 +132,7 @@ export const ProblemAgitation = () => {
               </div>
 
               <div className="flex items-start gap-3">
-                <span className="text-primary font-black text-base shrink-0">
-                  ✅
-                </span>
+                <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                 <div>
                   <strong className="text-text block font-extrabold text-sm mb-0.5">
                     Instant Motion Tilt Detection

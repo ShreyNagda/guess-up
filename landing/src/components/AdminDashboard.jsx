@@ -31,7 +31,6 @@ import {
   Plus,
   Edit,
   Trash2,
-  Check,
   X,
   Layers,
   Flame,
@@ -40,10 +39,8 @@ import {
   EyeOff,
   Smile,
   Archive,
-  CheckCircle2,
   AlertCircle,
   Smartphone,
-  Sparkles,
   Loader2,
 } from "lucide-react";
 import { ColorPicker } from "./ColorPicker";
@@ -131,7 +128,6 @@ export const AdminDashboard = () => {
   const [deckIsAvailable, setDeckIsAvailable] = useState(true);
   const [deckSortOrder, setDeckSortOrder] = useState(0);
   const [deckWordsInput, setDeckWordsInput] = useState("");
-  const [infoWordsSearch, setInfoWordsSearch] = useState("");
   const [newWordsInput, setNewWordsInput] = useState("");
   const [savingDeck, setSavingDeck] = useState(false);
   const [savingNewWords, setSavingNewWords] = useState(false);
@@ -155,7 +151,6 @@ export const AdminDashboard = () => {
   // Listen to 'categories' collection in Firestore
   useEffect(() => {
     if (!isAdminLoggedIn) return;
-    setLoadingDecks(true);
 
     let unsub = () => {};
     try {
@@ -175,8 +170,8 @@ export const AdminDashboard = () => {
           setLoadingDecks(false);
         },
       );
-    } catch (_) {
-      setLoadingDecks(false);
+    } catch {
+      queueMicrotask(() => setLoadingDecks(false));
     }
 
     return () => unsub();
@@ -185,7 +180,6 @@ export const AdminDashboard = () => {
   // Listen to 'testers' collection
   useEffect(() => {
     if (!isAdminLoggedIn) return;
-    setLoadingTesters(true);
 
     let unsub = () => {};
     try {
@@ -205,8 +199,8 @@ export const AdminDashboard = () => {
           setLoadingTesters(false);
         },
       );
-    } catch (_) {
-      setLoadingTesters(false);
+    } catch {
+      queueMicrotask(() => setLoadingTesters(false));
     }
 
     return () => unsub();
@@ -215,7 +209,6 @@ export const AdminDashboard = () => {
   // Listen to 'feedback' collection
   useEffect(() => {
     if (!isAdminLoggedIn) return;
-    setLoadingFeedback(true);
 
     let unsub = () => {};
     try {
@@ -235,8 +228,8 @@ export const AdminDashboard = () => {
           setLoadingFeedback(false);
         },
       );
-    } catch (_) {
-      setLoadingFeedback(false);
+    } catch {
+      queueMicrotask(() => setLoadingFeedback(false));
     }
 
     return () => unsub();
@@ -254,17 +247,17 @@ export const AdminDashboard = () => {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          className="w-full max-w-md bg-surface-dark border-2 border-border-dark p-8 rounded-3xl shadow-2xl text-text-dark flex flex-col items-center gap-6"
+          className="w-full max-w-md bg-surface border-2 border-border p-8 rounded-3xl shadow-2xl text-text flex flex-col items-center gap-6"
         >
           <div className="w-16 h-16 rounded-3xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary shadow-inner">
             <Lock className="w-8 h-8" />
           </div>
 
           <div>
-            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-text">
               Admin Portal Access
             </h2>
-            <p className="text-xs text-muted-dark mt-1.5 leading-relaxed">
+            <p className="text-xs text-muted mt-1.5 leading-relaxed">
               Sign in with your Firebase Administrator credentials to manage
               beta testers, user feedback, and game decks.
             </p>
@@ -275,34 +268,34 @@ export const AdminDashboard = () => {
             className="w-full flex flex-col gap-4 text-left"
           >
             <div className="flex flex-col gap-1.5">
-              <label className="text-[0.7rem] font-black uppercase text-muted-dark">
+              <label className="text-[0.7rem] font-black uppercase text-muted">
                 Admin Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                 <input
                   type="email"
                   placeholder="admin@guessup.com"
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-surface-card border text-xs font-semibold outline-none focus:border-primary transition-all"
                   required
                 />
               </div>
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <label className="text-[0.7rem] font-black uppercase text-muted-dark">
+              <label className="text-[0.7rem] font-black uppercase text-muted">
                 Password
               </label>
               <div className="relative">
-                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
                 <input
                   type="password"
                   placeholder="••••••••"
                   value={authPassword}
                   onChange={(e) => setAuthPassword(e.target.value)}
-                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary transition-all"
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-surface-card border text-xs font-semibold outline-none focus:border-primary transition-all"
                   required
                 />
               </div>
@@ -319,7 +312,7 @@ export const AdminDashboard = () => {
               <button
                 type="button"
                 onClick={() => navigate("/")}
-                className="flex-1 py-3 rounded-2xl border border-border-dark text-muted-dark font-extrabold text-xs hover:bg-white/5 transition-all cursor-pointer"
+                className="flex-1 py-3 rounded-2xl border border-border text-muted font-extrabold text-xs hover:bg-surface-card transition-all cursor-pointer"
               >
                 Return Home
               </button>
@@ -466,7 +459,6 @@ export const AdminDashboard = () => {
     setDeckIsAvailable(true);
     setDeckSortOrder(decksList.length);
     setDeckWordsInput("");
-    setInfoWordsSearch("");
     setIsDeckModalOpen(true);
   };
 
@@ -483,7 +475,6 @@ export const AdminDashboard = () => {
     setDeckIsAvailable(deck.isAvailable !== false);
     setDeckSortOrder(deck.sortOrder || 0);
     setDeckWordsInput((deck.words || []).join(", "));
-    setInfoWordsSearch("");
     setIsDeckModalOpen(true);
   };
 
@@ -609,14 +600,6 @@ export const AdminDashboard = () => {
     }
   };
 
-  const handleRemoveSingleWordFromInfo = (wordToRemove) => {
-    const currentWords = deckWordsInput
-      .split(/[\n,]+/)
-      .map((w) => w.trim())
-      .filter((w) => w.length > 0 && w !== wordToRemove);
-    setDeckWordsInput(currentWords.join(", "));
-  };
-
   // Filtered Decks
   const filteredDecks = decksList.filter((deck) => {
     const q = searchQuery.toLowerCase();
@@ -693,39 +676,20 @@ export const AdminDashboard = () => {
       let rows = [];
 
       if (testersSubTab === "registrations") {
-        headers = ["ID", "Name", "Email", "Role", "Device", "Registered Date"];
-        rows = data.map((item) => [
-          `"${item.id || ""}"`,
-          `"${(item.name || "").replace(/"/g, '""')}"`,
-          `"${(item.email || "").replace(/"/g, '""')}"`,
-          `"${item.role || "Beta Tester"}"`,
-          `"${item.deviceType || item.device || "iOS"}"`,
-          `"${item.submittedAt || ""}"`,
-        ]);
+        headers = ["Email"];
+        rows = data
+          .map((item) => (item.email || "").trim())
+          .filter(Boolean)
+          .map((email) => [`"${email.replace(/"/g, '""')}"`]);
       } else {
-        headers = [
-          "ID",
-          "Name",
-          "Email",
-          "Category",
-          "Device",
-          "Feedback Note",
-          "Archived",
-          "Submitted Date",
-        ];
-        rows = data.map((item) => [
-          `"${item.id || ""}"`,
-          `"${(item.name || "").replace(/"/g, '""')}"`,
-          `"${(item.email || "").replace(/"/g, '""')}"`,
-          `"${item.feedbackType || "General"}"`,
-          `"${item.deviceType || "Web"}"`,
-          `"${(item.feedbackText || "").replace(/"/g, '""')}"`,
-          item.archived ? "YES" : "NO",
-          `"${item.submittedAt || ""}"`,
-        ]);
+        headers = ["Email"];
+        rows = data
+          .map((item) => (item.email || "").trim())
+          .filter(Boolean)
+          .map((email) => [`"${email.replace(/"/g, '""')}"`]);
       }
       downloadCSV(
-        `guessup_${testersSubTab}_export_${new Date().toISOString().split("T")[0]}.csv`,
+        `guessup_${testersSubTab}_emails_${new Date().toISOString().split("T")[0]}.csv`,
         headers,
         rows,
       );
@@ -772,191 +736,177 @@ export const AdminDashboard = () => {
     .map((w) => w.trim())
     .filter((w) => w.length > 0);
 
-  const filteredCurrentWords = currentDeckWords.filter((w) =>
-    w.toLowerCase().includes(infoWordsSearch.toLowerCase()),
-  );
-
   const parsedNewWordsList = newWordsInput
     .split(/[\n,]+/)
     .map((w) => w.trim())
     .filter((w) => w.length > 0);
 
   return (
-    <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 flex flex-col gap-8 text-text-dark">
+    <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 flex flex-col gap-8 text-text">
       {/* Header Bar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-surface-dark border-2 border-border-dark p-6 rounded-3xl shadow-lg">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-surface border-2 border-border p-6 rounded-3xl shadow-lg">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black">
             <ShieldCheck className="w-6 h-6" />
           </div>
           <div>
-            <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black tracking-tight">
-                Admin Master Suite
-              </h1>
-              <span className="text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded-full bg-success/20 text-success border border-success/30">
-                Firebase Auth & Firestore
-              </span>
-            </div>
-            <p className="text-xs text-muted-dark mt-0.5">
-              Logged in as{" "}
-              <strong className="text-white">
-                {user?.email || "Administrator"}
-              </strong>
+            <h1 className="text-xl sm:text-2xl font-black tracking-tight">
+              Admin Dashboard
+            </h1>
+            <p className="text-xs text-muted">
+              {user?.email || "Admin Session"}
             </p>
           </div>
         </div>
 
         <button
           onClick={handleLogout}
-          className="px-4 py-2.5 rounded-xl border border-border-dark bg-white/5 hover:bg-white/10 font-extrabold text-xs text-muted-dark hover:text-white transition-all flex items-center gap-2 cursor-pointer self-end sm:self-center"
+          className="px-3.5 py-2 rounded-xl border border-border bg-surface-card hover:bg-black/5 dark:hover:bg-white/5 font-extrabold text-xs text-muted hover:text-text transition-all flex items-center gap-2 cursor-pointer self-end sm:self-center"
         >
-          <LogOut className="w-4 h-4" /> End Session
+          <LogOut className="w-4 h-4" /> Logout
         </button>
       </div>
 
       {/* TWO MASTER SECTIONS CARDS */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
         {/* Section 1: Decks Management */}
         <div
           onClick={() => setActiveSection("decks")}
-          className={`p-6 rounded-3xl border-2 cursor-pointer transition-all flex items-center justify-between gap-4 ${
+          className={`p-5 sm:p-6 rounded-2xl sm:rounded-3xl border-2 cursor-pointer transition-all flex items-center justify-between gap-4 ${
             activeSection === "decks"
-              ? "bg-surface-dark border-primary shadow-xl ring-2 ring-primary/20"
-              : "bg-surface-dark/50 border-border-dark opacity-75 hover:opacity-100"
+              ? "bg-surface border-primary shadow-lg ring-2 ring-primary/20"
+              : "bg-surface/50 border-border opacity-80 hover:opacity-100"
           }`}
         >
           <div className="flex flex-col gap-1">
-            <span className="text-xs uppercase font-black tracking-wider text-primary flex items-center gap-2">
-              <Layers className="w-4 h-4" /> Section 1: Deck Management
+            <span className="text-[0.7rem] uppercase font-black tracking-wider text-primary flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5" /> Decks Catalog
             </span>
-            <span className="text-3xl font-black text-white">
+            <span className="text-2xl sm:text-3xl font-black text-text">
               {decksList.length} Decks
             </span>
-            <span className="text-xs text-muted-dark font-semibold">
+            <span className="text-xs text-muted font-bold">
               {decksList.reduce(
                 (acc, curr) => acc + (curr.words ? curr.words.length : 0),
                 0,
               )}{" "}
-              word cards configured
+              Total Words
             </span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black">
-            <Layers className="w-6 h-6 text-primary" />
+          <div className="w-11 h-11 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black shrink-0">
+            <Layers className="w-5 h-5 text-primary" />
           </div>
         </div>
 
         {/* Section 2: Testers & Feedback */}
         <div
           onClick={() => setActiveSection("testers")}
-          className={`p-6 rounded-3xl border-2 cursor-pointer transition-all flex items-center justify-between gap-4 ${
+          className={`p-5 sm:p-6 rounded-2xl sm:rounded-3xl border-2 cursor-pointer transition-all flex items-center justify-between gap-4 ${
             activeSection === "testers"
-              ? "bg-surface-dark border-primary shadow-xl ring-2 ring-primary/20"
-              : "bg-surface-dark/50 border-border-dark opacity-75 hover:opacity-100"
+              ? "bg-surface border-primary shadow-lg ring-2 ring-primary/20"
+              : "bg-surface/50 border-border opacity-80 hover:opacity-100"
           }`}
         >
           <div className="flex flex-col gap-1">
-            <span className="text-xs uppercase font-black tracking-wider text-primary flex items-center gap-2">
-              <Users className="w-4 h-4" /> Section 2: Testers & Feedback
+            <span className="text-[0.7rem] uppercase font-black tracking-wider text-primary flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5" /> Testers & Notes
             </span>
-            <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-black text-white">
+            <div className="flex items-baseline gap-2">
+              <span className="text-2xl sm:text-3xl font-black text-text">
                 {testersList.length} Testers
               </span>
-              <span className="text-xs text-primary font-bold">
-                ({feedbackList.length} notes)
-              </span>
             </div>
-            <span className="text-xs text-muted-dark font-semibold">
-              Beta list signups & user feedback entries
+            <span className="text-xs text-muted font-bold">
+              {feedbackList.length} Feedback Notes
             </span>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black">
-            <Users className="w-6 h-6 text-primary" />
+          <div className="w-11 h-11 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black shrink-0">
+            <Users className="w-5 h-5 text-primary" />
           </div>
         </div>
       </div>
 
       {/* Section Controls & Actions Bar */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-surface-dark border-2 border-border-dark p-4 rounded-2xl">
+      <div className="flex flex-col md:flex-row items-center justify-between gap-4 bg-surface border-2 border-border p-4 rounded-2xl">
         {activeSection === "decks" ? (
           <div className="flex items-center gap-2">
             <span className="text-xs font-black uppercase text-primary tracking-wider flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/30">
-              <Layers className="w-4 h-4" /> Deck Catalog ({decksList.length})
+              <Layers className="w-4 h-4" /> Decks ({decksList.length})
             </span>
           </div>
         ) : (
-          <div className="flex items-center gap-2 bg-surface-card-dark p-1.5 rounded-xl border border-border-dark w-full md:w-auto">
+          <div className="flex items-center gap-2 bg-surface-card p-1 rounded-xl border border-border w-full md:w-auto">
             <button
               onClick={() => setTestersSubTab("registrations")}
-              className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-extrabold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`flex-1 md:flex-none px-3.5 py-1.5 rounded-lg font-extrabold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 testersSubTab === "registrations"
-                  ? "bg-primary text-accent shadow-sm"
-                  : "text-muted-dark hover:text-white"
+                  ? "bg-primary text-accent shadow-xs"
+                  : "text-muted hover:text-text"
               }`}
             >
-              <Users className="w-3.5 h-3.5" /> Beta Testers (
-              {testersList.length})
+              <Users className="w-3.5 h-3.5" /> Testers ({testersList.length})
             </button>
             <button
               onClick={() => setTestersSubTab("feedback")}
-              className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-extrabold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
+              className={`flex-1 md:flex-none px-3.5 py-1.5 rounded-lg font-extrabold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
                 testersSubTab === "feedback"
-                  ? "bg-primary text-accent shadow-sm"
-                  : "text-muted-dark hover:text-white"
+                  ? "bg-primary text-accent shadow-xs"
+                  : "text-muted hover:text-text"
               }`}
             >
-              <MessageSquare className="w-3.5 h-3.5" /> Feedback Notes (
+              <MessageSquare className="w-3.5 h-3.5" /> Feedback (
               {feedbackList.length})
             </button>
           </div>
         )}
 
         {/* Search & Actions */}
-        <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
-          <div className="relative w-full md:w-56">
+        <div className="flex flex-wrap items-center gap-2.5 w-full md:w-auto justify-between md:justify-end">
+          <div className="relative w-full md:w-52">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
             <input
               type="text"
-              placeholder={`Search ${activeSection}...`}
+              placeholder="Search..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-card border border-border/80 text-xs font-semibold outline-none focus:border-primary transition-all"
+              className="w-full pl-9 pr-3 py-2 rounded-xl bg-surface-card border text-xs font-semibold outline-none focus:border-primary transition-all"
             />
           </div>
 
           {activeSection === "decks" && (
             <button
               onClick={openCreateDeckModal}
-              className="px-4 py-2 rounded-xl bg-primary text-accent font-black text-xs flex items-center gap-1.5 hover:scale-105 active:scale-95 transition-all shadow-md cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-primary text-accent font-black text-xs flex items-center gap-1.5 hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> Create New Deck
+              <Plus className="w-4 h-4" />{" "}
+              <span className="hidden sm:inline">Create</span> Deck
             </button>
           )}
 
           {activeSection === "testers" && testersSubTab === "registrations" && (
             <button
               onClick={openCreateTesterModal}
-              className="px-4 py-2 rounded-xl bg-primary text-accent font-black text-xs flex items-center gap-1.5 hover:scale-105 active:scale-95 transition-all shadow-md cursor-pointer"
+              className="px-3.5 py-2 rounded-xl bg-primary text-accent font-black text-xs flex items-center gap-1.5 hover:scale-105 active:scale-95 transition-all shadow-sm cursor-pointer"
             >
-              <Plus className="w-4 h-4" /> Add Beta Tester
+              <Plus className="w-4 h-4" />{" "}
+              <span className="hidden sm:inline">Add</span> Tester
             </button>
           )}
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
             <button
               onClick={exportCSV}
-              className="px-3.5 py-2 rounded-xl border border-border-dark bg-white/5 hover:bg-white/10 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
-              title="Export as CSV"
+              className="px-3 py-2 rounded-xl border border-border bg-surface-card hover:bg-black/5 dark:hover:bg-white/5 font-extrabold text-xs text-muted hover:text-text flex items-center gap-1 transition-all cursor-pointer"
+              title="Export CSV"
             >
-              <FileSpreadsheet className="w-4 h-4" /> CSV
+              <FileSpreadsheet className="w-3.5 h-3.5" /> CSV
             </button>
             <button
               onClick={exportJSON}
-              className="px-3.5 py-2 rounded-xl border border-border-dark bg-white/5 hover:bg-white/10 font-extrabold text-xs flex items-center gap-1.5 transition-all cursor-pointer"
-              title="Export as JSON"
+              className="px-3 py-2 rounded-xl border border-border bg-surface-card hover:bg-black/5 dark:hover:bg-white/5 font-extrabold text-xs text-muted hover:text-text flex items-center gap-1 transition-all cursor-pointer"
+              title="Export JSON"
             >
-              <FileJson className="w-4 h-4" /> JSON
+              <FileJson className="w-3.5 h-3.5" /> JSON
             </button>
           </div>
         </div>
@@ -966,37 +916,37 @@ export const AdminDashboard = () => {
       {activeSection === "decks" && (
         <div className="flex flex-col gap-6">
           {loadingDecks ? (
-            <div className="flex items-center justify-center p-12 text-muted-dark gap-3 text-sm bg-surface-dark border-2 border-border-dark rounded-3xl">
+            <div className="flex items-center justify-center p-12 text-muted gap-3 text-sm bg-surface border-2 border-border rounded-3xl">
               <RefreshCw className="w-5 h-5 animate-spin text-primary" />{" "}
-              Syncing Firestore decks catalog...
+              Loading decks...
             </div>
           ) : filteredDecks.length === 0 ? (
-            <div className="text-center p-12 text-muted-dark bg-surface-dark border-2 border-border-dark rounded-3xl">
-              <p className="text-sm font-bold">No decks found in Firestore.</p>
+            <div className="text-center p-12 text-muted bg-surface border-2 border-border rounded-3xl">
+              <p className="text-sm font-bold">No decks found.</p>
               <button
                 onClick={openCreateDeckModal}
                 className="mt-4 px-5 py-2.5 rounded-xl bg-primary text-accent font-black text-xs inline-flex items-center gap-2 cursor-pointer"
               >
-                <Plus className="w-4 h-4" /> Create First Deck
+                <Plus className="w-4 h-4" /> Create Deck
               </button>
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {filteredDecks.map((deck) => (
                 <motion.div
                   key={deck.id}
-                  whileHover={{ y: -4 }}
-                  className="bg-surface-dark border-2 border-border-dark rounded-3xl p-6 flex flex-col justify-between gap-6 shadow-md relative overflow-hidden group"
+                  whileHover={{ y: -3 }}
+                  className="bg-surface border-2 border-border rounded-2xl sm:rounded-3xl p-5 flex flex-col justify-between gap-5 shadow-sm relative overflow-hidden group"
                   style={{
                     borderColor: deck.color
                       ? `${deck.color}40`
-                      : "var(--color-border-dark)",
+                      : "var(--color-border)",
                   }}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div
-                        className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-2xl border-2 shadow-inner"
+                        className="w-11 h-11 rounded-2xl flex items-center justify-center font-black text-xl border-2 shadow-inner shrink-0"
                         style={{
                           backgroundColor: deck.color
                             ? `${deck.color}20`
@@ -1007,10 +957,10 @@ export const AdminDashboard = () => {
                         {deck.icon || "🎮"}
                       </div>
                       <div>
-                        <h3 className="font-extrabold text-lg text-white flex items-center gap-2">
+                        <h3 className="font-extrabold text-base text-text flex items-center gap-2">
                           {deck.name}
                         </h3>
-                        <span className="text-[0.7rem] font-mono text-muted-dark block">
+                        <span className="text-[0.65rem] font-mono text-muted block">
                           id: {deck.id}
                         </span>
                       </div>
@@ -1018,23 +968,24 @@ export const AdminDashboard = () => {
 
                     {deck.isTrending && (
                       <span
-                        className="p-1.5 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs"
-                        title="Trending 🔥"
+                        className="p-1 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs"
+                        title="Trending"
                       >
-                        <Flame className="w-4 h-4" />
+                        <Flame className="w-3.5 h-3.5" />
                       </span>
                     )}
                   </div>
 
                   <div className="flex flex-col gap-2">
-                    <p className="text-xs text-muted-dark leading-relaxed line-clamp-2">
-                      {deck.description ||
-                        "No description provided for this deck."}
-                    </p>
-                    <div className="flex items-center justify-between pt-2 border-t border-border-dark text-xs font-bold">
+                    {deck.description && (
+                      <p className="text-xs text-muted leading-relaxed line-clamp-2">
+                        {deck.description}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between pt-2 border-t border-border/60 text-xs font-bold">
                       <span className="text-primary flex items-center gap-1">
                         <Tag className="w-3.5 h-3.5" />{" "}
-                        {deck.words ? deck.words.length : 0} Word Cards
+                        {deck.words ? deck.words.length : 0} Words
                       </span>
                       <button
                         onClick={() => openAddWordsModal(deck)}
@@ -1045,17 +996,15 @@ export const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between p-3 rounded-2xl bg-surface-card-dark/60 border border-border-dark">
+                  <div className="flex items-center justify-between p-2.5 rounded-xl bg-surface-card border border-border/80">
                     <div className="flex items-center gap-2">
                       {deck.isAvailable ? (
                         <Eye className="w-4 h-4 text-success" />
                       ) : (
-                        <EyeOff className="w-4 h-4 text-muted-dark" />
+                        <EyeOff className="w-4 h-4 text-muted" />
                       )}
-                      <span className="text-xs font-bold text-white">
-                        {deck.isAvailable
-                          ? "Visible to Players"
-                          : "Hidden from Players"}
+                      <span className="text-xs font-bold text-text">
+                        {deck.isAvailable ? "Active" : "Hidden"}
                       </span>
                     </div>
                     <Switch
@@ -1066,12 +1015,12 @@ export const AdminDashboard = () => {
                     />
                   </div>
 
-                  <div className="flex items-center gap-2 pt-1">
+                  <div className="flex items-center gap-2 pt-0.5">
                     <button
                       onClick={() => openEditDeckModal(deck)}
-                      className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-primary hover:text-accent font-black text-xs flex items-center justify-center gap-1.5 transition-all border border-border-dark cursor-pointer"
+                      className="flex-1 py-2.5 rounded-xl bg-surface-card hover:bg-primary hover:text-accent font-black text-xs flex items-center justify-center gap-1.5 transition-all border border-border cursor-pointer text-text"
                     >
-                      <Edit className="w-3.5 h-3.5" /> View Deck Info
+                      <Edit className="w-3.5 h-3.5" /> Edit Deck
                     </button>
                     <button
                       onClick={() => setDeleteConfirmDeck(deck)}
@@ -1093,12 +1042,12 @@ export const AdminDashboard = () => {
         <div className="flex flex-col gap-6">
           {testersSubTab === "registrations" ? (
             loadingTesters ? (
-              <div className="flex items-center justify-center p-12 text-muted-dark gap-3 text-sm bg-surface-dark border-2 border-border-dark rounded-3xl">
+              <div className="flex items-center justify-center p-12 text-muted gap-3 text-sm bg-surface border-2 border-border rounded-3xl">
                 <RefreshCw className="w-5 h-5 animate-spin text-primary" />{" "}
                 Loading beta testers...
               </div>
             ) : filteredTesters.length === 0 ? (
-              <div className="text-center p-12 text-muted-dark bg-surface-dark border-2 border-border-dark rounded-3xl">
+              <div className="text-center p-12 text-muted bg-surface border-2 border-border rounded-3xl">
                 <p className="text-sm font-bold">
                   No beta testers registered yet.
                 </p>
@@ -1110,10 +1059,67 @@ export const AdminDashboard = () => {
                 </button>
               </div>
             ) : (
-              <div className="bg-surface-dark border-2 border-border-dark rounded-3xl overflow-hidden shadow-lg">
-                <div className="overflow-x-auto">
+              <div className="bg-surface border-2 border-border rounded-3xl overflow-hidden shadow-lg">
+                {/* Mobile Stacked Card View (<md) */}
+                <div className="grid grid-cols-1 gap-4 p-4 md:hidden">
+                  {filteredTesters.map((item, index) => (
+                    <div
+                      key={item.id || index}
+                      className="p-4 rounded-2xl bg-surface-card border border-border flex flex-col gap-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="font-black text-text text-sm flex items-center gap-2">
+                          <User className="w-4 h-4 text-primary" />{" "}
+                          {item.name || "Anonymous"}
+                        </span>
+                        <span className="px-2.5 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30 text-[0.65rem] font-bold uppercase tracking-wider">
+                          {item.role || "Beta Tester"}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col gap-1 text-xs">
+                        <a
+                          href={`mailto:${item.email}`}
+                          className="text-primary font-semibold hover:underline flex items-center gap-1.5"
+                        >
+                          <Mail className="w-3.5 h-3.5 text-muted" />{" "}
+                          {item.email}
+                        </a>
+                        <div className="flex items-center justify-between text-muted pt-1">
+                          <span className="flex items-center gap-1">
+                            <Smartphone className="w-3.5 h-3.5" />{" "}
+                            {item.deviceType || item.device || "iOS"}
+                          </span>
+                          <span>
+                            {item.submittedAt
+                              ? new Date(item.submittedAt).toLocaleDateString()
+                              : "Recent"}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                        <button
+                          onClick={() => openEditTesterModal(item)}
+                          className="px-3 py-1.5 rounded-xl bg-surface hover:bg-primary hover:text-accent text-text transition-all border border-border font-bold text-xs flex items-center gap-1 cursor-pointer"
+                        >
+                          <Edit className="w-3.5 h-3.5" /> Edit
+                        </button>
+                        <button
+                          onClick={() => setDeleteConfirmTester(item)}
+                          className="px-3 py-1.5 rounded-xl bg-error/15 text-error hover:bg-error hover:text-white transition-all border border-error/30 font-bold text-xs flex items-center gap-1 cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" /> Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop Horizontal Scroll Table (md+) */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-surface-card-dark border-b border-border-dark uppercase font-black tracking-wider text-muted-dark">
+                    <thead className="bg-surface-card border-b border-border uppercase font-black tracking-wider text-muted">
                       <tr>
                         <th className="py-4 px-6">Name</th>
                         <th className="py-4 px-6">Email Address</th>
@@ -1123,13 +1129,13 @@ export const AdminDashboard = () => {
                         <th className="py-4 px-6 text-right">Actions</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border-dark">
+                    <tbody className="divide-y divide-border">
                       {filteredTesters.map((item, index) => (
                         <tr
                           key={item.id || index}
-                          className="hover:bg-white/5 transition-colors"
+                          className="hover:bg-black/5 dark:hover:bg-white/5 transition-colors"
                         >
-                          <td className="py-4 px-6 font-black text-white flex items-center gap-2">
+                          <td className="py-4 px-6 font-black text-text flex items-center gap-2">
                             <User className="w-4 h-4 text-primary" />{" "}
                             {item.name || "Anonymous"}
                           </td>
@@ -1138,7 +1144,7 @@ export const AdminDashboard = () => {
                               href={`mailto:${item.email}`}
                               className="hover:underline flex items-center gap-1.5"
                             >
-                              <Mail className="w-3.5 h-3.5 text-muted-dark" />{" "}
+                              <Mail className="w-3.5 h-3.5 text-muted" />{" "}
                               {item.email}
                             </a>
                           </td>
@@ -1147,11 +1153,11 @@ export const AdminDashboard = () => {
                               {item.role || "Beta Tester"}
                             </span>
                           </td>
-                          <td className="py-4 px-6 text-muted-dark font-medium flex items-center gap-1">
+                          <td className="py-4 px-6 text-muted font-medium flex items-center gap-1">
                             <Smartphone className="w-3.5 h-3.5 text-muted" />{" "}
                             {item.deviceType || item.device || "iOS"}
                           </td>
-                          <td className="py-4 px-6 text-muted-dark">
+                          <td className="py-4 px-6 text-muted">
                             {item.submittedAt
                               ? new Date(item.submittedAt).toLocaleDateString()
                               : "Recent"}
@@ -1159,7 +1165,7 @@ export const AdminDashboard = () => {
                           <td className="py-4 px-6 text-right space-x-2">
                             <button
                               onClick={() => openEditTesterModal(item)}
-                              className="p-2 rounded-xl bg-white/5 hover:bg-primary hover:text-accent transition-all border border-border-dark cursor-pointer inline-flex"
+                              className="p-2 rounded-xl bg-surface-card hover:bg-primary hover:text-accent text-text transition-all border border-border cursor-pointer inline-flex"
                               title="Edit Tester"
                             >
                               <Edit className="w-3.5 h-3.5" />
@@ -1183,9 +1189,9 @@ export const AdminDashboard = () => {
             /* FEEDBACK SUB-TAB */
             <div className="flex flex-col gap-4">
               {/* Feedback Filters */}
-              <div className="flex flex-wrap items-center justify-between gap-4 bg-surface-dark border-2 border-border-dark p-4 rounded-2xl">
+              <div className="flex flex-wrap items-center justify-between gap-4 bg-surface border-2 border-border p-4 rounded-2xl">
                 <div className="flex items-center gap-2 overflow-x-auto">
-                  <span className="text-xs font-black uppercase text-muted-dark mr-2">
+                  <span className="text-xs font-black uppercase text-muted mr-2">
                     Category:
                   </span>
                   {["all", "bug", "feature", "deck", "general"].map((cat) => (
@@ -1195,7 +1201,7 @@ export const AdminDashboard = () => {
                       className={`px-3 py-1.5 rounded-xl font-bold text-xs capitalize transition-all cursor-pointer ${
                         feedbackCategoryFilter === cat
                           ? "bg-primary text-accent shadow-sm"
-                          : "bg-surface-card-dark text-muted-dark hover:text-white border border-border-dark"
+                          : "bg-surface-card text-muted hover:text-text border border-border"
                       }`}
                     >
                       {cat === "bug"
@@ -1210,7 +1216,7 @@ export const AdminDashboard = () => {
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-black uppercase text-muted-dark mr-2">
+                  <span className="text-xs font-black uppercase text-muted mr-2">
                     Status:
                   </span>
                   {["all", "active", "archived"].map((st) => (
@@ -1220,7 +1226,7 @@ export const AdminDashboard = () => {
                       className={`px-3 py-1.5 rounded-xl font-bold text-xs capitalize transition-all cursor-pointer ${
                         feedbackStatusFilter === st
                           ? "bg-primary text-accent shadow-sm"
-                          : "bg-surface-card-dark text-muted-dark hover:text-white border border-border-dark"
+                          : "bg-surface-card text-muted hover:text-text border border-border"
                       }`}
                     >
                       {st}
@@ -1230,21 +1236,79 @@ export const AdminDashboard = () => {
               </div>
 
               {loadingFeedback ? (
-                <div className="flex items-center justify-center p-12 text-muted-dark gap-3 text-sm bg-surface-dark border-2 border-border-dark rounded-3xl">
+                <div className="flex items-center justify-center p-12 text-muted gap-3 text-sm bg-surface border-2 border-border rounded-3xl">
                   <RefreshCw className="w-5 h-5 animate-spin text-primary" />{" "}
                   Loading feedback notes...
                 </div>
               ) : filteredFeedback.length === 0 ? (
-                <div className="text-center p-12 text-muted-dark bg-surface-dark border-2 border-border-dark rounded-3xl">
+                <div className="text-center p-12 text-muted bg-surface border-2 border-border rounded-3xl">
                   <p className="text-sm font-bold">
                     No feedback entries match criteria.
                   </p>
                 </div>
               ) : (
-                <div className="bg-surface-dark border-2 border-border-dark rounded-3xl overflow-hidden shadow-lg">
-                  <div className="overflow-x-auto">
+                <div className="bg-surface border-2 border-border rounded-3xl overflow-hidden shadow-lg">
+                  {/* Mobile Stacked Card View (<md) */}
+                  <div className="grid grid-cols-1 gap-4 p-4 md:hidden">
+                    {filteredFeedback.map((item, index) => (
+                      <div
+                        key={item.id || index}
+                        className={`p-4 rounded-2xl bg-surface-card border border-border flex flex-col gap-3 ${item.archived ? "opacity-60" : ""}`}
+                      >
+                        <div className="flex items-center justify-between">
+                          <span className="font-black text-text text-sm">
+                            {item.name || "Anonymous"}
+                          </span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-surface text-muted border border-border font-bold text-[0.65rem] uppercase">
+                            {item.feedbackType || item.category || "General"}
+                          </span>
+                        </div>
+
+                        <a
+                          href={`mailto:${item.email}`}
+                          className="text-primary font-semibold text-xs hover:underline flex items-center gap-1"
+                        >
+                          <Mail className="w-3 h-3 text-muted" /> {item.email}
+                        </a>
+
+                        <p className="text-xs font-medium text-text leading-relaxed bg-surface/50 p-3 rounded-xl border border-border">
+                          {item.feedbackText}
+                        </p>
+
+                        <div className="flex items-center justify-between pt-1">
+                          <span className="text-[0.65rem] text-muted">
+                            Device: {item.deviceType || "Web"}
+                          </span>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleToggleArchiveFeedback(item)}
+                              className={`p-2 rounded-xl border transition-all cursor-pointer inline-flex ${
+                                item.archived
+                                  ? "bg-primary/15 text-primary border-primary/30 hover:bg-primary hover:text-accent"
+                                  : "bg-surface text-muted border-border hover:text-text"
+                              }`}
+                              title={item.archived ? "Unarchive" : "Archive"}
+                            >
+                              <Archive className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirmFeedback(item)}
+                              className="p-2 rounded-xl bg-error/15 text-error hover:bg-error hover:text-white transition-all border border-error/30 cursor-pointer inline-flex"
+                              title="Delete Feedback"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Desktop Horizontal Scroll Table (md+) */}
+                  <div className="hidden md:block overflow-x-auto">
                     <table className="w-full text-left text-xs">
-                      <thead className="bg-surface-card-dark border-b border-border-dark uppercase font-black tracking-wider text-muted-dark">
+                      <thead className="bg-surface-card border-b border-border uppercase font-black tracking-wider text-muted">
                         <tr>
                           <th className="py-4 px-6">Submitter</th>
                           <th className="py-4 px-6">Type & Device</th>
@@ -1253,40 +1317,40 @@ export const AdminDashboard = () => {
                           <th className="py-4 px-6 text-right">Actions</th>
                         </tr>
                       </thead>
-                      <tbody className="divide-y divide-border-dark">
+                      <tbody className="divide-y divide-border">
                         {filteredFeedback.map((item, index) => (
                           <tr
                             key={item.id || index}
-                            className={`hover:bg-white/5 transition-colors ${item.archived ? "opacity-60" : ""}`}
+                            className={`hover:bg-black/5 dark:hover:bg-white/5 transition-colors ${item.archived ? "opacity-60" : ""}`}
                           >
                             <td className="py-4 px-6 shrink-0">
-                              <div className="font-black text-white">
+                              <div className="font-black text-text">
                                 {item.name || "Anonymous"}
                               </div>
                               <a
                                 href={`mailto:${item.email}`}
                                 className="text-primary font-semibold hover:underline flex items-center gap-1"
                               >
-                                <Mail className="w-3 h-3 text-muted-dark" />{" "}
+                                <Mail className="w-3 h-3 text-muted" />{" "}
                                 {item.email}
                               </a>
                             </td>
                             <td className="py-4 px-6 shrink-0">
-                              <span className="px-2.5 py-1 rounded-full bg-surface-card-dark text-muted-dark border border-border-dark font-bold text-[0.65rem] uppercase block w-max">
+                              <span className="px-2.5 py-1 rounded-full bg-surface-card text-muted border border-border font-bold text-[0.65rem] uppercase block w-max">
                                 {item.feedbackType ||
                                   item.category ||
                                   "General"}
                               </span>
-                              <span className="text-[0.65rem] text-muted-dark mt-1 block">
+                              <span className="text-[0.65rem] text-muted mt-1 block">
                                 Device: {item.deviceType || "Web"}
                               </span>
                             </td>
-                            <td className="py-4 px-6 font-medium text-text-dark leading-relaxed max-w-md">
+                            <td className="py-4 px-6 font-medium text-text leading-relaxed max-w-md">
                               {item.feedbackText}
                             </td>
                             <td className="py-4 px-6 shrink-0">
                               {item.archived ? (
-                                <span className="px-2.5 py-1 rounded-full bg-white/10 text-muted-dark border border-white/20 text-[0.65rem] uppercase font-bold">
+                                <span className="px-2.5 py-1 rounded-full bg-text/10 text-muted border border-border text-[0.65rem] uppercase font-bold">
                                   Archived
                                 </span>
                               ) : (
@@ -1303,7 +1367,7 @@ export const AdminDashboard = () => {
                                 className={`p-2 rounded-xl border transition-all cursor-pointer inline-flex ${
                                   item.archived
                                     ? "bg-primary/15 text-primary border-primary/30 hover:bg-primary hover:text-accent"
-                                    : "bg-white/5 text-muted-dark border-border-dark hover:bg-white/10 hover:text-white"
+                                    : "bg-surface-card text-muted border-border hover:text-text"
                                 }`}
                                 title={item.archived ? "Unarchive" : "Archive"}
                               >
@@ -1337,80 +1401,80 @@ export const AdminDashboard = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-md bg-surface-dark border-2 border-border-dark p-6 rounded-3xl shadow-2xl text-text-dark"
+              className="relative w-full max-w-md bg-surface border-2 border-border p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-2xl text-text"
             >
               <button
                 onClick={() => setIsTesterModalOpen(false)}
-                className="absolute top-5 right-5 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted-dark hover:text-white transition-all cursor-pointer"
+                className="absolute top-4 right-4 p-2 rounded-xl bg-surface-card hover:bg-black/5 dark:hover:bg-white/5 text-muted hover:text-text transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-3 mb-6 border-b border-border-dark pb-4">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black">
-                  <User className="w-6 h-6" />
+              <div className="flex items-center gap-3 mb-5 border-b border-border pb-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black">
+                  <User className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-white">
-                    {editingTester ? "Edit Beta Tester" : "Add Beta Tester"}
+                  <h3 className="text-lg font-black text-text">
+                    {editingTester ? "Edit Tester" : "Add Tester"}
                   </h3>
-                  <p className="text-xs text-muted-dark">
-                    Manage tester credentials and badge status.
-                  </p>
                 </div>
               </div>
 
-              <form onSubmit={handleSaveTester} className="flex flex-col gap-4">
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
-                    Tester Name *
+              <form
+                onSubmit={handleSaveTester}
+                className="flex flex-col gap-3.5"
+              >
+                <div className="flex flex-col gap-1">
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted">
+                    Name
                   </label>
                   <input
                     type="text"
-                    placeholder="Full Name (e.g. Rahul Sharma)"
+                    placeholder="Full Name"
                     value={testerName}
                     onChange={(e) => setTesterName(e.target.value)}
                     required
-                    className="w-full p-3 rounded-2xl bg-surface-card-dark border text-xs font-semibold outline-none focus:border-primary transition-all"
+                    className="w-full p-2.5 rounded-xl bg-surface-card border text-xs font-semibold outline-none focus:border-primary transition-all text-text"
                   />
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
-                    Email Address *
+                <div className="flex flex-col gap-1">
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted">
+                    Email
                   </label>
                   <input
                     type="email"
-                    placeholder="rahul@example.com"
+                    placeholder="Email Address"
                     value={testerEmail}
                     onChange={(e) => setTesterEmail(e.target.value)}
                     required
-                    className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary transition-all"
+                    className="w-full p-2.5 rounded-xl bg-surface-card border text-xs font-semibold outline-none focus:border-primary transition-all text-text"
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
-                      Device Type
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[0.7rem] font-extrabold uppercase text-muted">
+                      Device
                     </label>
                     <select
                       value={testerDevice}
                       onChange={(e) => setTesterDevice(e.target.value)}
-                      className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary transition-all"
+                      className="w-full p-2.5 rounded-xl bg-surface-card border text-xs font-semibold outline-none focus:border-primary transition-all text-text"
                     >
                       <option value="Android">Android</option>
                     </select>
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
-                      Role Badge
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[0.7rem] font-extrabold uppercase text-muted">
+                      Role
                     </label>
                     <select
                       value={testerRole}
                       onChange={(e) => setTesterRole(e.target.value)}
-                      className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary transition-all"
+                      className="w-full p-2.5 rounded-xl bg-surface-card border text-xs font-semibold outline-none focus:border-primary transition-all text-text"
                     >
                       <option value="Beta Tester">Beta Tester</option>
                       <option value="Alpha Crew">Alpha Crew</option>
@@ -1419,23 +1483,23 @@ export const AdminDashboard = () => {
                   </div>
                 </div>
 
-                <div className="flex gap-3 mt-4">
+                <div className="flex gap-3 mt-3">
                   <button
                     type="button"
                     onClick={() => setIsTesterModalOpen(false)}
-                    className="flex-1 py-3 rounded-2xl border border-border-dark text-muted-dark font-extrabold text-xs hover:bg-white/5 transition-all cursor-pointer"
+                    className="flex-1 py-2.5 rounded-xl border border-border text-muted font-extrabold text-xs hover:bg-surface-card transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={savingTester}
-                    className="flex-1 py-3 rounded-2xl bg-primary text-accent font-black text-xs hover:scale-102 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 rounded-xl bg-primary text-accent font-black text-xs hover:scale-102 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {savingTester ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      "Save Tester"
+                      "Save"
                     )}
                   </button>
                 </div>
@@ -1445,7 +1509,7 @@ export const AdminDashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* --- DIALOG 2: DECK INFO DIALOG (METADATA + WORDS) --- */}
+      {/* --- DIALOG 2: DECK INFO DIALOG --- */}
       <AnimatePresence>
         {isDeckModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto">
@@ -1453,52 +1517,46 @@ export const AdminDashboard = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-3xl bg-surface-dark border-2 border-border-dark p-6 sm:p-8 rounded-3xl shadow-2xl text-text-dark my-8 max-h-[90vh] overflow-y-auto"
+              className="relative w-full max-w-3xl bg-surface border-2 border-border p-5 sm:p-7 rounded-2xl sm:rounded-3xl shadow-2xl text-text my-6 max-h-[88vh] overflow-y-auto"
             >
               <button
                 onClick={() => setIsDeckModalOpen(false)}
-                className="absolute top-5 right-5 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted-dark hover:text-white transition-all cursor-pointer"
+                className="absolute top-4 right-4 p-2 rounded-xl bg-surface-card hover:bg-black/5 dark:hover:bg-white/5 text-muted hover:text-text transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-3 mb-6 border-b border-border-dark pb-4">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black text-xl">
+              <div className="flex items-center gap-3 mb-5 border-b border-border pb-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black text-lg">
                   {deckIcon || "🎮"}
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-white">
-                    {editingDeck
-                      ? `Deck Info: ${editingDeck.name}`
-                      : "Create New Category Deck"}
+                  <h3 className="text-lg font-black text-text">
+                    {editingDeck ? editingDeck.name : "New Deck"}
                   </h3>
-                  <p className="text-xs text-muted-dark">
-                    Configure deck metadata, dynamic slug, emoji picker, and
-                    view existing words.
-                  </p>
                 </div>
               </div>
 
-              <form onSubmit={handleSaveDeck} className="flex flex-col gap-6">
+              <form onSubmit={handleSaveDeck} className="flex flex-col gap-4">
                 <div className="grid md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1.5">
-                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
-                      Deck Title / Name *
+                  <div className="flex flex-col gap-1">
+                    <label className="text-[0.7rem] font-extrabold uppercase text-muted">
+                      Title
                     </label>
                     <input
                       type="text"
-                      placeholder="e.g. Bollywood Blockbusters"
+                      placeholder="e.g. Bollywood"
                       value={deckName}
                       onChange={(e) => handleNameChange(e.target.value)}
                       required
-                      className="w-full p-3 rounded-2xl bg-surface-card-dark border text-xs font-semibold outline-none focus:border-primary transition-all"
+                      className="w-full p-2.5 rounded-xl bg-surface-card border text-xs font-semibold outline-none focus:border-primary transition-all text-text"
                     />
                   </div>
 
-                  <div className="flex flex-col gap-1.5">
+                  <div className="flex flex-col gap-1">
                     <div className="flex items-center justify-between">
-                      <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
-                        Deck ID / Slug *
+                      <label className="text-[0.7rem] font-extrabold uppercase text-muted">
+                        Slug
                       </label>
                       {!editingDeck && (
                         <button
@@ -1506,13 +1564,13 @@ export const AdminDashboard = () => {
                           onClick={() => setAutoSlug(!autoSlug)}
                           className="text-[0.65rem] font-bold text-primary hover:underline cursor-pointer"
                         >
-                          {autoSlug ? "⚡ Auto Slug ON" : "✏️ Manual Override"}
+                          {autoSlug ? "Auto" : "Manual"}
                         </button>
                       )}
                     </div>
                     <input
                       type="text"
-                      placeholder="e.g. bollywood_blockbusters"
+                      placeholder="slug_id"
                       value={deckId}
                       onChange={(e) => {
                         setAutoSlug(false);
@@ -1524,27 +1582,26 @@ export const AdminDashboard = () => {
                       }}
                       disabled={!!editingDeck}
                       required
-                      className="w-full p-3 rounded-2xl bg-surface-card-dark border text-xs font-mono font-semibold outline-none focus:border-primary disabled:opacity-50 transition-all"
+                      className="w-full p-2.5 rounded-xl bg-surface-card border text-xs font-mono font-semibold outline-none focus:border-primary disabled:opacity-50 transition-all text-text"
                     />
                   </div>
                 </div>
 
                 {/* Emoji Selection Palette */}
-                <div className="flex flex-col gap-2">
-                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark flex items-center gap-1.5">
-                    <Smile className="w-3.5 h-3.5 text-primary" /> Choose Emoji
-                    Icon *
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted flex items-center gap-1">
+                    <Smile className="w-3.5 h-3.5 text-primary" /> Emoji
                   </label>
-                  <div className="flex flex-wrap gap-2 p-3 rounded-2xl bg-surface-card-dark border border-border-dark">
+                  <div className="flex flex-wrap gap-1.5 p-2.5 rounded-xl bg-surface-card border border-border">
                     {EMOJI_PALETTE.map((emoji) => (
                       <button
                         key={emoji}
                         type="button"
                         onClick={() => setDeckIcon(emoji)}
-                        className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center transition-all cursor-pointer ${
+                        className={`w-8 h-8 rounded-lg text-base flex items-center justify-center transition-all cursor-pointer ${
                           deckIcon === emoji
-                            ? "bg-primary scale-110 shadow-md"
-                            : "hover:bg-white/10"
+                            ? "bg-primary scale-110 shadow-xs"
+                            : "hover:bg-black/5 dark:hover:bg-white/10"
                         }`}
                       >
                         {emoji}
@@ -1553,41 +1610,36 @@ export const AdminDashboard = () => {
                   </div>
                 </div>
 
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
+                <div className="flex flex-col gap-1">
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted">
                     Description
                   </label>
                   <textarea
                     rows={2}
-                    placeholder="Brief overview of this deck's content..."
+                    placeholder="Short description..."
                     value={deckDesc}
                     onChange={(e) => setDeckDesc(e.target.value)}
-                    className="w-full p-3 rounded-2xl bg-surface-card-dark border text-xs font-semibold outline-none focus:border-primary transition-all resize-none"
+                    className="w-full p-2.5 rounded-xl bg-surface-card border text-xs font-semibold outline-none focus:border-primary transition-all resize-none text-text"
                   />
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4">
+                <div className="grid md:grid-cols-2 gap-3">
                   <ColorPicker
                     label="Primary Color"
                     color={deckColor}
                     onChange={setDeckColor}
                   />
                   <ColorPicker
-                    label="Gradient End Color"
+                    label="Gradient End"
                     color={deckGradientEnd}
                     onChange={setDeckGradientEnd}
                   />
                 </div>
 
-                <div className="flex items-center justify-between p-4 rounded-2xl bg-surface-card-dark border border-border-dark">
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-white">
-                      Visible to Players
-                    </span>
-                    <span className="text-[0.65rem] text-muted-dark">
-                      Toggle whether this deck appears on the mobile app & web
-                    </span>
-                  </div>
+                <div className="flex items-center justify-between p-3 rounded-xl bg-surface-card border border-border">
+                  <span className="text-xs font-bold text-text">
+                    Active Status
+                  </span>
                   <Switch
                     checked={deckIsAvailable}
                     onChange={setDeckIsAvailable}
@@ -1596,22 +1648,17 @@ export const AdminDashboard = () => {
                 </div>
 
                 {/* Words Editor */}
-                <div className="flex flex-col gap-2 border-t border-border-dark pt-4">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
-                      Cards Word List ({currentDeckWords.length} Words)
-                    </label>
-                    <span className="text-[0.65rem] text-muted-dark">
-                      Separate with commas or newlines
-                    </span>
-                  </div>
+                <div className="flex flex-col gap-1.5 border-t border-border pt-3">
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted">
+                    Words ({currentDeckWords.length})
+                  </label>
 
                   <textarea
-                    rows={5}
-                    placeholder="Enter words separated by commas (e.g. Sholay, DDLJ, 3 Idiots)..."
+                    rows={4}
+                    placeholder="Words separated by commas..."
                     value={deckWordsInput}
                     onChange={(e) => setDeckWordsInput(e.target.value)}
-                    className="w-full p-3 rounded-2xl bg-surface-card-dark border text-xs font-semibold outline-none focus:border-primary transition-all"
+                    className="w-full p-2.5 rounded-xl bg-surface-card border text-xs font-semibold outline-none focus:border-primary transition-all text-text"
                   />
                 </div>
 
@@ -1619,19 +1666,19 @@ export const AdminDashboard = () => {
                   <button
                     type="button"
                     onClick={() => setIsDeckModalOpen(false)}
-                    className="flex-1 py-3 rounded-2xl border border-border-dark text-muted-dark font-extrabold text-xs hover:bg-white/5 transition-all cursor-pointer"
+                    className="flex-1 py-2.5 rounded-xl border border-border text-muted font-extrabold text-xs hover:bg-surface-card transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={savingDeck}
-                    className="flex-1 py-3 rounded-2xl bg-primary text-accent font-black text-xs hover:scale-102 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                    className="flex-1 py-2.5 rounded-xl bg-primary text-accent font-black text-xs hover:scale-102 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                   >
                     {savingDeck ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
-                      "Save Deck"
+                      "Save"
                     )}
                   </button>
                 </div>
@@ -1649,58 +1696,54 @@ export const AdminDashboard = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg bg-surface-dark border-2 border-border-dark p-6 rounded-3xl shadow-2xl text-text-dark"
+              className="relative w-full max-w-lg bg-surface border-2 border-border p-5 sm:p-6 rounded-2xl sm:rounded-3xl shadow-2xl text-text"
             >
               <button
                 onClick={() => setIsAddWordsModalOpen(false)}
-                className="absolute top-5 right-5 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted-dark hover:text-white transition-all cursor-pointer"
+                className="absolute top-4 right-4 p-2 rounded-xl bg-surface-card hover:bg-black/5 dark:hover:bg-white/5 text-muted hover:text-text transition-all cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
 
-              <div className="flex items-center gap-3 mb-6 border-b border-border-dark pb-4">
-                <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black text-xl">
+              <div className="flex items-center gap-3 mb-5 border-b border-border pb-3">
+                <div className="w-10 h-10 rounded-xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black text-lg">
                   {editingDeck.icon || "🎮"}
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-white">
-                    Add Words to "{editingDeck.name}"
+                  <h3 className="text-lg font-black text-text">
+                    Add Words: {editingDeck.name}
                   </h3>
-                  <p className="text-xs text-muted-dark">
-                    Current deck word count:{" "}
-                    {editingDeck.words ? editingDeck.words.length : 0} cards
-                  </p>
                 </div>
               </div>
 
               <form
                 onSubmit={handleSaveNewWordsOnly}
-                className="flex flex-col gap-4"
+                className="flex flex-col gap-3.5"
               >
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
-                    Enter New Words *
+                <div className="flex flex-col gap-1">
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted">
+                    New Words
                   </label>
                   <textarea
                     rows={4}
-                    placeholder="Enter words separated by commas or newlines (e.g. Word 1, Word 2)..."
+                    placeholder="Enter words separated by commas or newlines..."
                     value={newWordsInput}
                     onChange={(e) => setNewWordsInput(e.target.value)}
                     required
-                    className="w-full p-3 rounded-2xl bg-surface-card-dark border  text-xs font-semibold outline-none focus:border-primary transition-all"
+                    className="w-full p-2.5 rounded-xl bg-surface-card border text-xs font-semibold outline-none focus:border-primary transition-all text-text"
                   />
                 </div>
 
                 {parsedNewWordsList.length > 0 && (
-                  <div className="p-3 rounded-2xl bg-surface-card-dark border border-border-dark flex flex-col gap-1">
+                  <div className="p-2.5 rounded-xl bg-surface-card border border-border flex flex-col gap-1">
                     <span className="text-[0.65rem] font-bold uppercase text-primary">
-                      Previewing ({parsedNewWordsList.length} new words):
+                      Preview ({parsedNewWordsList.length} words):
                     </span>
-                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                    <div className="flex flex-wrap gap-1 max-h-20 overflow-y-auto">
                       {parsedNewWordsList.map((w, idx) => (
                         <span
                           key={idx}
-                          className="px-2 py-0.5 rounded-lg bg-white/10 text-white text-[0.65rem] font-mono"
+                          className="px-2 py-0.5 rounded-md bg-text/10 text-text text-[0.65rem] font-mono"
                         >
                           {w}
                         </span>
@@ -1713,7 +1756,7 @@ export const AdminDashboard = () => {
                   <button
                     type="button"
                     onClick={() => setIsAddWordsModalOpen(false)}
-                    className="flex-1 py-3 rounded-2xl border border-border-dark text-muted-dark font-extrabold text-xs hover:bg-white/5 transition-all cursor-pointer"
+                    className="flex-1 py-2.5 rounded-xl border border-border text-muted font-extrabold text-xs hover:bg-surface-card transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
@@ -1743,22 +1786,22 @@ export const AdminDashboard = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="relative w-full max-w-sm bg-surface-dark border-2 border-border-dark p-6 rounded-3xl shadow-2xl text-text-dark flex flex-col items-center text-center gap-4"
+              className="relative w-full max-w-sm bg-surface border-2 border-border p-6 rounded-3xl shadow-2xl text-text flex flex-col items-center text-center gap-4"
             >
               <div className="w-12 h-12 rounded-2xl bg-error/15 text-error border border-error/30 flex items-center justify-center">
                 <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-black text-white">
+              <h3 className="text-xl font-black text-text">
                 Delete "{deleteConfirmDeck.name}"?
               </h3>
-              <p className="text-xs text-muted-dark leading-relaxed">
+              <p className="text-xs text-muted leading-relaxed">
                 This action will permanently delete this category deck and all
                 associated word cards from Firestore.
               </p>
               <div className="flex gap-3 w-full mt-2">
                 <button
                   onClick={() => setDeleteConfirmDeck(null)}
-                  className="flex-1 py-2.5 rounded-xl border border-border-dark font-extrabold text-xs text-muted-dark hover:bg-white/5 cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl border border-border font-extrabold text-xs text-muted hover:bg-surface-card cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1782,22 +1825,22 @@ export const AdminDashboard = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="relative w-full max-w-sm bg-surface-dark border-2 border-border-dark p-6 rounded-3xl shadow-2xl text-text-dark flex flex-col items-center text-center gap-4"
+              className="relative w-full max-w-sm bg-surface border-2 border-border p-6 rounded-3xl shadow-2xl text-text flex flex-col items-center text-center gap-4"
             >
               <div className="w-12 h-12 rounded-2xl bg-error/15 text-error border border-error/30 flex items-center justify-center">
                 <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-black text-white">
+              <h3 className="text-xl font-black text-text">
                 Remove Tester "{deleteConfirmTester.name}"?
               </h3>
-              <p className="text-xs text-muted-dark leading-relaxed">
+              <p className="text-xs text-muted leading-relaxed">
                 This action will permanently remove this tester from the beta
                 list in Firestore.
               </p>
               <div className="flex gap-3 w-full mt-2">
                 <button
                   onClick={() => setDeleteConfirmTester(null)}
-                  className="flex-1 py-2.5 rounded-xl border border-border-dark font-extrabold text-xs text-muted-dark hover:bg-white/5 cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl border border-border font-extrabold text-xs text-muted hover:bg-surface-card cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1821,22 +1864,22 @@ export const AdminDashboard = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="relative w-full max-w-sm bg-surface-dark border-2 border-border-dark p-6 rounded-3xl shadow-2xl text-text-dark flex flex-col items-center text-center gap-4"
+              className="relative w-full max-w-sm bg-surface border-2 border-border p-6 rounded-3xl shadow-2xl text-text flex flex-col items-center text-center gap-4"
             >
               <div className="w-12 h-12 rounded-2xl bg-error/15 text-error border border-error/30 flex items-center justify-center">
                 <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-black text-white">
+              <h3 className="text-xl font-black text-text">
                 Delete Feedback Note?
               </h3>
-              <p className="text-xs text-muted-dark leading-relaxed">
+              <p className="text-xs text-muted leading-relaxed">
                 This action will permanently delete this feedback entry from
                 Firestore.
               </p>
               <div className="flex gap-3 w-full mt-2">
                 <button
                   onClick={() => setDeleteConfirmFeedback(null)}
-                  className="flex-1 py-2.5 rounded-xl border border-border-dark font-extrabold text-xs text-muted-dark hover:bg-white/5 cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl border border-border font-extrabold text-xs text-muted hover:bg-surface-card cursor-pointer"
                 >
                   Cancel
                 </button>

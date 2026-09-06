@@ -4,8 +4,8 @@ import { Sparkles, Compass, Cpu, HeartHandshake } from "lucide-react";
 
 export const Story = () => {
   return (
-    <section className="py-16 md:py-24 border-t border-border/40 relative" id="story">
-      <div className="max-w-4xl mx-auto px-6 flex flex-col gap-12">
+    <section className="py-8 sm:py-16 md:py-24 border-t border-border/40 relative" id="story">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col gap-6 sm:gap-12">
         {/* Section Header */}
         <div className="text-center flex flex-col items-center gap-3">
           <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-black text-xs uppercase tracking-widest">
@@ -21,16 +21,16 @@ export const Story = () => {
         </div>
 
         {/* Editorial Story Layout */}
-        <div className="flex flex-col gap-8">
+        <div className="flex flex-col gap-5 sm:gap-8">
           {/* Chapter 1 */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
-            className="p-8 rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col sm:flex-row gap-6 items-start shadow-md hover:border-primary/40 transition-all"
+            className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col sm:flex-row gap-4 sm:gap-6 items-start shadow-md hover:border-primary/40 transition-all"
           >
-            <div className="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-black shrink-0">
-              <Compass className="w-7 h-7" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-black shrink-0">
+              <Compass className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <div className="flex flex-col gap-2">
               <span className="text-[0.7rem] font-black uppercase text-primary tracking-widest">Chapter 1</span>
@@ -47,10 +47,10 @@ export const Story = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
-            className="p-8 rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col sm:flex-row gap-6 items-start shadow-md hover:border-primary/40 transition-all"
+            className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col sm:flex-row gap-4 sm:gap-6 items-start shadow-md hover:border-primary/40 transition-all"
           >
-            <div className="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-black shrink-0">
-              <Cpu className="w-7 h-7" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-black shrink-0">
+              <Cpu className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <div className="flex flex-col gap-2">
               <span className="text-[0.7rem] font-black uppercase text-primary tracking-widest">Chapter 2</span>
@@ -67,10 +67,10 @@ export const Story = () => {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
-            className="p-8 rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col sm:flex-row gap-6 items-start shadow-md hover:border-primary/40 transition-all"
+            className="p-5 sm:p-8 rounded-2xl sm:rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col sm:flex-row gap-4 sm:gap-6 items-start shadow-md hover:border-primary/40 transition-all"
           >
-            <div className="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-black shrink-0">
-              <HeartHandshake className="w-7 h-7" />
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-black shrink-0">
+              <HeartHandshake className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
             <div className="flex flex-col gap-2">
               <span className="text-[0.7rem] font-black uppercase text-primary tracking-widest">Chapter 3</span>

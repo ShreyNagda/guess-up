@@ -1,5 +1,14 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Pipette } from "lucide-react";
+
+const normalizeHex = (val, defaultValue = "#FFD600") => {
+  if (!val) return defaultValue;
+  let formatted = val.trim();
+  if (!formatted.startsWith("#")) {
+    formatted = "#" + formatted;
+  }
+  return formatted.toUpperCase();
+};
 
 export const ColorPicker = ({
   value = "#FFD600",
@@ -7,20 +16,15 @@ export const ColorPicker = ({
   label = "Color",
   defaultValue = "#FFD600",
 }) => {
-  const normalizeHex = (val) => {
-    if (!val) return defaultValue;
-    let formatted = val.trim();
-    if (!formatted.startsWith("#")) {
-      formatted = "#" + formatted;
-    }
-    return formatted.toUpperCase();
-  };
+  const [hexInput, setHexInput] = useState(() =>
+    normalizeHex(value, defaultValue),
+  );
+  const [prevValue, setPrevValue] = useState(value);
 
-  const [hexInput, setHexInput] = useState(normalizeHex(value));
-
-  useEffect(() => {
-    setHexInput(normalizeHex(value));
-  }, [value]);
+  if (value !== prevValue) {
+    setPrevValue(value);
+    setHexInput(normalizeHex(value, defaultValue));
+  }
 
   const currentColor = normalizeHex(value);
 
@@ -93,7 +97,7 @@ export const ColorPicker = ({
             onBlur={handleHexBlur}
             placeholder={defaultValue}
             maxLength={7}
-            className="w-full pl-3 pr-3 py-2.5 rounded-xl bg-surface border border-border text-xs font-mono font-bold text-text outline-none focus:border-primary transition-all uppercase placeholder:text-muted"
+            className="w-full pl-3 pr-3 py-2.5 rounded-xl bg-surface border border-border text-xs font-mono font-bold outline-none transition-all uppercase placeholder:text-muted"
           />
         </div>
       </div>

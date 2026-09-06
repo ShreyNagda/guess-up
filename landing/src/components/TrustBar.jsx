@@ -3,13 +3,14 @@ import { Star, Zap } from "lucide-react";
 
 export const TrustBar = () => {
   return (
-    <section className="py-8 border-y border-border/40 bg-surface/50 backdrop-blur-md relative overflow-hidden transition-colors duration-300">
+    <section className="py-4 sm:py-8 border-y border-border/40 bg-surface/50 backdrop-blur-md relative overflow-hidden transition-colors duration-300">
       <div className="max-w-4xl mx-auto px-6">
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6 items-center text-center">
-          
           {/* Item 1 */}
           <div className="flex flex-col items-center gap-1 p-2">
-            <span className="text-2xl sm:text-3xl font-black text-primary tracking-tight">500+</span>
+            <span className="text-2xl sm:text-3xl font-black text-primary tracking-tight">
+              500+
+            </span>
             <span className="text-[0.7rem] font-black uppercase text-muted tracking-wider">
               Desi Pop-Culture Cards
             </span>
@@ -27,7 +28,9 @@ export const TrustBar = () => {
 
           {/* Item 3 */}
           <div className="flex flex-col items-center gap-1 p-2 border-l border-border/40">
-            <span className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">100%</span>
+            <span className="text-2xl sm:text-3xl font-black text-emerald-400 tracking-tight">
+              100%
+            </span>
             <span className="text-[0.7rem] font-black uppercase text-muted tracking-wider">
               Ad-Free Game Flow
             </span>
@@ -36,13 +39,12 @@ export const TrustBar = () => {
           {/* Item 4 */}
           <div className="flex flex-col items-center gap-1 p-2 border-l border-border/40">
             <span className="text-2xl sm:text-3xl font-black text-primary tracking-tight flex items-center gap-1">
-              4.9★ <Star className="w-5 h-5 text-primary fill-primary" />
+              4.9 <Star className="w-5 h-5 text-primary fill-primary" />
             </span>
             <span className="text-[0.7rem] font-black uppercase text-muted tracking-wider">
               Playtester Beta Rating
             </span>
           </div>
-
         </div>
       </div>
     </section>

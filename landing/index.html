@@ -3,44 +3,53 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Guess Up — The Motion-Activated Party Charades Game</title>
+    <title>
+      GuessUp | Free Online Word Guessing Game & Motion Charades Party App
+    </title>
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://guessup-game.netlify.app/" />
+
+    <!-- Favicon -->
     <link rel="icon" type="image/png" href="/images/favicon.ico" />
 
-    <!-- Primary SEO Meta Tags -->
+    <!-- Primary Long-Tail SEO Meta Tags -->
     <meta
       name="description"
-      content="Guess Up is a high-energy, motion-activated charades party game. Hold your phone to your forehead, guess Bollywood, Cricket, Food, and pop-culture clues, and tilt down to score!"
+      content="Play GuessUp — the free online word guessing game and motion-activated browser trivia party app. Hold your phone to your forehead, guess Bollywood, Cricket, Food, and pop-culture clues, and tilt down to score! 100% ad-free party charades."
     />
     <meta
       name="keywords"
-      content="charades, party game, indian games, bollywood charades, cricket trivia, heads up, guess up, forehead game, motion charades, multiplayer party app"
+      content="word guessing game, browser trivia party game, online charades, heads up online, indian party games, bollywood charades, cricket trivia game, forehead game online, motion charades app, multiplayer party app, free browser game"
     />
-    <meta name="author" content="Guess Up Team" />
+    <meta name="author" content="Shrey Nagda" />
     <meta name="theme-color" content="#FFD600" />
+    <meta name="robots" content="index, follow, max-image-preview:large" />
 
     <!-- Open Graph / Facebook / WhatsApp Meta Tags -->
     <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://guessup.app/" />
+    <meta property="og:url" content="https://guessup-game.netlify.app/" />
     <meta
       property="og:title"
-      content="Guess Up — The Motion-Activated Party Charades Game"
+      content="GuessUp | Free Online Word Guessing Game & Motion Charades Party App"
     />
     <meta
       property="og:description"
-      content="The high-energy social guessing game where phone tilts trigger hilarity. Curated Desi pop-culture decks, zero ad interruptions!"
+      content="The high-energy social word guessing game where phone tilts trigger hilarity. Curated Desi pop-culture decks, zero ad interruptions!"
     />
     <meta
       property="og:image"
-      content="https://guessup.app/images/guess_up_icon_rounded.png"
+      content="https://guessup-game.netlify.app/images/guess_up_icon_rounded.png"
     />
-    <meta property="og:site_name" content="Guess Up" />
+    <meta property="og:site_name" content="GuessUp" />
+    <meta property="og:locale" content="en_US" />
 
     <!-- Twitter Card Meta Tags -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://guessup.app/" />
+    <meta name="twitter:url" content="https://guessup-game.netlify.app/" />
     <meta
       name="twitter:title"
-      content="Guess Up — The Motion-Activated Party Charades Game"
+      content="GuessUp | Free Online Word Guessing Game & Motion Charades Party App"
     />
     <meta
       name="twitter:description"
@@ -48,8 +57,12 @@
     />
     <meta
       name="twitter:image"
-      content="https://guessup.app/images/guess_up_icon_rounded.png"
+      content="https://guessup-game.netlify.app/images/guess_up_icon_rounded.png"
     />
+
+    <!-- Web App Manifest & Apple Touch Icon for PWA -->
+    <link rel="manifest" href="/manifest.json" />
+    <link rel="apple-touch-icon" href="/images/guessup-icon.png" />
 
     <!-- Google Fonts - Manrope -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -57,31 +70,144 @@
     <link
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap"
       rel="stylesheet"
+      fetchpriority="high"
     />
 
-    <!-- JSON-LD Structured Data for Mobile & Software Application -->
+    <!-- JSON-LD Structured Data (VideoGame, SoftwareApplication & FAQPage) -->
     <script type="application/ld+json">
       {
         "@context": "https://schema.org",
-        "@type": "MobileApplication",
-        "name": "Guess Up",
-        "operatingSystem": "iOS, Android",
-        "applicationCategory": "GameApplication",
-        "genre": "Party Game",
-        "offers": {
-          "@type": "Offer",
-          "price": "0",
-          "priceCurrency": "USD"
-        },
-        "description": "Motion-activated social party charades game designed for Indian youth and families with hand-curated pop culture decks and zero ad interruptions.",
-        "author": {
-          "@type": "Organization",
-          "name": "Guess Up Team"
-        }
+        "@graph": [
+          {
+            "@type": "SoftwareApplication",
+            "@id": "https://guessup-game.netlify.app/#software",
+            "name": "GuessUp",
+            "operatingSystem": "Android, Web Browser",
+            "applicationCategory": "GameApplication",
+            "genre": "Party Charades Game",
+            "offers": {
+              "@type": "Offer",
+              "price": "0",
+              "priceCurrency": "USD"
+            },
+            "description": "Free online word guessing game and motion-activated social party charades designed for Indian youth and families with hand-curated pop culture decks.",
+            "author": {
+              "@type": "Person",
+              "name": "Shrey Nagda",
+              "email": "shreynagda2714@gmail.com"
+            }
+          },
+          {
+            "@type": "VideoGame",
+            "@id": "https://guessup-game.netlify.app/#game",
+            "name": "GuessUp Party Charades",
+            "description": "Interactive motion tilt word guessing game with Bollywood, Cricket, and Desi pop culture trivia decks.",
+            "genre": ["Party", "Trivia", "Charades", "Word Game"],
+            "playMode": ["MultiPlayer", "CoOp"],
+            "gamePlatform": ["Android", "Web Browser"],
+            "numberOfPlayers": {
+              "@type": "QuantitativeValue",
+              "minValue": 2,
+              "maxValue": 20
+            }
+          },
+          {
+            "@type": "FAQPage",
+            "@id": "https://guessup-game.netlify.app/#faq",
+            "mainEntity": [
+              {
+                "@type": "Question",
+                "name": "Is Guess Up completely free of ads?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Yes! Unlike other charades apps that force 30-second unskippable video ads between rounds, Guess Up on Android is built for 100% uninterrupted party gameplay."
+                }
+              },
+              {
+                "@type": "Question",
+                "name": "How does motion tilt detection work on Android?",
+                "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Guess Up uses your Android phone's built-in accelerometer and gyroscope. When held to your forehead, tilting down registers a Correct point, and tilting up passes to the next card."
+                }
+              }
+            ]
+          }
+        ]
       }
     </script>
   </head>
-  <body class="overflow-x-hidden">
+  <body class="overflow-x-hidden bg-[#0e0c1c] text-white">
+    <!-- Static Discoverable Text Content for Search Crawlers & No-JS Clients -->
+    <noscript>
+      <header>
+        <h1>
+          GuessUp — Free Online Word Guessing Game & Motion Charades Party App
+        </h1>
+        <p>
+          The ultimate motion-activated party game for house parties, hostel
+          hangouts, and family gatherings.
+        </p>
+      </header>
+      <main>
+        <section>
+          <h2>How To Play GuessUp</h2>
+          <ol>
+            <li>
+              Select a category deck (e.g. Bollywood Buff, Cricket Fever, Sweet
+              & Spicy).
+            </li>
+            <li>
+              Hold your phone to your forehead with the screen facing your
+              friends.
+            </li>
+            <li>
+              Your friends shout clues while you guess the word displayed on
+              screen.
+            </li>
+            <li>
+              Nod your phone DOWN to score a point when guessed correctly!
+            </li>
+            <li>Tilt your phone UP to pass if you are stuck.</li>
+          </ol>
+        </section>
+        <section>
+          <h2>Popular Decks & Categories</h2>
+          <ul>
+            <li>
+              <strong>Bollywood Buff</strong>: Iconic Indian movies, famous
+              dialogues, and superstars.
+            </li>
+            <li>
+              <strong>Cricket Fever</strong>: Legendary players, IPL moments,
+              and iconic shots.
+            </li>
+            <li>
+              <strong>Sweet & Spicy</strong>: Street snacks, Indian delicacies,
+              and 2 AM cravings.
+            </li>
+            <li>
+              <strong>Incredible India</strong>: Famous monuments, cultural
+              festivals, and desi quirks.
+            </li>
+            <li>
+              <strong>Aamchi Mumbai</strong>: Local train vibes, Marine Drive,
+              and vada pav.
+            </li>
+          </ul>
+        </section>
+        <section>
+          <h2>Key Game Features</h2>
+          <ul>
+            <li>100% Ad-Free uninterrupted gameplay.</li>
+            <li>60 FPS real-time motion tilt gesture detection.</li>
+            <li>2-Team Battle Mode with automated scoreboard tracking.</li>
+            <li>Custom Deck Creation Engine.</li>
+          </ul>
+        </section>
+      </main>
+    </noscript>
+
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>

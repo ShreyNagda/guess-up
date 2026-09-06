@@ -4,9 +4,11 @@ import { Sparkles, Film, Cpu, Users } from "lucide-react";
 
 export const ValuePropositions = () => {
   return (
-    <section className="py-16 md:py-24 border-t border-border/40 relative" id="values">
-      <div className="max-w-4xl mx-auto px-6 flex flex-col gap-12">
-        
+    <section
+      className="py-8 sm:py-16 md:py-24 border-t border-border/40 relative"
+      id="values"
+    >
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col gap-6 sm:gap-12">
         {/* Header */}
         <div className="text-center flex flex-col items-center gap-3">
           <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-black text-xs uppercase tracking-widest">
@@ -20,24 +22,30 @@ export const ValuePropositions = () => {
 
         {/* 3 Numbered Prop Cards */}
         <div className="grid md:grid-cols-3 gap-6">
-          
           {/* Card 01 */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             whileHover={{ y: -5 }}
-            className="p-8 rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col gap-4 relative overflow-hidden group hover:border-primary/50 transition-all shadow-card shadow-card-hover"
+            className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col gap-4 relative overflow-hidden group hover:border-primary/50 transition-all shadow-card shadow-card-hover"
           >
-            <span className="text-5xl font-black font-mono text-primary/30 group-hover:text-primary transition-colors">
-              01
-            </span>
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black">
-              <Film className="w-6 h-6" />
+            <div className="flex items-center justify-between w-full">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black shrink-0">
+                <Film className="w-6 h-6" />
+              </div>
+              <span className="text-4xl sm:text-5xl font-black font-mono text-primary/30 group-hover:text-primary transition-colors">
+                01
+              </span>
             </div>
-            <h3 className="text-xl font-extrabold text-text">Culturally Crafted Decks</h3>
+            <h3 className="text-xl font-extrabold text-text">
+              Culturally Crafted Decks
+            </h3>
             <p className="text-xs text-muted leading-relaxed">
-              No more generic clues. Pick from handcrafted Indian decks like <strong>Bollywood Buff</strong>, <strong>Cricket Fever</strong>, <strong>Sweet & Spicy</strong>, <strong>Incredible India</strong>, and <strong>Aamchi Mumbai</strong>.
+              No more generic clues. Pick from handcrafted Indian decks like{" "}
+              <strong>Bollywood Buff</strong>, <strong>Cricket Fever</strong>,{" "}
+              <strong>Sweet & Spicy</strong>, <strong>Incredible India</strong>,
+              and <strong>Aamchi Mumbai</strong>.
             </p>
           </motion.div>
 
@@ -48,17 +56,23 @@ export const ValuePropositions = () => {
             viewport={{ once: true }}
             transition={{ delay: 0.1 }}
             whileHover={{ y: -5 }}
-            className="p-8 rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col gap-4 relative overflow-hidden group hover:border-primary/50 transition-all shadow-card shadow-card-hover"
+            className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col gap-4 relative overflow-hidden group hover:border-primary/50 transition-all shadow-card shadow-card-hover"
           >
-            <span className="text-5xl font-black font-mono text-primary/30 group-hover:text-primary transition-colors">
-              02
-            </span>
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black">
-              <Cpu className="w-6 h-6" />
+            <div className="flex items-center justify-between w-full">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black shrink-0">
+                <Cpu className="w-6 h-6" />
+              </div>
+              <span className="text-4xl sm:text-5xl font-black font-mono text-primary/30 group-hover:text-primary transition-colors">
+                02
+              </span>
             </div>
-            <h3 className="text-xl font-extrabold text-text">Hardware Motion Sensing</h3>
+            <h3 className="text-xl font-extrabold text-text">
+              Hardware Motion Sensing
+            </h3>
             <p className="text-xs text-muted leading-relaxed">
-              Our 60 FPS motion algorithm processes orientation vectors live on-device. Nod down for points, tilt up to pass — zero lag, zero tutorial friction.
+              Our 60 FPS motion algorithm processes orientation vectors live
+              on-device. Nod down for points, tilt up to pass — zero lag, zero
+              tutorial friction.
             </p>
           </motion.div>
 
@@ -69,20 +83,25 @@ export const ValuePropositions = () => {
             viewport={{ once: true }}
             transition={{ delay: 0.2 }}
             whileHover={{ y: -5 }}
-            className="p-8 rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col gap-4 relative overflow-hidden group hover:border-primary/50 transition-all shadow-card shadow-card-hover"
+            className="p-6 sm:p-8 rounded-2xl sm:rounded-3xl bg-surface-card border border-border backdrop-blur-md flex flex-col gap-4 relative overflow-hidden group hover:border-primary/50 transition-all shadow-card shadow-card-hover"
           >
-            <span className="text-5xl font-black font-mono text-primary/30 group-hover:text-primary transition-colors">
-              03
-            </span>
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black">
-              <Users className="w-6 h-6" />
+            <div className="flex items-center justify-between w-full">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black shrink-0">
+                <Users className="w-6 h-6" />
+              </div>
+              <span className="text-4xl sm:text-5xl font-black font-mono text-primary/30 group-hover:text-primary transition-colors">
+                03
+              </span>
             </div>
-            <h3 className="text-xl font-extrabold text-text">Solo & 2-Team Battle Modes</h3>
+            <h3 className="text-xl font-extrabold text-text">
+              Solo & 2-Team Battle Modes
+            </h3>
             <p className="text-xs text-muted leading-relaxed">
-              Play quick 1-on-1 rounds or split your party into Team A vs Team B. Custom round timers (30s, 45s, 60s, 90s) fit any party intensity.
+              Play quick 1-on-1 rounds or split your party into Team A vs Team
+              B. Custom round timers (30s, 45s, 60s, 90s) fit any party
+              intensity.
             </p>
           </motion.div>
-
         </div>
       </div>
     </section>

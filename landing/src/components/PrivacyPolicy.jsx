@@ -1,15 +1,15 @@
-import React, { useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
-import { ShieldCheck, Lock, EyeOff, Radio, ArrowRight, Expand } from "lucide-react";
-import { PrivacyModalDrawer } from "./PrivacyModalDrawer";
+import { ShieldCheck, Lock, EyeOff, Radio, ArrowRight } from "lucide-react";
 
 export const PrivacyPolicy = () => {
-  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-
   return (
-    <section className="py-16 md:py-24 border-t border-border/40 relative" id="privacy">
-      <div className="max-w-4xl mx-auto px-6">
-        <div className="bg-surface/80 border border-border/60 backdrop-blur-md p-8 md:p-12 rounded-3xl shadow-xl flex flex-col gap-8">
+    <section
+      className="py-8 sm:py-16 md:py-24 border-t border-border/40 relative"
+      id="privacy"
+    >
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 flex flex-col gap-6 sm:gap-8">
+        <div className="bg-surface/80 border border-border/60 backdrop-blur-md p-4 md:p-12 rounded-3xl shadow-xl flex flex-col gap-8">
           <div className="flex flex-col gap-3 text-center md:text-left">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary self-center md:self-start">
               <ShieldCheck className="w-6 h-6" />
@@ -18,7 +18,8 @@ export const PrivacyPolicy = () => {
               Privacy & Transparency Policy
             </h2>
             <p className="text-xs sm:text-sm text-muted">
-              100% Zero-Data & On-Device Processing Guarantee for <strong>Guess Up</strong>
+              100% Zero-Data & On-Device Processing Guarantee for{" "}
+              <strong>Guess Up</strong>
             </p>
           </div>
 
@@ -28,7 +29,8 @@ export const PrivacyPolicy = () => {
                 <Lock className="w-4 h-4 text-primary" /> No User Accounts
               </div>
               <p className="text-xs text-muted leading-relaxed">
-                Guess Up requires zero registration or social logins. You open the app and play immediately.
+                Guess Up requires zero registration or social logins. You open
+                the app and play immediately.
               </p>
             </div>
 
@@ -37,7 +39,8 @@ export const PrivacyPolicy = () => {
                 <EyeOff className="w-4 h-4 text-primary" /> No Ad Tracking
               </div>
               <p className="text-xs text-muted leading-relaxed">
-                We do not include third-party advertising SDKs, tracking pixels, or cross-app identifier networks.
+                We do not include third-party advertising SDKs, tracking pixels,
+                or cross-app identifier networks.
               </p>
             </div>
 
@@ -46,31 +49,23 @@ export const PrivacyPolicy = () => {
                 <Radio className="w-4 h-4 text-primary" /> Local Sensors Only
               </div>
               <p className="text-xs text-muted leading-relaxed">
-                Accelerometer and gyroscope data are processed strictly on-device during active round timers and never stored.
+                Accelerometer and gyroscope data are processed strictly
+                on-device during active round timers and never stored.
               </p>
             </div>
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-border/40">
-            <button
-              onClick={() => setIsDrawerOpen(true)}
-              className="px-5 py-3 rounded-2xl bg-surface-card border border-border font-black text-xs inline-flex items-center gap-2 hover:border-primary transition-all cursor-pointer"
-            >
-              <Expand className="w-4 h-4 text-primary" /> Read Privacy Overlay Drawer
-            </button>
-
             <Link
               to="/privacy"
               className="px-5 py-3 rounded-2xl bg-primary text-accent font-black text-xs inline-flex items-center gap-2 hover:scale-105 active:scale-95 transition-all shadow-md cursor-pointer"
             >
-              <ShieldCheck className="w-4 h-4" /> Full Policy Details <ArrowRight className="w-4 h-4" />
+              <ShieldCheck className="w-4 h-4" /> Full Policy Details{" "}
+              <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
         </div>
       </div>
-
-      {/* On-Page Privacy Overlay Modal */}
-      <PrivacyModalDrawer isOpen={isDrawerOpen} onClose={() => setIsDrawerOpen(false)} />
     </section>
   );
 };

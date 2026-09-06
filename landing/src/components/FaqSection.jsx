@@ -21,7 +21,7 @@ const FAQ_ITEMS = [
   },
   {
     q: "How do I get early access to the Android app?",
-    a: "Simply register your name and email on our Beta Wall! You'll receive instant access to early Android APK builds and Play Store beta updates.",
+    a: "Simply enter your Google Play email address on our playtester sign-up form! You'll receive an instant invitation link to join the official Google Play closed testing track.",
   },
 ];
 
@@ -29,8 +29,8 @@ export const FaqSection = () => {
   const [openIndex, setOpenIndex] = useState(0);
 
   return (
-    <section className="py-16 md:py-24 border-t border-border/40 relative" id="faq">
-      <div className="max-w-3xl mx-auto px-6 flex flex-col gap-10">
+    <section className="py-8 sm:py-16 md:py-24 border-t border-border/40 relative" id="faq">
+      <div className="max-w-3xl mx-auto px-4 sm:px-6 flex flex-col gap-6 sm:gap-10">
         
         {/* Header */}
         <div className="text-center flex flex-col items-center gap-3">
@@ -43,17 +43,19 @@ export const FaqSection = () => {
         </div>
 
         {/* Accordion List */}
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 sm:gap-4">
           {FAQ_ITEMS.map((item, idx) => {
             const isOpen = openIndex === idx;
             return (
               <div
                 key={idx}
-                className="rounded-3xl bg-surface-card border border-border backdrop-blur-md overflow-hidden transition-all shadow-card shadow-card-hover"
+                className="rounded-2xl sm:rounded-3xl bg-surface-card border border-border backdrop-blur-md overflow-hidden transition-all shadow-card shadow-card-hover"
               >
                 <button
                   onClick={() => setOpenIndex(isOpen ? null : idx)}
-                  className="w-full p-6 text-left font-black text-sm sm:text-base text-text flex items-center justify-between gap-4 cursor-pointer hover:text-primary transition-colors"
+                  aria-expanded={isOpen}
+                  aria-controls={`faq-answer-${idx}`}
+                  className="w-full p-4 sm:p-6 text-left font-black text-xs sm:text-base text-text flex items-center justify-between gap-3 sm:gap-4 cursor-pointer hover:text-primary transition-colors focus:outline-none focus:ring-2 focus:ring-primary/50"
                 >
                   <span>{item.q}</span>
                   <ChevronDown
@@ -66,6 +68,8 @@ export const FaqSection = () => {
                 <AnimatePresence>
                   {isOpen && (
                     <motion.div
+                      id={`faq-answer-${idx}`}
+                      role="region"
                       initial={{ opacity: 0, height: 0 }}
                       animate={{ opacity: 1, height: "auto" }}
                       exit={{ opacity: 0, height: 0 }}

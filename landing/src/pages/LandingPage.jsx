@@ -80,7 +80,6 @@ const DECKS = [
 export const LandingPage = () => {
   const [liveDecks, setLiveDecks] = useState([]);
   const [deckSearch, setDeckSearch] = useState("");
-  const [selectedDeckForGame, setSelectedDeckForGame] = useState(null);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
@@ -139,7 +138,6 @@ export const LandingPage = () => {
         decks={filteredDecks}
         searchQuery={deckSearch}
         onSearchChange={setDeckSearch}
-        onSelectDeckForGame={setSelectedDeckForGame}
         onCreateCustomDeckClick={handleCreateCustomDeckClick}
       />
 

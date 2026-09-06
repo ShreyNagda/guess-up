@@ -5,7 +5,7 @@ import { Footer } from "../components/Footer";
 
 export const AdminPage = () => {
   return (
-    <div className="flex flex-col min-h-screen text-text-dark bg-bg-dark">
+    <div className="flex flex-col min-h-screen text-text bg-bg transition-colors duration-300">
       <Header />
       <main className="flex-1 py-8">
         <AdminDashboard />

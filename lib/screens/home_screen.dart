@@ -16,6 +16,7 @@ import 'package:guess_up/widgets/ambient_background.dart';
 import 'package:guess_up/widgets/arcade_page_route.dart';
 import 'package:guess_up/widgets/bouncy_game_button.dart';
 import 'package:guess_up/widgets/quick_settings_modal.dart';
+import 'package:guess_up/widgets/team_customization_modal.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -238,7 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            "${deck.words.length} Cards • Single Deck Mode",
+                            "Single Deck Mode",
                             style: TextStyle(
                               fontSize: 12,
                               color: theme.hintColor,
@@ -299,6 +300,23 @@ class _HomeScreenState extends State<HomeScreen> {
       _isTeamMode = isTeam;
     });
     _storageService.setTeamMode(isTeam);
+    if (isTeam) {
+      _openTeamCustomization();
+    }
+  }
+
+  void _openTeamCustomization() {
+    _audioEngine.lightImpact();
+    TeamCustomizationModal.show(
+      context,
+      currentCyanName: _storageService.teamCyanName,
+      currentCyanEmoji: _storageService.teamCyanEmoji,
+      currentMagentaName: _storageService.teamMagentaName,
+      currentMagentaEmoji: _storageService.teamMagentaEmoji,
+      onSave: (cyanName, cyanEmoji, magentaName, magentaEmoji) {
+        setState(() {});
+      },
+    );
   }
 
   void _handleStartGame() {
@@ -315,7 +333,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
     final teamState =
         _isTeamMode
-            ? TeamMatchState(isTeamMode: true, maxRounds: _teamRounds)
+            ? TeamMatchState(
+              isTeamMode: true,
+              maxRounds: _teamRounds,
+              teamCyanName: _storageService.teamCyanName,
+              teamCyanEmoji: _storageService.teamCyanEmoji,
+              teamMagentaName: _storageService.teamMagentaName,
+              teamMagentaEmoji: _storageService.teamMagentaEmoji,
+            )
             : null;
 
     if (_storageService.dontShowHowToPlay) {
@@ -975,29 +1000,6 @@ class _HomeScreenState extends State<HomeScreen> {
                               ],
                             ),
                           ),
-                          const SizedBox(height: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 3,
-                            ),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withAlpha(110),
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(
-                                color: Colors.white.withAlpha(30),
-                              ),
-                            ),
-                            child: Text(
-                              "${deck.words.length} CARDS",
-                              style: const TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 10,
-                                color: Colors.white70,
-                                letterSpacing: 0.5,
-                              ),
-                            ),
-                          ),
                         ],
                       ),
                     ),
@@ -1180,6 +1182,88 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ],
           ),
+
+          if (_isTeamMode) ...[
+            const SizedBox(height: 10),
+            GestureDetector(
+              onTap: _openTeamCustomization,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 8,
+                ),
+                decoration: BoxDecoration(
+                  color:
+                      isDark
+                          ? const Color(0xFF261F47)
+                          : Colors.amber.withAlpha(30),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: Colors.amber.withAlpha(120),
+                    width: 1.5,
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              '${_storageService.teamCyanEmoji} ${_storageService.teamCyanName}',
+                              style: TextStyle(
+                                color: AppTheme.teamAColor,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const Padding(
+                            padding: EdgeInsets.symmetric(horizontal: 6),
+                            child: Text(
+                              'vs',
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          Flexible(
+                            child: Text(
+                              '${_storageService.teamMagentaEmoji} ${_storageService.teamMagentaName}',
+                              style: TextStyle(
+                                color: AppTheme.teamBColor,
+                                fontWeight: FontWeight.w800,
+                                fontSize: 13,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.all(5),
+                      decoration: const BoxDecoration(
+                        color: Colors.amber,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.edit_rounded,
+                        size: 13,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
 
           const SizedBox(height: 12),
 

@@ -3,13 +3,16 @@ import { motion, AnimatePresence } from "motion/react";
 
 const ToastContext = createContext();
 
+let toastCounter = 0;
+const createToastId = () => `toast_${Date.now()}_${++toastCounter}`;
+
 export const ToastProvider = ({ children }) => {
   const [toasts, setToasts] = useState([]);
 
   const showToast = (message, type = "info") => {
-    const id = Date.now() + Math.random().toString(36).substr(2, 9);
+    const id = createToastId();
     setToasts((prev) => [...prev, { id, message, type }]);
-    
+
     // Automatically remove toast after 5 seconds
     setTimeout(() => {
       removeToast(id);
@@ -31,12 +34,12 @@ export const ToastProvider = ({ children }) => {
               initial={{ opacity: 0, y: 50, scale: 0.9 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, scale: 0.8, transition: { duration: 0.2 } }}
-              className={`p-4 rounded-xl shadow-lg border-l-4 font-bold flex justify-between items-center pointer-events-auto bg-surface-light dark:bg-surface-dark text-text-light dark:text-text-dark ${
+              className={`p-4 rounded-xl shadow-lg border-l-4 font-bold flex justify-between items-center pointer-events-auto bg-surface-light text-text-light ${
                 toast.type === "success"
                   ? "border-success"
                   : toast.type === "error"
-                  ? "border-error"
-                  : "border-primary"
+                    ? "border-error"
+                    : "border-primary"
               }`}
             >
               <span>{toast.message}</span>

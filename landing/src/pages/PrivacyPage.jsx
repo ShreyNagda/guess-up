@@ -7,7 +7,6 @@ import {
   Cpu,
   Database,
   Trash2,
-  Users,
   Mail,
   ExternalLink,
   CheckCircle2,
@@ -29,26 +28,26 @@ export const PrivacyPage = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen text-text-light dark:text-text-dark bg-bg-light dark:bg-bg-dark transition-colors duration-300">
+    <div className="flex flex-col min-h-screen text-text bg-bg transition-colors duration-300">
       <Header />
 
       <main className="max-w-4xl mx-auto px-4 sm:px-6 py-12 flex flex-col gap-10">
         {/* Document Header Hero */}
-        <div className="flex flex-col gap-4 border-b border-border-light dark:border-border-dark pb-8">
+        <div className="flex flex-col gap-4 border-b border-border pb-8">
           <div className="flex items-center gap-2">
             <span className="px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-black text-xs uppercase tracking-wider flex items-center gap-1.5">
               <ShieldCheck className="w-4 h-4" /> Google Play Verification Ready
             </span>
-            <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 font-bold text-xs">
+            <span className="px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 font-bold text-xs">
               Official Legal Policy
             </span>
           </div>
 
-          <h1 className="text-3xl sm:text-5xl font-black tracking-tight uppercase text-text-light dark:text-text-dark leading-tight">
+          <h1 className="text-3xl sm:text-5xl font-black tracking-tight uppercase text-text leading-tight">
             Privacy Policy for <span className="text-primary">Guess Up</span>
           </h1>
 
-          <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-muted-light dark:text-muted-dark">
+          <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-muted">
             <div className="flex items-center gap-1.5">
               <FileText className="w-4 h-4 text-primary" />
               <span>
@@ -68,57 +67,57 @@ export const PrivacyPage = () => {
 
         {/* Play Console Verification Summary Grid */}
         <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="p-4 rounded-2xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-sm flex flex-col gap-2">
+          <div className="p-4 rounded-2xl bg-surface border border-border shadow-sm flex flex-col gap-2">
             <div className="w-9 h-9 rounded-xl bg-primary/15 text-primary flex items-center justify-center font-bold">
               <Lock className="w-5 h-5" />
             </div>
-            <h4 className="font-extrabold text-sm text-text-light dark:text-text-dark">
+            <h4 className="font-extrabold text-sm text-text">
               Zero PII Data
             </h4>
-            <p className="text-xs text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-xs text-muted leading-relaxed">
               No accounts, emails, phone numbers, or user tracking collected.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-sm flex flex-col gap-2">
+          <div className="p-4 rounded-2xl bg-surface border border-border shadow-sm flex flex-col gap-2">
             <div className="w-9 h-9 rounded-xl bg-blue-500/15 text-blue-500 flex items-center justify-center font-bold">
               <Cpu className="w-5 h-5" />
             </div>
-            <h4 className="font-extrabold text-sm text-text-light dark:text-text-dark">
+            <h4 className="font-extrabold text-sm text-text">
               On-Device RAM Sensors
             </h4>
-            <p className="text-xs text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-xs text-muted leading-relaxed">
               Tilt gestures read in RAM only. Never recorded or transmitted.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-sm flex flex-col gap-2">
+          <div className="p-4 rounded-2xl bg-surface border border-border shadow-sm flex flex-col gap-2">
             <div className="w-9 h-9 rounded-xl bg-purple-500/15 text-purple-500 flex items-center justify-center font-bold">
               <Database className="w-5 h-5" />
             </div>
-            <h4 className="font-extrabold text-sm text-text-light dark:text-text-dark">
+            <h4 className="font-extrabold text-sm text-text">
               TLS Encrypted Sync
             </h4>
-            <p className="text-xs text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-xs text-muted leading-relaxed">
               Secure cloud database used for deck updates via encrypted HTTPS.
             </p>
           </div>
 
-          <div className="p-4 rounded-2xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark shadow-sm flex flex-col gap-2">
+          <div className="p-4 rounded-2xl bg-surface border border-border shadow-sm flex flex-col gap-2">
             <div className="w-9 h-9 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center font-bold">
               <Trash2 className="w-5 h-5" />
             </div>
-            <h4 className="font-extrabold text-sm text-text-light dark:text-text-dark">
+            <h4 className="font-extrabold text-sm text-text">
               Data Erasure Control
             </h4>
-            <p className="text-xs text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-xs text-muted leading-relaxed">
               Clear local preferences anytime via Android Settings.
             </p>
           </div>
         </div>
 
         {/* Quick Jump Index Bar */}
-        <div className="p-5 rounded-2xl bg-surface-light dark:bg-surface-card-dark border border-border-light dark:border-border-dark flex flex-col gap-3">
+        <div className="p-5 rounded-2xl bg-surface-card border border-border flex flex-col gap-3">
           <span className="text-xs font-black uppercase text-primary tracking-wider">
             Quick Table of Contents
           </span>
@@ -136,7 +135,7 @@ export const PrivacyPage = () => {
               <button
                 key={sec.id}
                 onClick={() => scrollToSection(sec.id)}
-                className="px-3 py-1.5 rounded-xl bg-bg-light dark:bg-bg-dark border border-border-light dark:border-border-dark hover:border-primary text-text-light dark:text-text-dark hover:text-primary transition-all cursor-pointer flex items-center gap-1"
+                className="px-3 py-1.5 rounded-xl bg-bg border border-border hover:border-primary text-text hover:text-primary transition-all cursor-pointer flex items-center gap-1"
               >
                 <span>{sec.title}</span>
                 <ChevronRight className="w-3 h-3 opacity-60" />
@@ -149,12 +148,12 @@ export const PrivacyPage = () => {
         <div className="flex flex-col gap-10">
           {/* SECTION 1 */}
           <section id="sec-1" className="flex flex-col gap-4 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-border-light dark:border-border-dark pb-3">
-              <h2 className="text-xl sm:text-2xl font-black text-primary dark:text-text-dark tracking-tight">
+            <div className="flex items-center gap-3 border-b border-border pb-3">
+              <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
                 1. INTRODUCTION & IDENTITY
               </h2>
             </div>
-            <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-sm sm:text-base text-muted leading-relaxed">
               Welcome to <strong>Guess Up</strong> ("we," "our," or "us"), an
               interactive party charades mobile application developed and
               operated by <strong>Shrey Nagda</strong>. Guess Up is designed to
@@ -162,7 +161,7 @@ export const PrivacyPage = () => {
               players place their phone on their forehead while friends shout
               clues.
             </p>
-            <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-sm sm:text-base text-muted leading-relaxed">
               This Privacy Policy details our data governance practices,
               hardware permissions, and security measures for the Guess Up
               mobile application on the Google Play Store. We strictly adhere to
@@ -173,60 +172,60 @@ export const PrivacyPage = () => {
 
           {/* SECTION 2 */}
           <section id="sec-2" className="flex flex-col gap-4 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-border-light dark:border-border-dark pb-3">
-              <h2 className="text-xl sm:text-2xl font-black text-primary dark:text-text-dark tracking-tight">
+            <div className="flex items-center gap-3 border-b border-border pb-3">
+              <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
                 2. INFORMATION WE DO NOT COLLECT (ZERO PII POLICY)
               </h2>
             </div>
-            <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-sm sm:text-base text-muted leading-relaxed">
               Guess Up operates as a standalone offline and online party game.
               We strictly follow a <strong>Zero Personal Information</strong>{" "}
               policy:
             </p>
             <div className="grid sm:grid-cols-2 gap-3 pt-1">
-              <div className="p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark flex items-start gap-3">
+              <div className="p-4 rounded-xl bg-surface border border-border flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                 <div className="text-xs">
-                  <strong className="text-text-light dark:text-text-dark block font-extrabold mb-0.5">
+                  <strong className="text-text block font-extrabold mb-0.5">
                     No User Accounts
                   </strong>
-                  <span className="text-muted-light dark:text-muted-dark">
+                  <span className="text-muted">
                     No sign-up, email registration, password creation, or social
                     logins required.
                   </span>
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark flex items-start gap-3">
+              <div className="p-4 rounded-xl bg-surface border border-border flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                 <div className="text-xs">
-                  <strong className="text-text-light dark:text-text-dark block font-extrabold mb-0.5">
+                  <strong className="text-text block font-extrabold mb-0.5">
                     No PII Storage
                   </strong>
-                  <span className="text-muted-light dark:text-muted-dark">
+                  <span className="text-muted">
                     We do not collect names, phone numbers, email addresses,
                     physical locations, or contacts.
                   </span>
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark flex items-start gap-3">
+              <div className="p-4 rounded-xl bg-surface border border-border flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                 <div className="text-xs">
-                  <strong className="text-text-light dark:text-text-dark block font-extrabold mb-0.5">
+                  <strong className="text-text block font-extrabold mb-0.5">
                     No Audio/Video Recording
                   </strong>
-                  <span className="text-muted-light dark:text-muted-dark">
+                  <span className="text-muted">
                     The App does NOT record audio, access the microphone,
                     capture camera footage, or store media.
                   </span>
                 </div>
               </div>
-              <div className="p-4 rounded-xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark flex items-start gap-3">
+              <div className="p-4 rounded-xl bg-surface border border-border flex items-start gap-3">
                 <CheckCircle2 className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
                 <div className="text-xs">
-                  <strong className="text-text-light dark:text-text-dark block font-extrabold mb-0.5">
+                  <strong className="text-text block font-extrabold mb-0.5">
                     No Advertising Tracking
                   </strong>
-                  <span className="text-muted-light dark:text-muted-dark">
+                  <span className="text-muted">
                     We do not employ ad tracking SDKs (such as IDFA or AAID
                     tracking) for ad profiling.
                   </span>
@@ -237,27 +236,27 @@ export const PrivacyPage = () => {
 
           {/* SECTION 3 */}
           <section id="sec-3" className="flex flex-col gap-4 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-border-light dark:border-border-dark pb-3">
-              <h2 className="text-xl sm:text-2xl font-black text-primary dark:text-text-dark tracking-tight">
+            <div className="flex items-center gap-3 border-b border-border pb-3">
+              <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
                 3. HARDWARE SENSORS & MOTION DATA (ACCELEROMETER)
               </h2>
             </div>
-            <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-sm sm:text-base text-muted leading-relaxed">
               Guess Up uses on-device motion hardware to provide hands-free
               gesture control during active game rounds:
             </p>
-            <div className="p-5 rounded-2xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark flex flex-col gap-3">
-              <div className="flex items-center gap-2 font-bold text-sm text-text-light dark:text-text-dark">
+            <div className="p-5 rounded-2xl bg-surface border border-border flex flex-col gap-3">
+              <div className="flex items-center gap-2 font-bold text-sm text-text">
                 <Cpu className="w-5 h-5 text-primary" />
                 <span>Real-Time Forehead Tilt Gesture Detection</span>
               </div>
-              <p className="text-xs sm:text-sm text-muted-light dark:text-muted-dark leading-relaxed">
+              <p className="text-xs sm:text-sm text-muted leading-relaxed">
                 The App accesses the device's built-in Accelerometer and
                 Gyroscope hardware strictly in real-time to recognize physical
                 tilt gestures (e.g., tilting the device forward/down to mark a
                 correct answer, or tilting upward to pass).
               </p>
-              <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-xs font-semibold text-text-light dark:text-text-dark">
+              <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-xs font-semibold text-text">
                 <strong>Crucial Privacy Note:</strong> All sensor data streams
                 are processed strictly in volatile device memory (RAM) during
                 active gameplay. Motion sensor data is NEVER logged to disk,
@@ -269,16 +268,16 @@ export const PrivacyPage = () => {
 
           {/* SECTION 4 */}
           <section id="sec-4" className="flex flex-col gap-4 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-border-light dark:border-border-dark pb-3">
-              <h2 className="text-xl sm:text-2xl font-black text-primary dark:text-text-dark tracking-tight">
+            <div className="flex items-center gap-3 border-b border-border pb-3">
+              <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
                 4. NETWORK CONNECTIVITY & CLOUD SERVICES
               </h2>
             </div>
-            <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-sm sm:text-base text-muted leading-relaxed">
               Guess Up connects to secure cloud infrastructure to download
               updated trivia word decks, categories, and game parameters:
             </p>
-            <ul className="list-disc pl-6 flex flex-col gap-2 text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
+            <ul className="list-disc pl-6 flex flex-col gap-2 text-sm sm:text-base text-muted leading-relaxed">
               <li>
                 <strong>Encrypted Communications:</strong> All network
                 communication between the mobile app and cloud backend is
@@ -312,17 +311,17 @@ export const PrivacyPage = () => {
 
           {/* SECTION 5 */}
           <section id="sec-5" className="flex flex-col gap-4 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-border-light dark:border-border-dark pb-3">
-              <h2 className="text-xl sm:text-2xl font-black text-primary dark:text-text-dark tracking-tight">
+            <div className="flex items-center gap-3 border-b border-border pb-3">
+              <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
                 5. LOCAL DATA STORAGE & USER PREFERENCES
               </h2>
             </div>
-            <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-sm sm:text-base text-muted leading-relaxed">
               To maintain user convenience across game launches, Guess Up saves
               non-personal game configuration settings locally on your physical
               device using native <code>SharedPreferences</code> storage:
             </p>
-            <ul className="list-disc pl-6 flex flex-col gap-1.5 text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
+            <ul className="list-disc pl-6 flex flex-col gap-1.5 text-sm sm:text-base text-muted leading-relaxed">
               <li>Sound effects (SFX) toggle status (ON/OFF)</li>
               <li>Background music toggle status (ON/OFF)</li>
               <li>Haptic vibration feedback status (ON/OFF)</li>
@@ -334,26 +333,26 @@ export const PrivacyPage = () => {
 
           {/* SECTION 6 */}
           <section id="sec-6" className="flex flex-col gap-4 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-border-light dark:border-border-dark pb-3">
-              <h2 className="text-xl sm:text-2xl font-black text-primary dark:text-text-dark tracking-tight">
+            <div className="flex items-center gap-3 border-b border-border pb-3">
+              <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
                 6. DATA DELETION & ERASURE POLICY
               </h2>
             </div>
-            <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-sm sm:text-base text-muted leading-relaxed">
               In full compliance with Google Play’s Data Deletion Policy
               requirements:
             </p>
-            <div className="p-5 rounded-2xl bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark flex flex-col gap-3">
-              <div className="flex items-center gap-2 font-extrabold text-sm text-text-light dark:text-text-dark">
+            <div className="p-5 rounded-2xl bg-surface border border-border flex flex-col gap-3">
+              <div className="flex items-center gap-2 font-extrabold text-sm text-text">
                 <Trash2 className="w-5 h-5 text-emerald-500" />
                 <span>How to Delete Your Data</span>
               </div>
-              <p className="text-xs sm:text-sm text-muted-light dark:text-muted-dark leading-relaxed">
+              <p className="text-xs sm:text-sm text-muted leading-relaxed">
                 Because Guess Up does not store user profiles or personal
                 information on remote servers, no cloud data deletion request is
                 necessary. Users hold 100% control over their local data:
               </p>
-              <ol className="list-decimal pl-6 flex flex-col gap-1 text-xs sm:text-sm text-muted-light dark:text-muted-dark leading-relaxed">
+              <ol className="list-decimal pl-6 flex flex-col gap-1 text-xs sm:text-sm text-muted leading-relaxed">
                 <li>
                   <strong>Clear App Storage:</strong> Open Android Device
                   Settings → Apps → Guess Up → Storage & Cache → Tap "Clear
@@ -371,18 +370,18 @@ export const PrivacyPage = () => {
 
           {/* SECTION 7 */}
           <section id="sec-7" className="flex flex-col gap-4 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-border-light dark:border-border-dark pb-3">
-              <h2 className="text-xl sm:text-2xl font-black text-primary dark:text-text-dark tracking-tight">
+            <div className="flex items-center gap-3 border-b border-border pb-3">
+              <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
                 7. CHILDREN’S PRIVACY (COPPA & GLOBAL COMPLIANCE)
               </h2>
             </div>
-            <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-sm sm:text-base text-muted leading-relaxed">
               Guess Up is designed for general family audiences, teenagers, and
               adult party groups. We fully comply with the Children’s Online
               Privacy Protection Act (COPPA) and international child protection
               regulations.
             </p>
-            <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-sm sm:text-base text-muted leading-relaxed">
               We do not knowingly collect, request, or process personal data
               from children under the age of 13. If you are a parent or guardian
               and believe that any technical information has been inadvertently
@@ -393,26 +392,26 @@ export const PrivacyPage = () => {
 
           {/* SECTION 8 */}
           <section id="sec-8" className="flex flex-col gap-4 scroll-mt-24">
-            <div className="flex items-center gap-3 border-b border-border-light dark:border-border-dark pb-3">
-              <h2 className="text-xl sm:text-2xl font-black text-primary dark:text-text-dark tracking-tight">
+            <div className="flex items-center gap-3 border-b border-border pb-3">
+              <h2 className="text-xl sm:text-2xl font-black text-text tracking-tight">
                 8. DEVELOPER & CONTACT INFORMATION
               </h2>
             </div>
-            <p className="text-sm sm:text-base text-muted-light dark:text-muted-dark leading-relaxed">
+            <p className="text-sm sm:text-base text-muted leading-relaxed">
               If you have any questions, inquiries, or feedback regarding this
               Privacy Policy or data transparency in Guess Up, please contact
               the developer:
             </p>
 
-            <div className="p-6 rounded-2xl bg-surface-light dark:bg-surface-dark border-2 border-border-light dark:border-border-dark flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
+            <div className="p-6 rounded-2xl bg-surface border-2 border-border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-md">
               <div className="flex flex-col gap-1">
                 <span className="text-xs uppercase font-black tracking-wider text-primary">
                   Developer & Data Controller
                 </span>
-                <span className="text-xl font-black text-text-light dark:text-text-dark">
+                <span className="text-xl font-black text-text">
                   Shrey Nagda
                 </span>
-                <span className="text-xs text-muted-light dark:text-muted-dark font-semibold">
+                <span className="text-xs text-muted font-semibold">
                   Location: India | App: Guess Up Mobile
                 </span>
               </div>
@@ -428,10 +427,10 @@ export const PrivacyPage = () => {
         </div>
 
         {/* Back To Top Action */}
-        <div className="flex justify-center pt-8 border-t border-border-light dark:border-border-dark">
+        <div className="flex justify-center pt-8 border-t border-border">
           <button
             onClick={scrollToTop}
-            className="px-5 py-2.5 rounded-xl border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark hover:border-primary text-xs font-extrabold text-muted-light dark:text-muted-dark hover:text-primary transition-all flex items-center gap-2 cursor-pointer"
+            className="px-5 py-2.5 rounded-xl border border-border bg-surface hover:border-primary text-xs font-extrabold text-muted hover:text-primary transition-all flex items-center gap-2 cursor-pointer"
           >
             <ArrowUp className="w-4 h-4 text-primary" /> Back to Top of Page
           </button>

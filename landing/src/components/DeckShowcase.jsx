@@ -28,7 +28,7 @@ const playBeep = () => {
     gain.connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + 0.08);
-  } catch (_) {}
+  } catch {}
 };
 
 export const DeckShowcase = ({
@@ -83,16 +83,16 @@ export const DeckShowcase = ({
 
   return (
     <section
-      className="py-16 md:py-24 border-t border-border/40 relative"
+      className="py-8 sm:py-16 md:py-24 border-t border-border/40 relative"
       id="decks"
     >
-      <div className="max-w-4xl mx-auto px-6 flex flex-col gap-8">
+      <div className="max-w-4xl mx-auto px-3.5 sm:px-6 flex flex-col gap-6 sm:gap-8">
         {/* Header */}
-        <div className="text-center flex flex-col items-center gap-3">
-          <span className="inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-black text-xs uppercase tracking-widest">
-            <Sparkles className="w-3.5 h-3.5" /> EXPLORE THE VAULT
+        <div className="text-center flex flex-col items-center gap-2.5 sm:gap-3">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-black text-[0.65rem] sm:text-xs uppercase tracking-widest">
+            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" /> EXPLORE THE VAULT
           </span>
-          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight">
             A Deck For Every Mood <br className="hidden sm:inline" />
             <span className="text-primary">& Group Vibe</span>
           </h2>
@@ -104,14 +104,14 @@ export const DeckShowcase = ({
         </div>
 
         {/* Search Bar */}
-        <div className="relative w-full h-13 rounded-2xl border border-border/60 bg-surface-card/80 backdrop-blur-md p-3.5 flex items-center gap-3 shadow-md">
-          <Search className="w-5 h-5 text-primary shrink-0" />
+        <div className="relative w-full h-11 sm:h-13 rounded-xl sm:rounded-2xl border border-border/60 bg-surface-card/80 backdrop-blur-md px-3 sm:px-3.5 py-2 sm:py-3.5 flex items-center gap-2.5 sm:gap-3 shadow-md">
+          <Search className="w-4 h-4 sm:w-5 sm:h-5 text-primary shrink-0" />
           <input
             type="text"
-            placeholder="🔍 Search 500+ party cards (e.g. SRK, Samosa, Super Over, Wankhede)..."
+            placeholder="Search 500+ party cards (e.g. SRK, Samosa)..."
             value={searchQuery}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="w-full text-xs sm:text-sm font-semibold bg-transparent outline-none"
+            className="w-full text-xs sm:text-sm font-semibold bg-transparent outline-none placeholder:text-[0.75rem] sm:placeholder:text-sm"
           />
           {searchQuery && (
             <button
@@ -132,15 +132,15 @@ export const DeckShowcase = ({
               animate={{ opacity: 1, height: "auto", scale: 1 }}
               exit={{ opacity: 0, height: 0, scale: 0.98 }}
               transition={{ duration: 0.3 }}
-              className="w-full bg-[#0E0C1C] border-2 rounded-3xl p-6 sm:p-8 shadow-2xl overflow-hidden flex flex-col gap-6 relative"
+              className="w-full bg-[#0E0C1C] border-2 rounded-2xl sm:rounded-3xl p-4 sm:p-8 shadow-2xl overflow-hidden flex flex-col gap-4 sm:gap-6 relative"
               style={{
                 borderColor: selectedDeck.color || "var(--color-primary)",
               }}
             >
-              <div className="flex items-start justify-between gap-4 border-b border-border/40 pb-4">
-                <div className="flex items-center gap-4">
+              <div className="flex items-start justify-between gap-3 border-b border-border/40 pb-3 sm:pb-4">
+                <div className="flex items-center gap-3 sm:gap-4">
                   <div
-                    className="w-14 h-14 rounded-2xl flex items-center justify-center font-black text-3xl shrink-0 border-2"
+                    className="w-10 h-10 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl flex items-center justify-center font-black text-xl sm:text-3xl shrink-0 border-2"
                     style={{
                       backgroundColor: `${selectedDeck.color}25`,
                       borderColor: selectedDeck.color,
@@ -150,14 +150,11 @@ export const DeckShowcase = ({
                   </div>
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="text-2xl font-black text-white">
+                      <h3 className="text-lg sm:text-2xl font-black text-white">
                         {selectedDeck.name}
                       </h3>
-                      <span className="text-[0.65rem] font-extrabold uppercase px-2.5 py-0.5 rounded-full bg-primary/20 text-primary border border-primary/30">
-                        {selectedWords.length} Cards
-                      </span>
                     </div>
-                    <p className="text-xs text-muted mt-1">
+                    <p className="text-[0.7rem] sm:text-xs text-muted mt-0.5 sm:mt-1">
                       {selectedDeck.description ||
                         "Previewing word deck cards below."}
                     </p>
@@ -166,18 +163,19 @@ export const DeckShowcase = ({
 
                 <button
                   onClick={() => setSelectedDeck(null)}
-                  className="p-2 rounded-xl bg-surface-card text-muted hover:text-white transition-all cursor-pointer font-bold text-xs flex items-center gap-1 shrink-0"
+                  className="p-1.5 sm:p-2 rounded-xl bg-surface-card text-muted hover:text-white transition-all cursor-pointer font-bold text-xs flex items-center gap-1 shrink-0"
                 >
                   <X className="w-4 h-4" /> Close
                 </button>
               </div>
 
               {/* Cards Simulator View */}
-              <div className="grid md:grid-cols-2 gap-6 items-center">
-                <div className="bg-surface-card border border-border p-6 rounded-2xl flex flex-col items-center justify-between text-center min-h-55 relative overflow-hidden">
+              <div className="grid md:grid-cols-2 gap-4 sm:gap-6 items-center">
+                <div className="bg-surface-card border border-border p-4 sm:p-6 rounded-xl sm:rounded-2xl flex flex-col items-center justify-between text-center min-h-44 sm:min-h-55 relative overflow-hidden">
                   <div className="flex items-center justify-between w-full mb-2">
-                    <span className="text-[0.65rem] font-black uppercase tracking-widest text-primary flex items-center gap-1">
-                      <Sparkles className="w-3.5 h-3.5" /> Flashcard Simulator
+                    <span className="text-[0.6rem] sm:text-[0.65rem] font-black uppercase tracking-widest text-primary flex items-center gap-1">
+                      <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5" />{" "}
+                      Flashcard Simulator
                     </span>
                     <button
                       type="button"
@@ -197,32 +195,32 @@ export const DeckShowcase = ({
                       key={cardIndex}
                       initial={{ scale: 0.85, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
-                      className="py-4 px-2 w-full"
+                      className="py-3 sm:py-4 px-2 w-full"
                     >
-                      <h4 className="text-2xl font-black uppercase text-primary tracking-tight">
+                      <h4 className="text-xl sm:text-2xl font-black uppercase text-primary tracking-tight">
                         {sampleWords[cardIndex]}
                       </h4>
-                      <span className="text-[0.65rem] text-muted font-bold mt-2 block">
-                        Sample Card {cardIndex + 1} of {sampleWords.length}
+                      <span className="text-[0.6rem] sm:text-[0.65rem] text-muted font-bold mt-1.5 sm:mt-2 block">
+                        Sample Card Preview
                       </span>
                     </motion.div>
                   ) : (
-                    <p className="text-xs text-muted py-8">
+                    <p className="text-xs text-muted py-6 sm:py-8">
                       No cards in this deck yet.
                     </p>
                   )}
 
                   {sampleWords.length > 1 && (
-                    <div className="flex items-center gap-4 mt-2">
+                    <div className="flex items-center gap-3 sm:gap-4 mt-2">
                       <button
                         onClick={handlePrevCard}
-                        className="p-2 rounded-xl bg-surface border border-border text-xs font-black hover:scale-105 transition-all cursor-pointer flex items-center gap-1"
+                        className="p-1.5 sm:p-2 rounded-xl bg-surface border border-border text-xs font-black hover:scale-105 transition-all cursor-pointer flex items-center gap-1"
                       >
                         <ChevronLeft className="w-4 h-4" /> Prev
                       </button>
                       <button
                         onClick={handleNextCard}
-                        className="px-4 py-2 rounded-xl bg-primary text-accent font-black text-xs hover:scale-105 transition-all cursor-pointer flex items-center gap-1 shadow-md"
+                        className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-xl bg-primary text-accent font-black text-xs hover:scale-105 transition-all cursor-pointer flex items-center gap-1 shadow-md"
                       >
                         Next Card <ChevronRight className="w-4 h-4" />
                       </button>
@@ -231,11 +229,11 @@ export const DeckShowcase = ({
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <span className="text-xs font-black uppercase text-muted tracking-wider flex items-center gap-1.5">
+                  <span className="text-[0.7rem] sm:text-xs font-black uppercase text-muted tracking-wider flex items-center gap-1.5">
                     <Tag className="w-3.5 h-3.5 text-primary" /> Sample Card
                     Preview:
                   </span>
-                  <div className="p-3 rounded-2xl bg-surface-card border border-border flex flex-wrap gap-2 max-h-45 overflow-y-auto">
+                  <div className="p-2.5 sm:p-3 rounded-xl sm:rounded-2xl bg-surface-card border border-border flex flex-wrap gap-1.5 sm:gap-2 max-h-36 sm:max-h-45 overflow-y-auto">
                     {sampleWords.map((word, idx) => (
                       <span
                         key={idx}
@@ -243,7 +241,7 @@ export const DeckShowcase = ({
                           setCardIndex(idx);
                           triggerFeedback();
                         }}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                        className={`px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-lg sm:rounded-xl text-[0.7rem] sm:text-xs font-bold transition-all cursor-pointer ${
                           cardIndex === idx
                             ? "bg-primary text-accent shadow-sm scale-105"
                             : "bg-surface border border-border text-text hover:border-primary"
@@ -254,14 +252,16 @@ export const DeckShowcase = ({
                     ))}
 
                     {hiddenCount > 0 && (
-                      <div className="w-full mt-1 p-2.5 rounded-xl bg-surface border border-primary/30 flex items-center justify-between text-xs font-bold">
-                        <div className="flex items-center gap-2 text-primary font-black">
-                          <Lock className="w-3.5 h-3.5 shrink-0" />
-                          <span>+{hiddenCount} More Secret Cards</span>
+                      <div className="w-full mt-1 p-2 sm:p-2.5 rounded-xl bg-surface border border-primary/30 flex items-center justify-between text-xs font-bold">
+                        <div className="flex items-center gap-1.5 sm:gap-2 text-primary font-black text-[0.7rem] sm:text-xs">
+                          <Lock className="w-3 h-3 sm:w-3.5 sm:h-3.5 shrink-0" />
+                          <span>More Secret Cards</span>
                         </div>
-                        <span className="text-[0.65rem] font-black uppercase tracking-wider text-muted">
-                          Play in App
-                        </span>
+                        <a href="">
+                          <span className="text-[0.6rem] sm:text-[0.65rem] font-black uppercase tracking-wider text-muted">
+                            Play in App
+                          </span>
+                        </a>
                       </div>
                     )}
                   </div>
@@ -272,7 +272,7 @@ export const DeckShowcase = ({
         </AnimatePresence>
 
         {/* 2-Column Arcade Deck Cards Matrix */}
-        <div className="grid grid-cols-2 gap-4 sm:gap-6 w-full">
+        <div className="grid grid-cols-2 gap-3 sm:gap-6 w-full">
           {normalizedDecks.map((deck, idx) => {
             const isSelected = selectedDeck?.id === deck.id;
             return (

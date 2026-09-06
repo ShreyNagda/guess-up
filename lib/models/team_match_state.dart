@@ -14,6 +14,11 @@ class TeamMatchState {
   bool _isMatchFinished;
   bool _isTiebreaker;
 
+  String teamCyanName;
+  String teamCyanEmoji;
+  String teamMagentaName;
+  String teamMagentaEmoji;
+
   TeamMatchState({
     this.isTeamMode = false,
     TeamColor currentTeam = TeamColor.cyan,
@@ -24,6 +29,10 @@ class TeamMatchState {
     bool isMatchFinished = false,
     bool isTiebreaker = false,
     TeamColor? lastPlayingTeam,
+    String? teamCyanName,
+    String? teamCyanEmoji,
+    String? teamMagentaName,
+    String? teamMagentaEmoji,
   })  : _currentTeam = currentTeam,
         _teamCyanScore = teamCyanScore,
         _teamMagentaScore = teamMagentaScore,
@@ -31,7 +40,11 @@ class TeamMatchState {
         _maxRounds = maxRounds,
         _isMatchFinished = isMatchFinished,
         _isTiebreaker = isTiebreaker,
-        _lastPlayingTeam = lastPlayingTeam;
+        _lastPlayingTeam = lastPlayingTeam,
+        teamCyanName = teamCyanName ?? AppTheme.teamAName,
+        teamCyanEmoji = teamCyanEmoji ?? AppTheme.teamAEmoji,
+        teamMagentaName = teamMagentaName ?? AppTheme.teamBName,
+        teamMagentaEmoji = teamMagentaEmoji ?? AppTheme.teamBEmoji;
 
   // Getters
   TeamColor get currentTeam => _currentTeam;
@@ -43,21 +56,67 @@ class TeamMatchState {
   bool get isMatchFinished => _isMatchFinished;
   bool get isTiebreaker => _isTiebreaker;
 
+  String get teamCyanDisplayName => "$teamCyanName $teamCyanEmoji".trim();
+  String get teamMagentaDisplayName => "$teamMagentaName $teamMagentaEmoji".trim();
+
   String get currentTeamName =>
       _currentTeam == TeamColor.cyan
-          ? "${AppTheme.teamAName} ${AppTheme.teamAEmoji}"
-          : "${AppTheme.teamBName} ${AppTheme.teamBEmoji}";
+          ? teamCyanDisplayName
+          : teamMagentaDisplayName;
+
+  String get currentTeamOnlyName =>
+      _currentTeam == TeamColor.cyan ? teamCyanName : teamMagentaName;
+
+  String get currentTeamOnlyEmoji =>
+      _currentTeam == TeamColor.cyan ? teamCyanEmoji : teamMagentaEmoji;
 
   String get nextTeamName =>
       _currentTeam == TeamColor.cyan
-          ? "${AppTheme.teamBName} ${AppTheme.teamBEmoji}"
-          : "${AppTheme.teamAName} ${AppTheme.teamAEmoji}";
+          ? teamMagentaDisplayName
+          : teamCyanDisplayName;
+
+  String get nextTeamOnlyName =>
+      _currentTeam == TeamColor.cyan ? teamMagentaName : teamCyanName;
+
+  String get nextTeamOnlyEmoji =>
+      _currentTeam == TeamColor.cyan ? teamMagentaEmoji : teamCyanEmoji;
+
+  String get winningTeamName =>
+      winningTeam == TeamColor.cyan
+          ? teamCyanDisplayName
+          : teamMagentaDisplayName;
+
+  String get winningTeamOnlyName =>
+      winningTeam == TeamColor.cyan ? teamCyanName : teamMagentaName;
+
+  String get winningTeamOnlyEmoji =>
+      winningTeam == TeamColor.cyan ? teamCyanEmoji : teamMagentaEmoji;
 
   Color get currentTeamColor =>
       _currentTeam == TeamColor.cyan ? AppTheme.teamAColor : AppTheme.teamBColor;
 
   Color get nextTeamColor =>
       _currentTeam == TeamColor.cyan ? AppTheme.teamBColor : AppTheme.teamAColor;
+
+  void updateTeamDetails({
+    String? cyanName,
+    String? cyanEmoji,
+    String? magentaName,
+    String? magentaEmoji,
+  }) {
+    if (cyanName != null && cyanName.trim().isNotEmpty) {
+      teamCyanName = cyanName.trim();
+    }
+    if (cyanEmoji != null && cyanEmoji.trim().isNotEmpty) {
+      teamCyanEmoji = cyanEmoji.trim();
+    }
+    if (magentaName != null && magentaName.trim().isNotEmpty) {
+      teamMagentaName = magentaName.trim();
+    }
+    if (magentaEmoji != null && magentaEmoji.trim().isNotEmpty) {
+      teamMagentaEmoji = magentaEmoji.trim();
+    }
+  }
 
   void recordRoundScore(int score) {
     _lastPlayingTeam = _currentTeam;
@@ -119,3 +178,4 @@ class TeamMatchState {
     _isTiebreaker = false;
   }
 }
+

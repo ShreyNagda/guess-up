@@ -61,7 +61,7 @@ class Category {
     if (description != null && description!.trim().isNotEmpty) {
       return description!;
     }
-    return "Deck featuring $count cards.";
+    return "Party deck for charades.";
   }
 
   /// Parse hex color string to Color

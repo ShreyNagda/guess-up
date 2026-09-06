@@ -386,27 +386,6 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
                                           maxLines: 2,
                                           overflow: TextOverflow.ellipsis,
                                         ),
-                                        const SizedBox(height: 4),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 8,
-                                            vertical: 2,
-                                          ),
-                                          decoration: BoxDecoration(
-                                            color: Colors.black.withAlpha(120),
-                                            borderRadius: BorderRadius.circular(
-                                              8,
-                                            ),
-                                          ),
-                                          child: Text(
-                                            "${_words.length} CARDS",
-                                            style: const TextStyle(
-                                              fontSize: 9,
-                                              fontWeight: FontWeight.w900,
-                                              color: Colors.white70,
-                                            ),
-                                          ),
-                                        ),
                                       ],
                                     ),
                                   ),

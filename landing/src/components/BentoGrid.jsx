@@ -5,10 +5,10 @@ import { Swords, Users, Smartphone, Flame, Sparkles } from "lucide-react";
 export const BentoGrid = () => {
   return (
     <section
-      className="max-w-6xl mx-auto px-4 md:px-8 py-16 md:py-24"
+      className="max-w-6xl mx-auto px-4 md:px-8 py-8 sm:py-16 md:py-24"
       id="features"
     >
-      <div className="text-center max-w-2xl mx-auto mb-16 flex flex-col gap-3">
+      <div className="text-center max-w-2xl mx-auto mb-6 sm:mb-12 md:mb-16 flex flex-col gap-3">
         <span className="text-xs uppercase tracking-widest font-black text-primary">
           Game Highlights
         </span>
@@ -21,11 +21,11 @@ export const BentoGrid = () => {
         </p>
       </div>
 
-      <div className="grid md:grid-cols-3 gap-6">
+      <div className="grid md:grid-cols-3 gap-4 sm:gap-6">
         {/* Card 1: Team Battles (Span 2) */}
         <motion.div
           whileHover={{ y: -6 }}
-          className="md:col-span-2 bg-linear-to-br from-surface to-surface-card border-2 border-border p-8 rounded-3xl flex flex-col justify-between gap-6 shadow-card shadow-card-hover relative overflow-hidden group hover:border-primary/50"
+          className="md:col-span-2 bg-linear-to-br from-surface to-surface-card border-2 border-border p-5 sm:p-8 rounded-2xl sm:rounded-3xl flex flex-col justify-between gap-6 shadow-card shadow-card-hover relative overflow-hidden group hover:border-primary/50"
         >
           <div className="flex items-center justify-between">
             <div className="w-12 h-12 rounded-2xl bg-team-a/20 border-2 border-team-a flex items-center justify-center text-team-a">
@@ -62,7 +62,7 @@ export const BentoGrid = () => {
         {/* Card 2: Solo vs Everyone */}
         <motion.div
           whileHover={{ y: -6 }}
-          className="bg-surface border-2 border-border p-8 rounded-3xl flex flex-col justify-between gap-6 shadow-card shadow-card-hover hover:border-primary/50"
+          className="bg-surface border-2 border-border p-5 sm:p-8 rounded-2xl sm:rounded-3xl flex flex-col justify-between gap-6 shadow-card shadow-card-hover hover:border-primary/50"
         >
           <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary">
             <Users className="w-6 h-6" />
@@ -85,7 +85,7 @@ export const BentoGrid = () => {
         {/* Card 3: Motion Controls */}
         <motion.div
           whileHover={{ y: -6 }}
-          className="bg-surface border-2 border-border p-8 rounded-3xl flex flex-col justify-between gap-6 shadow-card shadow-card-hover hover:border-primary/50"
+          className="bg-surface border-2 border-border p-5 sm:p-8 rounded-2xl sm:rounded-3xl flex flex-col justify-between gap-6 shadow-card shadow-card-hover hover:border-primary/50"
         >
           <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary">
             <Smartphone className="w-6 h-6" />
@@ -111,7 +111,7 @@ export const BentoGrid = () => {
         {/* Card 4: Desi Decks (Span 2) */}
         <motion.div
           whileHover={{ y: -6 }}
-          className="md:col-span-2 bg-surface border-2 border-border p-8 rounded-3xl flex flex-col justify-between gap-6 shadow-card shadow-card-hover hover:border-primary/50"
+          className="md:col-span-2 bg-surface border-2 border-border p-5 sm:p-8 rounded-2xl sm:rounded-3xl flex flex-col justify-between gap-6 shadow-card shadow-card-hover hover:border-primary/50"
         >
           <div className="flex items-center justify-between">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary">

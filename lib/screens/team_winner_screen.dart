@@ -1,7 +1,10 @@
+import 'dart:io';
 import 'dart:math';
+import 'dart:ui' as ui;
 import 'package:confetti/confetti.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:guess_up/models/category.dart';
 import 'package:guess_up/models/team_match_state.dart';
@@ -12,6 +15,9 @@ import 'package:guess_up/screens/team_pass_screen.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
+import 'package:guess_up/widgets/scorecard_card.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class TeamWinnerScreen extends StatefulWidget {
   final TeamMatchState teamState;
@@ -38,6 +44,8 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
   late ConfettiController _confettiController;
   late AnimationController _pulseController;
   late Animation<double> _pulseAnimation;
+  final GlobalKey _scorecardKey = GlobalKey();
+  bool _isSharing = false;
 
   @override
   void initState() {
@@ -66,6 +74,45 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
     _confettiController.dispose();
     _pulseController.dispose();
     super.dispose();
+  }
+
+  Future<void> _handleShareScorecard() async {
+    if (_isSharing) return;
+    setState(() => _isSharing = true);
+    GameAudioEngine().lightImpact();
+
+    try {
+      final boundary =
+          _scorecardKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
+      if (boundary != null) {
+        final image = await boundary.toImage(pixelRatio: 3.0);
+        final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+        if (byteData != null) {
+          final pngBytes = byteData.buffer.asUint8List();
+          final tempDir = await getTemporaryDirectory();
+          final file =
+              await File(
+                '${tempDir.path}/guessup_scorecard_${DateTime.now().millisecondsSinceEpoch}.png',
+              ).create();
+          await file.writeAsBytes(pngBytes);
+          final xFile = XFile(file.path);
+          await SharePlus.instance.share(
+            ShareParams(
+              files: [xFile],
+              text:
+                  widget.teamState.isTeamMode
+                      ? '🏆 ${widget.teamState.winningTeamOnlyName} won in Guess Up! Final Score: ${widget.teamState.teamCyanScore} - ${widget.teamState.teamMagentaScore}'
+                      : '🎉 Scored ${widget.lastRoundScore ?? 0} pts in Guess Up!',
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint("Error sharing scorecard: $e");
+    } finally {
+      if (mounted) setState(() => _isSharing = false);
+    }
   }
 
   void _handleStartTiebreaker() {
@@ -106,9 +153,9 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
 
   void _handleChangeSettings() {
     GameAudioEngine().lightImpact();
-    Navigator.of(
-      context,
-    ).pushReplacement(CupertinoPageRoute(builder: (_) => const SettingsScreen()));
+    Navigator.of(context).pushReplacement(
+      CupertinoPageRoute(builder: (_) => const SettingsScreen()),
+    );
   }
 
   void _handleGoHome() {
@@ -259,14 +306,8 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
     final isTie = state.isTie;
 
     final TeamColor? winningColor = isTie ? null : state.winningTeam;
-    final String winnerName =
-        winningColor == TeamColor.cyan
-            ? AppTheme.teamAName
-            : AppTheme.teamBName;
-    final String winnerEmoji =
-        winningColor == TeamColor.cyan
-            ? AppTheme.teamAEmoji
-            : AppTheme.teamBEmoji;
+    final String winnerName = isTie ? 'TIED' : state.winningTeamOnlyName;
+    final String winnerEmoji = isTie ? '🤝' : state.winningTeamOnlyEmoji;
     final Color winnerAccentColor =
         isTie
             ? Colors.amber
@@ -282,6 +323,29 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
         ambientColor: winnerAccentColor,
         child: Stack(
           children: [
+            // Hidden RepaintBoundary widget for PNG Scorecard export
+            Offstage(
+              offstage: true,
+              child: SingleChildScrollView(
+                child: RepaintBoundary(
+                  key: _scorecardKey,
+                  child: ScorecardCard(
+                    isTeamMode: state.isTeamMode,
+                    teamCyanName: state.teamCyanName,
+                    teamCyanEmoji: state.teamCyanEmoji,
+                    teamCyanScore: state.teamCyanScore,
+                    teamMagentaName: state.teamMagentaName,
+                    teamMagentaEmoji: state.teamMagentaEmoji,
+                    teamMagentaScore: state.teamMagentaScore,
+                    winnerName: winnerName,
+                    winnerEmoji: winnerEmoji,
+                    winnerColor: winnerAccentColor,
+                    soloScore: widget.lastRoundScore ?? 0,
+                    totalRounds: state.currentRound,
+                  ),
+                ),
+              ),
+            ),
             SafeArea(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
@@ -304,7 +368,10 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: winnerAccentColor.withAlpha(isDark ? 45 : 35),
-                          border: Border.all(color: winnerAccentColor, width: 3),
+                          border: Border.all(
+                            color: winnerAccentColor,
+                            width: 3,
+                          ),
                           boxShadow: [
                             BoxShadow(
                               color: winnerAccentColor.withAlpha(120),
@@ -325,373 +392,417 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
                       ),
                     ),
 
-                  const SizedBox(height: 18),
+                    const SizedBox(height: 18),
 
-                  // Title Tag
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: winnerAccentColor.withAlpha(30),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: winnerAccentColor.withAlpha(90),
+                    // Title Tag
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: winnerAccentColor.withAlpha(30),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: winnerAccentColor.withAlpha(90),
+                        ),
+                      ),
+                      child: Text(
+                        isTie ? "MATCH TIED" : "MATCH CHAMPIONS",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2.0,
+                          color: winnerAccentColor,
+                        ),
                       ),
                     ),
-                    child: Text(
-                      isTie ? "MATCH TIED" : "MATCH CHAMPIONS",
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 2.0,
-                        color: winnerAccentColor,
+
+                    const SizedBox(height: 10),
+
+                    // Big Headline Announcement
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        isTie
+                            ? "IT'S A DEAD TIE!"
+                            : "${winnerName.toUpperCase()} $winnerEmoji WINS!",
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.headlineLarge?.copyWith(
+                          fontWeight: FontWeight.w900,
+                          fontSize: 34,
+                          letterSpacing: -0.5,
+                          color:
+                              isDark
+                                  ? (isTie
+                                      ? Colors.amber
+                                      : (winningColor == TeamColor.cyan
+                                          ? AppTheme.teamAColor
+                                          : AppTheme.teamBColor))
+                                  : theme.colorScheme.secondary,
+                        ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 10),
+                    const SizedBox(height: 6),
 
-                  // Big Headline Announcement
-                  FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
+                    Text(
                       isTie
-                          ? "IT'S A DEAD TIE!"
-                          : "${winnerName.toUpperCase()} $winnerEmoji WINS!",
+                          ? "Both teams fought valiantly with identical scores!"
+                          : (scoreDiff == 1
+                              ? "A nail-biting 1-point victory!"
+                              : "Sensational performance and teamwork!"),
                       textAlign: TextAlign.center,
-                      style: theme.textTheme.headlineLarge?.copyWith(
-                        fontWeight: FontWeight.w900,
-                        fontSize: 34,
-                        letterSpacing: -0.5,
-                        color:
-                            isDark
-                                ? (isTie
-                                    ? Colors.amber
-                                    : (winningColor == TeamColor.cyan
-                                        ? AppTheme.teamAColor
-                                        : AppTheme.teamBColor))
-                                : theme.colorScheme.secondary,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        color: theme.hintColor,
+                        fontWeight: FontWeight.w600,
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 6),
+                    const SizedBox(height: 24),
 
-                  Text(
-                    isTie
-                        ? "Both teams fought valiantly with identical scores!"
-                        : (scoreDiff == 1
-                            ? "A nail-biting 1-point victory!"
-                            : "Sensational performance and teamwork!"),
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.hintColor,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // ==========================================
-                  // 2. HEAD-TO-HEAD STANDINGS CARD
-                  // ==========================================
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: theme.cardColor,
-                      borderRadius: BorderRadius.circular(26),
-                      border: Border.all(
-                        color: theme.dividerColor.withAlpha(50),
-                        width: 1.5,
+                    // ==========================================
+                    // 2. HEAD-TO-HEAD STANDINGS CARD
+                    // ==========================================
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: theme.cardColor,
+                        borderRadius: BorderRadius.circular(26),
+                        border: Border.all(
+                          color: theme.dividerColor.withAlpha(50),
+                          width: 1.5,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(isDark ? 60 : 25),
+                            blurRadius: 16,
+                            offset: const Offset(0, 6),
+                          ),
+                        ],
                       ),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withAlpha(isDark ? 60 : 25),
-                          blurRadius: 16,
-                          offset: const Offset(0, 6),
-                        ),
-                      ],
-                    ),
-                    child: Column(
-                      children: [
-                        Text(
-                          "FINAL MATCH SCOREBOARD",
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w900,
-                            letterSpacing: 1.6,
-                            color: theme.hintColor,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          children: [
-                            // Team A (Cyan)
-                            Expanded(
-                              child: _buildTeamScoreCard(
-                                theme: theme,
-                                isDark: isDark,
-                                name: AppTheme.teamAName,
-                                emoji: AppTheme.teamAEmoji,
-                                score: state.teamCyanScore,
-                                color: AppTheme.teamAColor,
-                                isWinner:
-                                    !isTie && winningColor == TeamColor.cyan,
-                                isTie: isTie,
-                              ),
+                      child: Column(
+                        children: [
+                          Text(
+                            "FINAL MATCH SCOREBOARD",
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              letterSpacing: 1.6,
+                              color: theme.hintColor,
                             ),
-                            const SizedBox(width: 12),
-                            // Team B (Magenta)
-                            Expanded(
-                              child: _buildTeamScoreCard(
-                                theme: theme,
-                                isDark: isDark,
-                                name: AppTheme.teamBName,
-                                emoji: AppTheme.teamBEmoji,
-                                score: state.teamMagentaScore,
-                                color: AppTheme.teamBColor,
-                                isWinner:
-                                    !isTie && winningColor == TeamColor.magenta,
-                                isTie: isTie,
-                              ),
-                            ),
-                          ],
-                        ),
-
-                        const SizedBox(height: 14),
-
-                        // Match Summary Pill
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 8,
                           ),
-                          decoration: BoxDecoration(
-                            color: theme.scaffoldBackgroundColor.withAlpha(140),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                          const SizedBox(height: 16),
+                          Row(
                             children: [
-                              Icon(
-                                Icons.sports_score_rounded,
-                                size: 18,
-                                color: theme.hintColor,
+                              // Team A (Cyan)
+                              Expanded(
+                                child: _buildTeamScoreCard(
+                                  theme: theme,
+                                  isDark: isDark,
+                                  name: state.teamCyanName,
+                                  emoji: state.teamCyanEmoji,
+                                  score: state.teamCyanScore,
+                                  color: AppTheme.teamAColor,
+                                  isWinner:
+                                      !isTie && winningColor == TeamColor.cyan,
+                                  isTie: isTie,
+                                ),
                               ),
-                              const SizedBox(width: 8),
-                              Text(
-                                isTie
-                                    ? "Deadlock after ${state.currentRound} rounds"
-                                    : "Margin of Victory: $scoreDiff ${scoreDiff == 1 ? 'Point' : 'Points'}",
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  fontWeight: FontWeight.w800,
-                                  letterSpacing: 0.3,
-                                  color: theme.hintColor,
+                              const SizedBox(width: 12),
+                              // Team B (Magenta)
+                              Expanded(
+                                child: _buildTeamScoreCard(
+                                  theme: theme,
+                                  isDark: isDark,
+                                  name: state.teamMagentaName,
+                                  emoji: state.teamMagentaEmoji,
+                                  score: state.teamMagentaScore,
+                                  color: AppTheme.teamBColor,
+                                  isWinner:
+                                      !isTie &&
+                                      winningColor == TeamColor.magenta,
+                                  isTie: isTie,
                                 ),
                               ),
                             ],
                           ),
-                        ),
-                      ],
+
+                          const SizedBox(height: 14),
+
+                          // Match Summary Pill
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.scaffoldBackgroundColor.withAlpha(
+                                140,
+                              ),
+                              borderRadius: BorderRadius.circular(14),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  Icons.sports_score_rounded,
+                                  size: 18,
+                                  color: theme.hintColor,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  isTie
+                                      ? "Deadlock after ${state.currentRound} rounds"
+                                      : "Margin of Victory: $scoreDiff ${scoreDiff == 1 ? 'Point' : 'Points'}",
+                                  style: theme.textTheme.bodySmall?.copyWith(
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.3,
+                                    color: theme.hintColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
 
-                  const SizedBox(height: 16),
+                    const SizedBox(height: 16),
 
-                  // Optional: Review Last Round Words Button
-                  if (widget.lastRoundScoreMap != null &&
-                      widget.lastRoundScoreMap!.isNotEmpty)
-                    TextButton.icon(
-                      onPressed: () => _showWordBreakdownModal(context),
-                      icon: const Icon(Icons.list_alt_rounded, size: 20),
-                      label: const Text(
-                        "Review Final Round Words",
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                    // Optional: Review Last Round Words Button
+                    if (widget.lastRoundScoreMap != null &&
+                        widget.lastRoundScoreMap!.isNotEmpty)
+                      TextButton.icon(
+                        onPressed: () => _showWordBreakdownModal(context),
+                        icon: const Icon(Icons.list_alt_rounded, size: 20),
+                        label: const Text(
+                          "Review Final Round Words",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                        style: TextButton.styleFrom(
+                          foregroundColor:
+                              isDark ? Colors.amber : theme.colorScheme.primary,
                         ),
                       ),
-                      style: TextButton.styleFrom(
-                        foregroundColor:
-                            isDark ? Colors.amber : theme.colorScheme.primary,
+
+                    const SizedBox(height: 16),
+
+                    // ==========================================
+                    // 3. ACTION BUTTONS
+                    // ==========================================
+                    if (isTie) ...[
+                      // Tiebreaker Button
+                      SizedBox(
+                        width: double.infinity,
+                        height: 56,
+                        child: ElevatedButton.icon(
+                          onPressed: _handleStartTiebreaker,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.deepOrangeAccent,
+                            foregroundColor: Colors.white,
+                            elevation: 4,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(18),
+                            ),
+                          ),
+                          icon: const Icon(Icons.bolt_rounded, size: 26),
+                          label: const Text(
+                            "SUDDEN DEATH TIEBREAKER (30s)",
+                            style: TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
+                      const SizedBox(height: 12),
+                    ],
 
-                  const SizedBox(height: 16),
-
-                  // ==========================================
-                  // 3. ACTION BUTTONS
-                  // ==========================================
-                  if (isTie) ...[
-                    // Tiebreaker Button
+                    // Share Scorecard Graphic Button
                     SizedBox(
                       width: double.infinity,
                       height: 56,
                       child: ElevatedButton.icon(
-                        onPressed: _handleStartTiebreaker,
+                        onPressed: _isSharing ? null : _handleShareScorecard,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.deepOrangeAccent,
+                          backgroundColor: const Color(0xFF6C5CE7),
                           foregroundColor: Colors.white,
-                          elevation: 4,
+                          elevation: 3,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(18),
                           ),
                         ),
-                        icon: const Icon(Icons.bolt_rounded, size: 26),
-                        label: const Text(
-                          "SUDDEN DEATH TIEBREAKER (30s)",
-                          style: TextStyle(
+                        icon:
+                            _isSharing
+                                ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                                : const Icon(Icons.share_rounded, size: 22),
+                        label: Text(
+                          _isSharing
+                              ? "GENERATING CARD..."
+                              : "SHARE SCORECARD 📸",
+                          style: const TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 15,
-                            letterSpacing: 0.5,
+                            letterSpacing: 0.8,
                           ),
                         ),
                       ),
                     ),
+
                     const SizedBox(height: 12),
-                  ],
 
-                  // Play Again (Rematch) Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton.icon(
-                      onPressed: _handleRematch,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor:
-                            isDark ? Colors.amber : theme.colorScheme.primary,
-                        foregroundColor: isDark ? Colors.black : Colors.black87,
-                        elevation: 3,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
+                    // Play Again (Rematch) Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton.icon(
+                        onPressed: _handleRematch,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor:
+                              isDark ? Colors.amber : theme.colorScheme.primary,
+                          foregroundColor:
+                              isDark ? Colors.black : Colors.black87,
+                          elevation: 3,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(18),
+                          ),
                         ),
-                      ),
-                      icon: const Icon(Icons.replay_rounded, size: 24),
-                      label: const Text(
-                        "PLAY AGAIN (REMATCH)",
-                        style: TextStyle(
-                          fontWeight: FontWeight.w900,
-                          fontSize: 16,
-                          letterSpacing: 0.8,
+                        icon: const Icon(Icons.replay_rounded, size: 24),
+                        label: const Text(
+                          "PLAY AGAIN (REMATCH)",
+                          style: TextStyle(
+                            fontWeight: FontWeight.w900,
+                            fontSize: 16,
+                            letterSpacing: 0.8,
+                          ),
                         ),
                       ),
                     ),
-                  ),
 
-                  const SizedBox(height: 12),
+                    const SizedBox(height: 12),
 
-                  // Bottom Row: Settings & Home
-                  Row(
-                    children: [
-                      Expanded(
-                        child: SizedBox(
-                          height: 50,
-                          child: OutlinedButton.icon(
-                            onPressed: _handleChangeSettings,
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(
-                                color: theme.dividerColor.withAlpha(100),
-                                width: 1.8,
+                    // Bottom Row: Settings & Home
+                    Row(
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 50,
+                            child: OutlinedButton.icon(
+                              onPressed: _handleChangeSettings,
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                  color: theme.dividerColor.withAlpha(100),
+                                  width: 1.8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            icon: const Icon(Icons.tune_rounded, size: 20),
-                            label: const Text(
-                              "SETTINGS",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13,
-                                letterSpacing: 0.5,
+                              icon: const Icon(Icons.tune_rounded, size: 20),
+                              label: const Text(
+                                "SETTINGS",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: SizedBox(
-                          height: 50,
-                          child: OutlinedButton.icon(
-                            onPressed: _handleGoHome,
-                            style: OutlinedButton.styleFrom(
-                              side: BorderSide(
-                                color: theme.dividerColor.withAlpha(100),
-                                width: 1.8,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: SizedBox(
+                            height: 50,
+                            child: OutlinedButton.icon(
+                              onPressed: _handleGoHome,
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(
+                                  color: theme.dividerColor.withAlpha(100),
+                                  width: 1.8,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
                               ),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            icon: const Icon(Icons.home_rounded, size: 20),
-                            label: const Text(
-                              "MAIN MENU",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w800,
-                                fontSize: 13,
-                                letterSpacing: 0.5,
+                              icon: const Icon(Icons.home_rounded, size: 20),
+                              label: const Text(
+                                "MAIN MENU",
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 13,
+                                  letterSpacing: 0.5,
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
 
-                  const SizedBox(height: 20),
+                    const SizedBox(height: 20),
+                  ],
+                ),
+              ),
+            ),
+
+            // ==========================================
+            // 4. CONFETTI CELEBRATION SHOWER
+            // ==========================================
+            Align(
+              alignment: Alignment.topCenter,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirectionality: BlastDirectionality.explosive,
+                shouldLoop: true,
+                numberOfParticles: 35,
+                gravity: 0.2,
+                colors: [
+                  AppTheme.teamAColor,
+                  AppTheme.teamBColor,
+                  Colors.amber,
+                  Colors.greenAccent,
+                  Colors.orangeAccent,
+                  Colors.white,
                 ],
               ),
             ),
-          ),
-
-          // ==========================================
-          // 4. CONFETTI CELEBRATION SHOWER
-          // ==========================================
-          Align(
-            alignment: Alignment.topCenter,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirectionality: BlastDirectionality.explosive,
-              shouldLoop: true,
-              numberOfParticles: 35,
-              gravity: 0.2,
-              colors: [
-                AppTheme.teamAColor,
-                AppTheme.teamBColor,
-                Colors.amber,
-                Colors.greenAccent,
-                Colors.orangeAccent,
-                Colors.white,
-              ],
+            Align(
+              alignment: Alignment.topLeft,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirection: pi / 4,
+                emissionFrequency: 0.05,
+                numberOfParticles: 15,
+                gravity: 0.18,
+              ),
             ),
-          ),
-          Align(
-            alignment: Alignment.topLeft,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirection: pi / 4,
-              emissionFrequency: 0.05,
-              numberOfParticles: 15,
-              gravity: 0.18,
+            Align(
+              alignment: Alignment.topRight,
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirection: 3 * pi / 4,
+                emissionFrequency: 0.05,
+                numberOfParticles: 15,
+                gravity: 0.18,
+              ),
             ),
-          ),
-          Align(
-            alignment: Alignment.topRight,
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirection: 3 * pi / 4,
-              emissionFrequency: 0.05,
-              numberOfParticles: 15,
-              gravity: 0.18,
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
-    ),
     );
   }
 

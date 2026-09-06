@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import {
   Play,
@@ -9,7 +9,9 @@ import {
   Clock,
   Users,
   User,
-  Flame,
+  ChevronDown,
+  ChevronUp,
+  Trophy,
 } from "lucide-react";
 
 const DEMO_20_WORDS = [
@@ -90,8 +92,40 @@ export const InteractiveHeroDemo = () => {
         osc.start();
         osc.stop(ctx.currentTime + 0.2);
       });
-    } catch (_) {}
+    } catch {}
   };
+
+  // Handle Correct or Pass
+  const handleAnswer = useCallback(
+    (isCorrect) => {
+      if (gameState !== "playing") return;
+
+      if (isCorrect) {
+        setScore((s) => s + 1);
+        setFlashColor("green");
+        playSound("correct");
+      } else {
+        setPassedCount((p) => p + 1);
+        setFlashColor("red");
+        playSound("pass");
+      }
+
+      setTimeout(() => setFlashColor(null), 250);
+
+      if (wordIndex + 1 < words.length) {
+        setWordIndex((i) => i + 1);
+      } else {
+        setGameState("ended");
+        if (gameMode === "team") {
+          setTeamScores((prevScores) => ({
+            ...prevScores,
+            [activeTeam]: prevScores[activeTeam] + score + (isCorrect ? 1 : 0),
+          }));
+        }
+      }
+    },
+    [gameState, wordIndex, words.length, gameMode, activeTeam, score],
+  );
 
   // Keyboard Shortcuts
   useEffect(() => {
@@ -108,7 +142,7 @@ export const InteractiveHeroDemo = () => {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [gameState, wordIndex, words]);
+  }, [gameState, handleAnswer]);
 
   // Mobile DeviceOrientation Accelerometer Sensor Listener
   useEffect(() => {
@@ -133,7 +167,7 @@ export const InteractiveHeroDemo = () => {
     window.addEventListener("deviceorientation", handleOrientation, true);
     return () =>
       window.removeEventListener("deviceorientation", handleOrientation, true);
-  }, [gameState, wordIndex, words]);
+  }, [gameState, handleAnswer]);
 
   // Request iOS Sensor Permissions
   const requestSensorPermission = () => {
@@ -190,41 +224,18 @@ export const InteractiveHeroDemo = () => {
     return () => clearInterval(timer);
   }, [gameState, gameMode, activeTeam, score]);
 
-  // Handle Correct or Pass
-  const handleAnswer = (isCorrect) => {
-    if (gameState !== "playing") return;
-
-    if (isCorrect) {
-      setScore((s) => s + 1);
-      setFlashColor("green");
-      playSound("correct");
-    } else {
-      setPassedCount((p) => p + 1);
-      setFlashColor("red");
-      playSound("pass");
-    }
-
-    setTimeout(() => setFlashColor(null), 250);
-
-    if (wordIndex + 1 < words.length) {
-      setWordIndex((i) => i + 1);
-    } else {
-      setGameState("ended");
-      if (gameMode === "team") {
-        setTeamScores((prevScores) => ({
-          ...prevScores,
-          [activeTeam]: prevScores[activeTeam] + score + (isCorrect ? 1 : 0),
-        }));
-      }
-    }
-  };
-
   const currentItem = words[wordIndex] || DEMO_20_WORDS[0];
 
   return (
-    <div className="w-full max-w-3xl mx-auto flex flex-col gap-4">
+    <div
+      className="w-full max-w-sm sm:max-w-3xl mx-auto flex flex-col gap-4"
+      id="interactive-hero-demo"
+    >
       {/* Playground Simulator Container */}
-      <div className="relative w-full aspect-video min-h-90 sm:min-h-105 bg-surface border-4 border-border rounded-2xl p-4 sm:p-6 flex flex-col justify-between overflow-hidden text-text font-sans shadow-card dark:shadow-amber-500/15 transition-colors duration-300">
+      <div className="relative w-full min-h-115 sm:min-h-105 sm:aspect-video bg-surface border-2 sm:border-4 border-border rounded-3xl p-4 sm:p-6 flex flex-col justify-between overflow-hidden text-text font-sans shadow-2xl dark:shadow-amber-500/10 transition-all duration-300">
+        {/* Mobile Screen Top Speaker Notch */}
+        <div className="sm:hidden absolute top-2 left-1/2 -translate-x-1/2 w-16 h-1 bg-border/80 rounded-full z-30 pointer-events-none" />
+
         {/* Flash Effect */}
         <AnimatePresence>
           {flashColor && (
@@ -246,17 +257,17 @@ export const InteractiveHeroDemo = () => {
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-72 h-32 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
 
         {/* Header HUD Bar */}
-        <div className="flex items-center justify-between z-20 bg-surface-card/80 backdrop-blur-md px-4 py-2 rounded-2xl border border-border/60 text-xs font-black">
+        <div className="flex items-center justify-between z-20 bg-surface-card/80 backdrop-blur-md px-3 py-1.5 sm:px-4 sm:py-2 rounded-2xl border border-border/60 text-xs font-black mt-1 sm:mt-0">
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-primary animate-ping" />
-            <span className="uppercase tracking-widest text-primary">
+            <span className="uppercase tracking-widest text-primary text-[0.7rem] sm:text-xs">
               Live Playable Demo
             </span>
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="text-muted text-[0.7rem] uppercase font-bold hidden sm:inline">
-              Mode: {gameMode === "solo" ? "Solo Play" : activeTeam}
+            <span className="text-muted text-[0.65rem] sm:text-[0.7rem] uppercase font-bold">
+              {gameMode === "solo" ? "Solo Play" : activeTeam}
             </span>
           </div>
         </div>
@@ -266,29 +277,29 @@ export const InteractiveHeroDemo = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center text-center gap-4 my-auto z-20 max-w-lg mx-auto"
+            className="flex flex-col items-center text-center gap-3.5 sm:gap-4 my-auto z-20 max-w-lg mx-auto w-full pt-1 sm:pt-0"
           >
             <div>
-              <h3 className="text-2xl sm:text-3xl font-black uppercase tracking-tight text-text">
+              <h3 className="text-xl sm:text-3xl font-black uppercase tracking-tight text-text">
                 Game Demo
               </h3>
-              <p className="text-muted text-xs sm:text-sm mt-1 leading-relaxed">
-                Test tilt sensing on mobile or keyboard controls on desktop.
+              <p className="text-muted text-[0.7rem] sm:text-sm mt-0.5 sm:mt-1 leading-relaxed">
+                Tilt phone on mobile or use keyboard controls on desktop.
               </p>
             </div>
 
             {/* Timer Selector */}
-            <div className="flex flex-col gap-1.5 w-full">
+            <div className="flex flex-col gap-1 w-full">
               <span className="text-[0.65rem] font-black uppercase text-muted tracking-wider flex items-center justify-center gap-1">
                 <Clock className="w-3 h-3 text-primary" /> Select Round
                 Duration:
               </span>
-              <div className="flex justify-center gap-2">
+              <div className="grid grid-cols-4 gap-1.5 sm:flex sm:justify-center sm:gap-2">
                 {[30, 45, 60, 90].map((t) => (
                   <button
                     key={t}
                     onClick={() => setSelectedTimer(t)}
-                    className={`px-4 py-2 rounded-xl font-black text-xs transition-all cursor-pointer ${
+                    className={`py-2 px-2 sm:px-4 rounded-xl font-black text-xs transition-all cursor-pointer ${
                       selectedTimer === t
                         ? "bg-primary text-accent scale-105 shadow-md"
                         : "bg-surface-card border border-border text-muted hover:text-text"
@@ -301,14 +312,14 @@ export const InteractiveHeroDemo = () => {
             </div>
 
             {/* Mode Selector */}
-            <div className="flex flex-col gap-1.5 w-full">
+            <div className="flex flex-col gap-1 w-full">
               <span className="text-[0.65rem] font-black uppercase text-muted tracking-wider flex items-center justify-center gap-1">
                 <Users className="w-3 h-3 text-primary" /> Select Game Mode:
               </span>
-              <div className="flex justify-center gap-2">
+              <div className="grid grid-cols-2 gap-2 sm:flex sm:justify-center">
                 <button
                   onClick={() => setGameMode("solo")}
-                  className={`px-4 py-2 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`py-2 px-3 sm:px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     gameMode === "solo"
                       ? "bg-primary text-accent scale-105 shadow-md"
                       : "bg-surface-card border border-border text-muted hover:text-text"
@@ -318,13 +329,13 @@ export const InteractiveHeroDemo = () => {
                 </button>
                 <button
                   onClick={() => setGameMode("team")}
-                  className={`px-4 py-2 rounded-xl font-black text-xs transition-all flex items-center gap-1.5 cursor-pointer ${
+                  className={`py-2 px-3 sm:px-4 rounded-xl font-black text-xs transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                     gameMode === "team"
                       ? "bg-primary text-accent scale-105 shadow-md"
                       : "bg-surface-card border border-border text-muted hover:text-text"
                   }`}
                 >
-                  <Users className="w-3.5 h-3.5" /> 2-Team Battle Mode
+                  <Users className="w-3.5 h-3.5" /> 2-Team Battle
                 </button>
               </div>
             </div>
@@ -332,7 +343,7 @@ export const InteractiveHeroDemo = () => {
             {/* Action Launch Button */}
             <button
               onClick={startGame}
-              className="w-full max-w-xs py-4 rounded-2xl bg-primary text-accent font-black text-xs uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer mt-2"
+              className="w-full max-w-xs py-3.5 sm:py-4 rounded-2xl bg-primary text-accent font-black text-xs uppercase tracking-wider hover:scale-105 active:scale-95 transition-all shadow-lg flex items-center justify-center gap-2 cursor-pointer mt-1"
             >
               <Play className="w-4 h-4 fill-accent" /> Start {selectedTimer}s
               Round Now
@@ -352,32 +363,30 @@ export const InteractiveHeroDemo = () => {
 
         {/* --- STATE 2: ACTIVE GAMEPLAY --- */}
         {gameState === "playing" && (
-          <div className="flex flex-col justify-between h-full z-20 py-2">
+          <div className="flex flex-col justify-between h-full z-20 py-1 sm:py-2 gap-2">
             {/* Top Score Bar */}
-            <div className="flex items-center justify-between bg-surface-card border border-border/60 px-4 py-2 rounded-xl text-xs font-black">
-              <div className="flex items-center gap-2">
-                <Clock className="w-4 h-4 text-primary animate-pulse" />
-                <span className="text-lg font-mono font-black text-primary">
+            <div className="flex items-center justify-between bg-surface-card border border-border/60 px-3 py-1.5 sm:px-4 sm:py-2 rounded-xl text-xs font-black">
+              <div className="flex items-center gap-1.5 sm:gap-2">
+                <Clock className="w-3.5 h-3.5 text-primary animate-pulse" />
+                <span className="text-base sm:text-lg font-mono font-black text-primary">
                   {timeLeft}s
                 </span>
               </div>
 
               {gameMode === "team" && (
-                <div className="flex items-center gap-3">
-                  <span
-                    className={`px-2.5 py-0.5 rounded-full text-[0.65rem] ${activeTeam === "Team A" ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" : "bg-pink-500/20 text-pink-400 border border-pink-500/30"}`}
-                  >
-                    Current: {activeTeam}
-                  </span>
-                </div>
+                <span
+                  className={`px-2 py-0.5 rounded-full text-[0.65rem] ${activeTeam === "Team A" ? "bg-cyan-500/20 text-cyan-400 border border-cyan-500/30" : "bg-pink-500/20 text-pink-400 border border-pink-500/30"}`}
+                >
+                  {activeTeam}
+                </span>
               )}
 
-              <div className="flex items-center gap-3">
-                <span className="text-emerald-400 font-black">
-                  ✓ {score} Correct
+              <div className="flex items-center gap-2 sm:gap-3 text-[0.7rem] sm:text-xs">
+                <span className="text-emerald-400 font-black flex items-center gap-1">
+                  <CheckCircle2 className="w-3.5 h-3.5" /> {score} Correct
                 </span>
-                <span className="text-red-400 font-black">
-                  ✗ {passedCount} Pass
+                <span className="text-red-400 font-black flex items-center gap-1">
+                  <XCircle className="w-3.5 h-3.5" /> {passedCount} Pass
                 </span>
               </div>
             </div>
@@ -388,9 +397,9 @@ export const InteractiveHeroDemo = () => {
               initial={{ scale: 0.85, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.85, opacity: 0 }}
-              className="my-auto bg-surface-card border-2 border-primary/60 rounded-3xl p-6 sm:p-8 text-center shadow-card shadow-card-hover shadow-primary/20 flex flex-col justify-center items-center gap-2 min-h-40"
+              className="my-auto bg-surface-card border-2 border-primary/60 rounded-3xl p-5 sm:p-8 text-center shadow-card shadow-primary/20 flex flex-col justify-center items-center gap-1.5 min-h-32.5 sm:min-h-40"
             >
-              <div className="flex items-center gap-2 text-xs font-black text-primary uppercase tracking-widest">
+              <div className="flex items-center gap-1.5 text-[0.7rem] sm:text-xs font-black text-primary uppercase tracking-widest">
                 <span>{currentItem.icon}</span> {currentItem.deck}
               </div>
               <h2 className="text-2xl sm:text-4xl font-black text-text uppercase tracking-tight leading-tight">
@@ -399,24 +408,26 @@ export const InteractiveHeroDemo = () => {
             </motion.div>
 
             {/* On-screen Controls & Keyboard Shortcuts */}
-            <div className="flex flex-col gap-2">
-              <div className="flex justify-between items-center text-[0.65rem] text-muted font-bold px-2">
+            <div className="flex flex-col gap-1.5">
+              <div className="hidden md:flex justify-between items-center text-[0.65rem] text-muted font-bold px-2">
                 <span>Keyboard: ↓ / Space (Correct)</span>
                 <span>Keyboard: ↑ / Esc (Pass)</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                 <button
                   onClick={() => handleAnswer(true)}
-                  className="py-3 bg-emerald-500 hover:bg-emerald-400 text-accent font-black text-xs uppercase rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="py-3 bg-emerald-500 hover:bg-emerald-400 text-accent font-black text-xs uppercase rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer"
                 >
-                  <CheckCircle2 className="w-4 h-4" /> Got It! (Tilt Down 👇)
+                  <CheckCircle2 className="w-4 h-4" /> Got It! (Tilt Down{" "}
+                  <ChevronDown className="w-3.5 h-3.5" />)
                 </button>
                 <button
                   onClick={() => handleAnswer(false)}
-                  className="py-3 bg-red-500 hover:bg-red-400 text-white font-black text-xs uppercase rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer"
+                  className="py-3 bg-red-500 hover:bg-red-400 text-white font-black text-xs uppercase rounded-2xl shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer"
                 >
-                  <XCircle className="w-4 h-4" /> Pass (Tilt Up 👆)
+                  <XCircle className="w-4 h-4" /> Pass (Tilt Up{" "}
+                  <ChevronUp className="w-3.5 h-3.5" />)
                 </button>
               </div>
             </div>
@@ -428,29 +439,29 @@ export const InteractiveHeroDemo = () => {
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center text-center gap-4 my-auto z-20 max-w-md mx-auto"
+            className="flex flex-col items-center text-center gap-3 sm:gap-4 my-auto z-20 max-w-md mx-auto w-full"
           >
-            <div className="w-14 h-14 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center text-primary font-black text-2xl">
-              🎉
+            <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary/20 border-2 border-primary flex items-center justify-center text-primary font-black">
+              <Trophy className="w-6 h-6 sm:w-7 sm:h-7" />
             </div>
 
             <div>
-              <h3 className="text-2xl font-black text-primary uppercase tracking-tight">
+              <h3 className="text-xl sm:text-2xl font-black text-primary uppercase tracking-tight">
                 Round Complete!
               </h3>
-              <p className="text-xs text-muted mt-1">
+              <p className="text-[0.75rem] sm:text-xs text-muted mt-0.5">
                 You scored <strong>{score} correct points</strong> in{" "}
                 {selectedTimer} seconds!
               </p>
             </div>
 
             {gameMode === "team" && (
-              <div className="w-full grid grid-cols-2 gap-3 p-3 rounded-2xl bg-surface-card border border-border">
+              <div className="w-full grid grid-cols-2 gap-2 sm:gap-3 p-2.5 sm:p-3 rounded-2xl bg-surface-card border border-border">
                 <div className="flex flex-col">
                   <span className="text-[0.65rem] font-bold text-cyan-400 uppercase">
                     Team A Score
                   </span>
-                  <span className="text-xl font-black text-text">
+                  <span className="text-lg sm:text-xl font-black text-text">
                     {teamScores["Team A"]}
                   </span>
                 </div>
@@ -458,14 +469,14 @@ export const InteractiveHeroDemo = () => {
                   <span className="text-[0.65rem] font-bold text-pink-400 uppercase">
                     Team B Score
                   </span>
-                  <span className="text-xl font-black text-text">
+                  <span className="text-lg sm:text-xl font-black text-text">
                     {teamScores["Team B"]}
                   </span>
                 </div>
               </div>
             )}
 
-            <div className="flex gap-3 w-full">
+            <div className="flex gap-2 sm:gap-3 w-full">
               {gameMode === "team" && (
                 <button
                   onClick={() => {
@@ -491,8 +502,14 @@ export const InteractiveHeroDemo = () => {
 
         {/* Bottom Bar Info */}
         <div className="flex justify-between items-center text-[0.65rem] text-muted font-bold z-20 pt-2 border-t border-border/40">
-          <span>GUESS UP CHARADES</span>
-          <span>MOBILE TILT + DESKTOP ARROW KEYS ACTIVE</span>
+          <span className="flex items-center gap-1">
+            <Smartphone className="w-3 h-3 text-primary" /> Auto Sensor
+          </span>
+          <span className="truncate max-w-50 sm:max-w-none">
+            {sensorPermission === "granted"
+              ? "Tilt Active: Down = Correct | Up = Pass"
+              : "Use On-Screen Buttons or Gyro Sensor"}
+          </span>
         </div>
       </div>
     </div>
