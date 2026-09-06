@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /admin
+Disallow: /admin/
+Allow: /
+
+Sitemap: https://guessup.app/sitemap.xml

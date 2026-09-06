@@ -77,9 +77,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _subscription = accelerometerEventStream().listen(_handleAccelerometer);
     _fetchInitialWords();
     _setLandscapeOrientation();
-    if (widget.teamMatchState?.isTeamMode == true) {
-      GameAudioEngine().stopBgm();
-    }
+    GameAudioEngine().setGameActive(true);
   }
 
   @override
@@ -150,11 +148,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   }
 
   void _startGetReadyCountdown() {
+    GameAudioEngine().pauseBgm();
     if (_isStartingCountdown) return;
     _isStartingCountdown = true;
-    if (widget.teamMatchState?.isTeamMode == true) {
-      GameAudioEngine().pauseBgm();
-    }
     GameAudioEngine().playStartBeep();
     GameAudioEngine().lightImpact();
 
@@ -202,12 +198,14 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       setState(() {
         isGamePaused = false;
       });
+      GameAudioEngine().setGameActive(true);
       gameTimerController.start();
     } else {
       gameTimerController.pause();
       setState(() {
         isGamePaused = true;
       });
+      GameAudioEngine().setGameActive(false);
     }
   }
 
@@ -364,7 +362,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     _subscription?.cancel();
     countdownTimer?.cancel();
     gameTimerController.dispose();
-    GameAudioEngine().startBgm();
+    GameAudioEngine().setGameActive(false);
     _setPortraitOrientation();
     super.dispose();
   }
@@ -397,6 +395,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
             GameAudioEngine().playEndBeep();
             GameAudioEngine().heavyImpact();
             setState(() => isGameFinished = true);
+            GameAudioEngine().setGameActive(false);
             _setPortraitOrientation();
             Navigator.of(context).pushReplacement(
               CupertinoPageRoute(

@@ -3,7 +3,7 @@ description: "Guess Up is a mobile-based charades party game, designed especiall
 
 publish_to: "none"
 
-version: 1.0.0+4
+version: 1.1.0+5
 
 environment:
   sdk: ^3.7.2
@@ -44,23 +44,21 @@ dev_dependencies:
 
 flutter_launcher_icons:
   android: true
-  ios: true
-  image_path: "assets/images/logo-transparent.png"
-  image_path_ios: "assets/images/logo_dark.png"
-  adaptive_icon_foreground: "assets/images/logo-transparent.png"
-  adaptive_icon_background: "#121212"
+  adaptive_icon_foreground_inset: 10
+  ios: false
+  image_path: "assets/images/guessup-icon.png"
+  adaptive_icon_foreground: "assets/images/guessup-foreground.png"
+  adaptive_icon_background: "assets/images/guessup-background.png"
 
 flutter_native_splash:
   color: "#ffffff"
   color_dark: "#000000"
-  image: "assets/images/logo-transparent.png"
-  image_dark: "assets/images/logo-transparent.png"
+  image: "assets/images/guessup-icon.png"
+  image_dark: "assets/images/guessup-icon.png"
   android_gravity: center
   android_12:
-    image: "assets/images/logo-transparent.png"
-    image_dark: "assets/images/logo-transparent.png"
-    icon_background_color: "#ffffff"
-    icon_background_color_dark: "#000000"
+    image: "assets/images/guessup-icon.png"
+    image_dark: "assets/images/guessup-icon.png"
 
 flutter:
   uses-material-design: true
@@ -69,9 +67,6 @@ flutter:
     - assets/data.json
     - assets/sounds/
     - assets/images/
-    - assets/images/logo-transparent.png
-    - assets/images/logo_light.png
-    - assets/images/logo_dark.png
     - assets/images/onboarding/1.webp
 
   fonts:

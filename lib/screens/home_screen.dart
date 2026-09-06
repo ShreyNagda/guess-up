@@ -425,7 +425,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                     ),
                     child: const Text(
-                      "EXIT APP",
+                      "EXIT",
                       style: TextStyle(
                         fontWeight: FontWeight.w900,
                         fontSize: 12,
@@ -493,7 +493,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(height: 6),
 
                 // 4. STICKY ACTION HUD WITH DROPDOWNS & HERO PLAY BUTTON
-                _buildStickyActionHUD(activeDeck, isDark),
+                _buildStickyActionHUD(isDark),
 
                 const SizedBox(height: 10),
               ],
@@ -896,15 +896,11 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 9,
-                          vertical: 4,
+                          vertical: 9,
                         ),
                         decoration: BoxDecoration(
                           color: Colors.black.withAlpha(200),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: Colors.amberAccent,
-                            width: 1.5,
-                          ),
+                          borderRadius: BorderRadius.circular(20),
                           boxShadow: const [
                             BoxShadow(
                               color: Colors.black38,
@@ -915,8 +911,8 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         child: Icon(
                           Icons.check_circle_rounded,
-                          color: Colors.greenAccent,
                           size: 14,
+                          color: Colors.amberAccent,
                         ),
                       ),
                     ),
@@ -1016,7 +1012,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   // --- STICKY ACTION HUD ---
-  Widget _buildStickyActionHUD(Category activeDeck, bool isDark) {
+  Widget _buildStickyActionHUD(bool isDark) {
     final primaryGlowColor =
         isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
     final hudSurface = isDark ? const Color(0xFF1A1A1E) : Colors.white;
@@ -1044,7 +1040,7 @@ class _HomeScreenState extends State<HomeScreen> {
           // Mode Toggle + Dropdowns Row
           Row(
             children: [
-              // Solo vs Team Segment Switch
+              // Solo vs Team Segment Switch - Fixed flex allocation so size remains identical in both modes
               Expanded(
                 flex: 4,
                 child: Container(
@@ -1124,58 +1120,64 @@ class _HomeScreenState extends State<HomeScreen> {
 
               const SizedBox(width: 8),
 
-              // Timer Dropdown Pill
+              // Other Settings (Timer & Rounds) - Takes the rest of the available space
               Expanded(
-                flex: 3,
-                child: _buildDropdownPill<int>(
-                  icon: Icons.timer_outlined,
-                  value: _gameDuration,
-                  label: "${_gameDuration}s",
-                  items:
-                      _timeOptions.map((sec) {
-                        return DropdownMenuItem<int>(
-                          value: sec,
-                          child: Text("${sec}s"),
-                        );
-                      }).toList(),
-                  onChanged: (newTime) {
-                    if (newTime != null) {
-                      _audioEngine.extraLightImpact();
-                      setState(() => _gameDuration = newTime);
-                      _storageService.setGameDuration(newTime);
-                    }
-                  },
-                  isDark: isDark,
+                flex: 6,
+                child: Row(
+                  children: [
+                    // Timer Dropdown Pill
+                    Expanded(
+                      child: _buildDropdownPill<int>(
+                        icon: Icons.timer_outlined,
+                        value: _gameDuration,
+                        label: "${_gameDuration}s",
+                        items:
+                            _timeOptions.map((sec) {
+                              return DropdownMenuItem<int>(
+                                value: sec,
+                                child: Text("${sec}s"),
+                              );
+                            }).toList(),
+                        onChanged: (newTime) {
+                          if (newTime != null) {
+                            _audioEngine.extraLightImpact();
+                            setState(() => _gameDuration = newTime);
+                            _storageService.setGameDuration(newTime);
+                          }
+                        },
+                        isDark: isDark,
+                      ),
+                    ),
+
+                    // Round Dropdown Pill (Team Mode Only)
+                    if (_isTeamMode) ...[
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: _buildDropdownPill<int>(
+                          icon: Icons.flag_outlined,
+                          value: _teamRounds,
+                          label: "$_teamRounds Rds",
+                          items:
+                              _roundOptions.map((rounds) {
+                                return DropdownMenuItem<int>(
+                                  value: rounds,
+                                  child: Text("$rounds Rds"),
+                                );
+                              }).toList(),
+                          onChanged: (newRounds) {
+                            if (newRounds != null) {
+                              _audioEngine.extraLightImpact();
+                              setState(() => _teamRounds = newRounds);
+                              _storageService.setTeamRounds(newRounds);
+                            }
+                          },
+                          isDark: isDark,
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
               ),
-
-              // Round Dropdown Pill (Team Mode Only)
-              if (_isTeamMode) ...[
-                const SizedBox(width: 8),
-                Expanded(
-                  flex: 3,
-                  child: _buildDropdownPill<int>(
-                    icon: Icons.flag_outlined,
-                    value: _teamRounds,
-                    label: "$_teamRounds Rds",
-                    items:
-                        _roundOptions.map((rounds) {
-                          return DropdownMenuItem<int>(
-                            value: rounds,
-                            child: Text("$rounds Rds"),
-                          );
-                        }).toList(),
-                    onChanged: (newRounds) {
-                      if (newRounds != null) {
-                        _audioEngine.extraLightImpact();
-                        setState(() => _teamRounds = newRounds);
-                        _storageService.setTeamRounds(newRounds);
-                      }
-                    },
-                    isDark: isDark,
-                  ),
-                ),
-              ],
             ],
           ),
 
@@ -1216,9 +1218,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
                           child: Text(
-                            _isTeamMode
-                                ? "START TEAM BATTLE (${activeDeck.name.toUpperCase()} • ${_gameDuration}s)"
-                                : "PLAY NOW (${activeDeck.name.toUpperCase()} • ${_gameDuration}s)",
+                            _isTeamMode ? "PLAY TEAM BATTLE" : "PLAY SOLO",
                             style: const TextStyle(
                               color: Colors.black,
                               fontSize: 15,
@@ -1237,13 +1237,13 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 8),
                       Container(
                         padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.black,
-                          shape: BoxShape.circle,
-                        ),
+                        // decoration: const BoxDecoration(
+                        //   color: Colors.black,
+                        //   shape: BoxShape.circle,
+                        // ),
                         child: const Icon(
                           Icons.play_arrow_rounded,
-                          color: Colors.amberAccent,
+                          color: Colors.black,
                           size: 22,
                         ),
                       ),

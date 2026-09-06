@@ -1,83 +1,91 @@
-import React, { useState } from "react";
+import React from "react";
 import { motion } from "motion/react";
 import { InteractiveHeroDemo } from "./InteractiveHeroDemo";
-import { StickyActionHUD } from "./StickyActionHUD";
-import { UserCheck, Sparkles, Flame } from "lucide-react";
+import { Sparkles, UserCheck, Play, Flame, ShieldCheck } from "lucide-react";
 
-export const Hero = ({ activeDeck, onPlayDemoClick }) => {
-  const [hudTime, setHudTime] = useState(60);
-  const [hudRounds, setHudRounds] = useState(5);
+export const Hero = () => {
+  const scrollToDemo = () => {
+    const demoEl = document.getElementById("interactive-hero-demo");
+    if (demoEl) {
+      demoEl.scrollIntoView({ behavior: "smooth" });
+    }
+  };
 
   return (
-    <section className="max-w-5xl mx-auto px-4 md:px-8 pt-6 pb-10 md:pt-12 md:pb-16 flex flex-col items-center text-center gap-10">
-      {/* Centered Hero Header Fold */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="flex flex-col items-center gap-5 max-w-3xl"
-      >
-        <span className="inline-flex items-center gap-2 bg-primary/15 border border-primary/40 text-primary px-4.5 py-1.5 rounded-full font-black text-xs uppercase tracking-widest shadow-sm">
-          <Sparkles className="w-4 h-4" /> Party Charades Powered by Motion
-        </span>
+    <section className="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden" id="hero">
+      {/* Ambient Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] sm:w-[800px] h-[500px] bg-gradient-to-b from-primary/20 via-primary/5 to-transparent rounded-full blur-3xl pointer-events-none" />
 
-        <h1 className="text-4xl sm:text-5xl lg:text-6xl font-black leading-[1.1] tracking-tight uppercase">
-          The Ultimate Party Charades Game —{" "}
-          <span className="text-primary drop-shadow-[3px_3px_0px_var(--color-accent)] dark:drop-shadow-[3px_3px_0px_rgba(255,255,255,0.15)]">
-            Powered by Motion.
-          </span>
-        </h1>
+      <div className="max-w-4xl mx-auto px-6 flex flex-col items-center text-center gap-10 relative z-10">
+        
+        {/* Top Badge */}
+        <motion.div
+          initial={{ opacity: 0, y: -15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.4 }}
+          className="inline-flex items-center gap-2 bg-primary/10 border border-primary/30 text-primary px-4 py-1.5 rounded-full font-black text-xs uppercase tracking-widest backdrop-blur-md shadow-sm"
+        >
+          <Sparkles className="w-4 h-4 text-primary" /> 🔥 THE #1 AD-FREE PARTY CHARADES GAME FOR INDIA
+        </motion.div>
 
-        <p className="text-lg md:text-xl font-extrabold text-text-dark max-w-2xl">
-          Hold your phone to your forehead and let your friends act, shout, and enact clues!
-        </p>
+        {/* Hero Headline & Subheadline */}
+        <motion.div
+          initial={{ opacity: 0, y: 15 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+          className="flex flex-col items-center gap-5 max-w-3xl"
+        >
+          <h1 className="text-4xl sm:text-6xl lg:text-7xl font-black leading-[1.08] tracking-tight uppercase text-white">
+            Flip Your Phone. <br className="hidden sm:inline" />
+            <span className="text-primary drop-shadow-[0_4px_25px_rgba(255,214,0,0.4)]">
+              Hilarious Chaos Unlocked.
+            </span>
+          </h1>
 
-        <p className="text-muted-dark leading-relaxed max-w-xl text-sm sm:text-base">
-          Guess Up turns any gathering into an electric party battle! Built with curated Desi pop-culture decks, 2-team battle mode, tilt detection, and zero ad interruptions.
-        </p>
+          <p className="text-base sm:text-xl font-bold text-slate-200 max-w-2xl leading-relaxed">
+            Put your phone on your forehead, let your crew enact wild clues, and nod down to score! Handcrafted for Indian youth, house parties, and hostel hangouts.
+          </p>
 
-        <div className="flex flex-wrap justify-center gap-3.5 w-full sm:w-auto mt-1">
-          <a
-            href="#join-beta"
-            className="btn bg-primary text-accent text-center font-black px-7 py-3.5 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-bevel-gold flex items-center justify-center gap-2 text-xs uppercase tracking-wider cursor-pointer"
-          >
-            <UserCheck className="w-4 h-4" /> Join Beta Testers
-          </a>
-          <a
-            href="#decks"
-            className="border-2 border-border-dark bg-surface-dark text-text-dark text-center font-extrabold px-7 py-3.5 rounded-2xl hover:bg-white/10 transition-all shadow-sm flex items-center justify-center gap-2 text-xs uppercase tracking-wider cursor-pointer"
-          >
-            <Flame className="w-4 h-4 text-primary" /> Browse Decks Matrix
-          </a>
-        </div>
-      </motion.div>
+          <p className="text-muted text-xs sm:text-sm max-w-xl leading-relaxed">
+            Curated Desi pop-culture decks, 60 FPS motion sensing, 2-team battle mode, and 100% uninterrupted game flow.
+          </p>
 
-      {/* Centered Landscape Interactive Demo Simulator */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-        transition={{ duration: 0.5, delay: 0.15 }}
-        className="w-full flex justify-center"
-      >
-        <InteractiveHeroDemo />
-      </motion.div>
+          {/* DUAL CTAs */}
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 w-full sm:w-auto mt-2">
+            {/* High Commitment CTA */}
+            <a
+              href="#testers"
+              className="w-full sm:w-auto bg-primary text-accent font-black px-8 py-4 rounded-2xl hover:scale-105 active:scale-95 transition-all shadow-xl flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider cursor-pointer"
+            >
+              <UserCheck className="w-4 h-4" /> Register For Free Beta Access 🚀
+            </a>
 
-      {/* Centered Sticky Action HUD (Time & Rounds Dropdowns + Hero Play Button) */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5, delay: 0.3 }}
-        className="w-full"
-      >
-        <StickyActionHUD
-          activeDeck={activeDeck}
-          selectedTime={hudTime}
-          onTimeChange={setHudTime}
-          selectedRounds={hudRounds}
-          onRoundsChange={setHudRounds}
-          onPlayClick={onPlayDemoClick}
-        />
-      </motion.div>
+            {/* Low Commitment CTA */}
+            <button
+              onClick={scrollToDemo}
+              className="w-full sm:w-auto border border-border bg-surface-card/80 backdrop-blur-md text-white font-black px-8 py-4 rounded-2xl hover:border-primary transition-all flex items-center justify-center gap-2.5 text-xs uppercase tracking-wider cursor-pointer"
+            >
+              <Play className="w-4 h-4 fill-primary text-primary" /> Try Live Interactive Demo 🎮
+            </button>
+          </div>
+
+          {/* Microcopy Friction Reducer */}
+          <div className="flex items-center justify-center gap-2 text-[0.7rem] text-muted font-bold mt-1">
+            <ShieldCheck className="w-3.5 h-3.5 text-primary" />
+            <span>100% Free • No Credit Card Required • Instant TestFlight / APK Access</span>
+          </div>
+        </motion.div>
+
+        {/* EMBEDDED PLAYABLE DEMO */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="w-full"
+        >
+          <InteractiveHeroDemo />
+        </motion.div>
+      </div>
     </section>
   );
 };

@@ -82,7 +82,7 @@ export const Header = () => {
           toggleTheme();
           setIsOpen(false);
         }}
-        className="border-2 border-border-light text-text-light font-bold text-xs px-3 py-1.5 rounded-lg hover:border-primary dark:hover:border-accent hover:bg-black/5 dark:hover:bg-white/5 transition-all uppercase tracking-wider cursor-pointer"
+        className="border-2 border-border text-text font-bold text-xs px-3 py-1.5 rounded-lg hover:border-primary hover:bg-black/5 dark:hover:bg-white/5 transition-all uppercase tracking-wider cursor-pointer"
         aria-label="Toggle Theme"
       >
         {theme === "dark" ? "Light" : "Dark"}
@@ -99,22 +99,22 @@ export const Header = () => {
   );
 
   return (
-    <header className="sticky top-0 w-full bg-bg-light/85 dark:bg-bg-dark/85 backdrop-blur-md border-b border-border-light dark:border-border-dark z-40 transition-colors duration-300">
+    <header className="sticky top-0 w-full bg-bg/85 backdrop-blur-md border-b border-border z-40 transition-colors duration-300">
       <div className="max-w-6xl mx-auto flex justify-between items-center px-4 py-4 md:px-8">
         <div className="flex items-center gap-3">
           <Link to="/" className="flex items-center gap-3">
             <img
-              className="w-9 h-9 md:w-11 md:h-11 rounded-full shadow-md object-contain bg-black/5 dark:bg-white/5 p-1"
+              className="w-9 h-9 md:w-11 md:h-11 rounded-full shadow-md object-contain dark:bg-white/5 p-1"
               src="/images/logo.png"
               alt="Guess Up Logo"
             />
             <h1
-              className="logo-text text-xl md:text-2xl font-black tracking-tight text-primary dark:text-text-dark font-sans"
+              className="logo-text text-xl md:text-2xl font-black tracking-tight text-text font-sans"
               style={{
                 textShadow:
                   theme === "light"
-                    ? "2px 2px 0px #ffd600"
-                    : "2px 2px 0px #212121",
+                    ? "2px 2px 0px rgba(0, 0, 0, 0.15)"
+                    : "2px 2px 0px #0c091a",
               }}
             >
               GUESS UP
@@ -123,7 +123,7 @@ export const Header = () => {
         </div>
 
         {/* Desktop Nav Links */}
-        <nav className="hidden md:flex items-center gap-8 text-text-light dark:text-text-dark">
+        <nav className="hidden md:flex items-center gap-8 text-text">
           {navLinks}
         </nav>
 
@@ -134,13 +134,13 @@ export const Header = () => {
           aria-label="Toggle Menu"
         >
           <span
-            className={`w-full h-0.75 bg-primary dark:bg-text-dark rounded transition-all duration-300 ${isOpen ? "transform translate-y-2 rotate-45" : ""}`}
+            className={`w-full h-0.75 bg-primary rounded transition-all duration-300 ${isOpen ? "transform translate-y-2 rotate-45" : ""}`}
           />
           <span
-            className={`w-full h-0.75 bg-primary dark:bg-text-dark rounded transition-all duration-300 ${isOpen ? "opacity-0" : ""}`}
+            className={`w-full h-0.75 bg-primary rounded transition-all duration-300 ${isOpen ? "opacity-0" : ""}`}
           />
           <span
-            className={`w-full h-0.75 bg-primary dark:bg-text-dark rounded transition-all duration-300 ${isOpen ? "transform -translate-y-2 -rotate-45" : ""}`}
+            className={`w-full h-0.75 bg-primary rounded transition-all duration-300 ${isOpen ? "transform -translate-y-2 -rotate-45" : ""}`}
           />
         </button>
 
@@ -163,9 +163,9 @@ export const Header = () => {
                 initial="closed"
                 animate="open"
                 exit="closed"
-                className="fixed top-0 bottom-0 right-0 w-70 bg-surface-light dark:bg-surface-dark border-l border-border-light dark:border-border-dark flex flex-col justify-start items-start p-20 gap-8 z-45 md:hidden shadow-2xl"
+                className="fixed top-0 bottom-0 right-0 w-70 bg-surface border-l border-border flex flex-col justify-start items-start p-20 gap-8 z-45 md:hidden shadow-2xl"
               >
-                <div className="flex flex-col gap-6 w-full text-text-light dark:text-text-dark items-start">
+                <div className="flex flex-col gap-6 w-full text-text items-start">
                   {navLinks}
                 </div>
               </motion.nav>

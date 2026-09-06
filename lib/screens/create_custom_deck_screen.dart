@@ -457,13 +457,13 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
                         isDark: isDark,
                         child: Row(
                           children: [
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              child: Text(
-                                _selectedIcon.isNotEmpty ? _selectedIcon : "🎴",
-                                style: const TextStyle(fontSize: 26),
-                              ),
-                            ),
+                            // Container(
+                            //   padding: const EdgeInsets.all(12),
+                            //   child: Text(
+                            //     _selectedIcon.isNotEmpty ? _selectedIcon : "🎴",
+                            //     style: const TextStyle(fontSize: 26),
+                            //   ),
+                            // ),
                             Expanded(
                               child: TextField(
                                 controller: _customEmojiController,
@@ -478,8 +478,15 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
                                     fontSize: 13,
                                     color: textColor.withAlpha(120),
                                   ),
+                                  contentPadding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                    vertical: 14,
+                                  ),
                                   border: InputBorder.none,
                                 ),
+                                maxLength: 1,
+                                maxLengthEnforcement:
+                                    MaxLengthEnforcement.enforced,
                                 onChanged: (val) {
                                   if (val.trim().isNotEmpty) {
                                     setState(() {

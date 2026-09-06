@@ -7,6 +7,7 @@ import {
   updateDoc,
   deleteDoc,
   deleteField,
+  addDoc,
   serverTimestamp,
   query,
   orderBy,
@@ -37,14 +38,16 @@ import {
   Tag,
   Eye,
   EyeOff,
-  AlertTriangle,
   Smile,
-  SlidersHorizontal,
-  Wand2,
+  Archive,
+  CheckCircle2,
+  AlertCircle,
+  Smartphone,
+  Sparkles,
+  Loader2,
 } from "lucide-react";
 import { ColorPicker } from "./ColorPicker";
 import { Switch } from "./Switch";
-import { WordTagInput } from "./WordTagInput";
 import { getRandomUnusedColor, getDarkerShade } from "../utils/colorUtils";
 import { normalizeCategory } from "../utils/categoryModel";
 
@@ -66,17 +69,25 @@ const EMOJI_PALETTE = [
   "🎯",
 ];
 
-const ADMIN_SECRET_KEY = import.meta.env.VITE_ADMIN_SECRET || "admin123";
-
 export const AdminDashboard = () => {
-  const { isAdminLoggedIn, logout, openAuthModal } = useAdminAuth();
+  const { user, isAdminLoggedIn, login, logout } = useAdminAuth();
   const navigate = useNavigate();
+
+  // Embedded Auth Form State
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authSubmitting, setAuthSubmitting] = useState(false);
+  const [authError, setAuthError] = useState("");
 
   // 2 Master Sections: "decks" | "testers"
   const [activeSection, setActiveSection] = useState("decks");
 
   // Sub-tab for Testers section: "registrations" | "feedback"
   const [testersSubTab, setTestersSubTab] = useState("registrations");
+
+  // Feedback filter state: category & status
+  const [feedbackCategoryFilter, setFeedbackCategoryFilter] = useState("all");
+  const [feedbackStatusFilter, setFeedbackStatusFilter] = useState("all"); // "all" | "active" | "archived"
 
   // Data states
   const [decksList, setDecksList] = useState([]);
@@ -92,12 +103,23 @@ export const AdminDashboard = () => {
   const [searchQuery, setSearchQuery] = useState("");
 
   // Modal States
-  const [isDeckModalOpen, setIsDeckModalOpen] = useState(false); // Deck Info Dialog (Metadata + View Words)
-  const [isAddWordsModalOpen, setIsAddWordsModalOpen] = useState(false); // Add New Words Dialog
-  const [editingDeck, setEditingDeck] = useState(null); // null = Create, object = Edit
+  const [isDeckModalOpen, setIsDeckModalOpen] = useState(false);
+  const [isAddWordsModalOpen, setIsAddWordsModalOpen] = useState(false);
+  const [isTesterModalOpen, setIsTesterModalOpen] = useState(false);
+  const [editingDeck, setEditingDeck] = useState(null);
   const [deleteConfirmDeck, setDeleteConfirmDeck] = useState(null);
+  const [deleteConfirmTester, setDeleteConfirmTester] = useState(null);
+  const [deleteConfirmFeedback, setDeleteConfirmFeedback] = useState(null);
 
-  // Form Fields for Deck Info (Category model)
+  // Form Fields for Tester Modal
+  const [testerName, setTesterName] = useState("");
+  const [testerEmail, setTesterEmail] = useState("");
+  const [testerDevice, setTesterDevice] = useState("iOS");
+  const [testerRole, setTesterRole] = useState("Beta Tester");
+  const [editingTester, setEditingTester] = useState(null);
+  const [savingTester, setSavingTester] = useState(false);
+
+  // Form Fields for Deck Info
   const [deckId, setDeckId] = useState("");
   const [autoSlug, setAutoSlug] = useState(true);
   const [deckName, setDeckName] = useState("");
@@ -109,14 +131,26 @@ export const AdminDashboard = () => {
   const [deckIsAvailable, setDeckIsAvailable] = useState(true);
   const [deckSortOrder, setDeckSortOrder] = useState(0);
   const [deckWordsInput, setDeckWordsInput] = useState("");
-
-  // Search inside Deck Info words list
   const [infoWordsSearch, setInfoWordsSearch] = useState("");
-
-  // New Words Dialog single combined field state
   const [newWordsInput, setNewWordsInput] = useState("");
   const [savingDeck, setSavingDeck] = useState(false);
   const [savingNewWords, setSavingNewWords] = useState(false);
+
+  // Handle Embedded Login
+  const handleEmbeddedLogin = async (e) => {
+    e.preventDefault();
+    if (!authEmail.trim() || !authPassword) {
+      setAuthError("Please enter your admin email and password.");
+      return;
+    }
+    setAuthError("");
+    setAuthSubmitting(true);
+    const res = await login(authEmail, authPassword);
+    setAuthSubmitting(false);
+    if (!res.success) {
+      setAuthError(res.message);
+    }
+  };
 
   // Listen to 'categories' collection in Firestore
   useEffect(() => {
@@ -137,7 +171,7 @@ export const AdminDashboard = () => {
           setLoadingDecks(false);
         },
         (err) => {
-          console.warn("Firestore categories fallback:", err);
+          console.warn("Firestore categories fetch fallback:", err);
           setLoadingDecks(false);
         },
       );
@@ -160,22 +194,16 @@ export const AdminDashboard = () => {
         q,
         (snapshot) => {
           const list = [];
-          snapshot.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
+          snapshot.forEach((docSnap) => list.push({ id: docSnap.id, ...docSnap.data() }));
           setTestersList(list);
           setLoadingTesters(false);
         },
         (err) => {
-          console.warn("Firestore testers fallback:", err);
-          const local = JSON.parse(
-            localStorage.getItem("guessup_testers") || "[]",
-          );
-          setTestersList(local);
+          console.warn("Firestore testers fetch error:", err);
           setLoadingTesters(false);
         },
       );
     } catch (_) {
-      const local = JSON.parse(localStorage.getItem("guessup_testers") || "[]");
-      setTestersList(local);
       setLoadingTesters(false);
     }
 
@@ -194,24 +222,16 @@ export const AdminDashboard = () => {
         q,
         (snapshot) => {
           const list = [];
-          snapshot.forEach((doc) => list.push({ id: doc.id, ...doc.data() }));
+          snapshot.forEach((docSnap) => list.push({ id: docSnap.id, ...docSnap.data() }));
           setFeedbackList(list);
           setLoadingFeedback(false);
         },
         (err) => {
-          console.warn("Firestore feedback fallback:", err);
-          const local = JSON.parse(
-            localStorage.getItem("guessup_feedback") || "[]",
-          );
-          setFeedbackList(local);
+          console.warn("Firestore feedback fetch error:", err);
           setLoadingFeedback(false);
         },
       );
     } catch (_) {
-      const local = JSON.parse(
-        localStorage.getItem("guessup_feedback") || "[]",
-      );
-      setFeedbackList(local);
       setLoadingFeedback(false);
     }
 
@@ -223,31 +243,84 @@ export const AdminDashboard = () => {
     navigate("/");
   };
 
+  // RENDER LOGIN SCREEN IF NOT AUTHENTICATED
   if (!isAdminLoggedIn) {
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
-        <div className="w-16 h-16 rounded-3xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary mb-4">
-          <Lock className="w-8 h-8" />
-        </div>
-        <h2 className="text-3xl font-black mb-2">Admin Dashboard Locked</h2>
-        <p className="text-muted-dark text-sm max-w-sm mb-6">
-          Please enter the internal admin passkey to access deck management and
-          playtesters.
-        </p>
-        <div className="flex gap-4">
-          <button
-            onClick={() => navigate("/")}
-            className="px-6 py-3 rounded-2xl border border-border-dark font-extrabold text-xs hover:bg-white/5 transition-all cursor-pointer"
-          >
-            Back to Home
-          </button>
-          <button
-            onClick={openAuthModal}
-            className="px-6 py-3 rounded-2xl bg-primary text-accent font-black text-xs hover:scale-105 transition-all shadow-md cursor-pointer"
-          >
-            Enter Passkey
-          </button>
-        </div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md bg-surface-dark border-2 border-border-dark p-8 rounded-3xl shadow-2xl text-text-dark flex flex-col items-center gap-6"
+        >
+          <div className="w-16 h-16 rounded-3xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary shadow-inner">
+            <Lock className="w-8 h-8" />
+          </div>
+
+          <div>
+            <h2 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              Admin Portal Access
+            </h2>
+            <p className="text-xs text-muted-dark mt-1.5 leading-relaxed">
+              Sign in with your Firebase Administrator credentials to manage beta testers, user feedback, and game decks.
+            </p>
+          </div>
+
+          <form onSubmit={handleEmbeddedLogin} className="w-full flex flex-col gap-4 text-left">
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[0.7rem] font-black uppercase text-muted-dark">Admin Email</label>
+              <div className="relative">
+                <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
+                <input
+                  type="email"
+                  placeholder="admin@guessup.com"
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-[0.7rem] font-black uppercase text-muted-dark">Password</label>
+              <div className="relative">
+                <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
+                <input
+                  type="password"
+                  placeholder="••••••••"
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+                  required
+                />
+              </div>
+            </div>
+
+            {authError && (
+              <div className="p-3 rounded-xl bg-error/15 border border-error/40 text-error text-xs font-bold flex items-center gap-2">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <span>{authError}</span>
+              </div>
+            )}
+
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => navigate("/")}
+                className="flex-1 py-3 rounded-2xl border border-border-dark text-muted-dark font-extrabold text-xs hover:bg-white/5 transition-all cursor-pointer"
+              >
+                Return Home
+              </button>
+              <button
+                type="submit"
+                disabled={authSubmitting}
+                className="flex-1 py-3 rounded-2xl bg-primary text-accent font-black text-xs hover:scale-102 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+              >
+                {authSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : "Sign In"}
+              </button>
+            </div>
+          </form>
+        </motion.div>
       </div>
     );
   }
@@ -269,7 +342,6 @@ export const AdminDashboard = () => {
     try {
       await updateDoc(doc(db, "categories", deck.id), {
         isAvailable: !deck.isAvailable,
-        adminSecret: ADMIN_SECRET_KEY,
         updatedAt: serverTimestamp(),
       });
     } catch (err) {
@@ -277,7 +349,90 @@ export const AdminDashboard = () => {
     }
   };
 
-  // --- DECK CRUD MODAL ACTIONS ---
+  // --- TESTERS MANAGEMENT ACTIONS ---
+  const openCreateTesterModal = () => {
+    setEditingTester(null);
+    setTesterName("");
+    setTesterEmail("");
+    setTesterDevice("iOS");
+    setTesterRole("Beta Tester");
+    setIsTesterModalOpen(true);
+  };
+
+  const openEditTesterModal = (tester) => {
+    setEditingTester(tester);
+    setTesterName(tester.name || "");
+    setTesterEmail(tester.email || "");
+    setTesterDevice(tester.deviceType || tester.device || "iOS");
+    setTesterRole(tester.role || "Beta Tester");
+    setIsTesterModalOpen(true);
+  };
+
+  const handleSaveTester = async (e) => {
+    e.preventDefault();
+    if (!testerName.trim() || !testerEmail.trim()) return;
+
+    setSavingTester(true);
+    const payload = {
+      name: testerName.trim(),
+      email: testerEmail.trim().toLowerCase(),
+      deviceType: testerDevice,
+      role: testerRole,
+      updatedAt: serverTimestamp(),
+    };
+
+    try {
+      if (editingTester) {
+        await updateDoc(doc(db, "testers", editingTester.id), payload);
+      } else {
+        payload.createdAt = serverTimestamp();
+        payload.submittedAt = new Date().toISOString();
+        await addDoc(collection(db, "testers"), payload);
+      }
+      setIsTesterModalOpen(false);
+    } catch (err) {
+      console.error("Error saving tester:", err);
+      alert("Failed to save tester: " + err.message);
+    } finally {
+      setSavingTester(false);
+    }
+  };
+
+  const handleDeleteTester = async () => {
+    if (!deleteConfirmTester) return;
+    try {
+      await deleteDoc(doc(db, "testers", deleteConfirmTester.id));
+      setDeleteConfirmTester(null);
+    } catch (err) {
+      console.error("Error deleting tester:", err);
+      alert("Failed to delete tester: " + err.message);
+    }
+  };
+
+  // --- FEEDBACK MANAGEMENT ACTIONS ---
+  const handleToggleArchiveFeedback = async (item) => {
+    try {
+      await updateDoc(doc(db, "feedback", item.id), {
+        archived: !item.archived,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (err) {
+      console.error("Error archiving feedback:", err);
+    }
+  };
+
+  const handleDeleteFeedback = async () => {
+    if (!deleteConfirmFeedback) return;
+    try {
+      await deleteDoc(doc(db, "feedback", deleteConfirmFeedback.id));
+      setDeleteConfirmFeedback(null);
+    } catch (err) {
+      console.error("Error deleting feedback:", err);
+      alert("Failed to delete feedback: " + err.message);
+    }
+  };
+
+  // --- DECK CRUD ACTIONS ---
   const openCreateDeckModal = () => {
     setEditingDeck(null);
     setAutoSlug(true);
@@ -356,7 +511,6 @@ export const AdminDashboard = () => {
       sortOrder: Number(deckSortOrder) || 0,
       words: parsedWords,
       wordsCount: parsedWords.length,
-      adminSecret: ADMIN_SECRET_KEY,
       updatedAt: serverTimestamp(),
     };
 
@@ -416,7 +570,6 @@ export const AdminDashboard = () => {
       await updateDoc(doc(db, "categories", editingDeck.id), {
         words: mergedWords,
         wordsCount: mergedWords.length,
-        adminSecret: ADMIN_SECRET_KEY,
         updatedAt: serverTimestamp(),
       });
       setIsAddWordsModalOpen(false);
@@ -458,36 +611,41 @@ export const AdminDashboard = () => {
     );
   });
 
-  // Filtered Testers & Feedback
+  // Filtered Testers
   const filteredTesters = testersList.filter((item) => {
     const q = searchQuery.toLowerCase();
     return (
       (item.name || "").toLowerCase().includes(q) ||
-      (item.email || "").toLowerCase().includes(q)
+      (item.email || "").toLowerCase().includes(q) ||
+      (item.role || "").toLowerCase().includes(q)
     );
   });
 
+  // Filtered Feedback
   const filteredFeedback = feedbackList.filter((item) => {
     const q = searchQuery.toLowerCase();
-    return (
+    const matchesSearch =
+      (item.name || "").toLowerCase().includes(q) ||
       (item.email || "").toLowerCase().includes(q) ||
-      (item.feedbackText || "").toLowerCase().includes(q)
-    );
+      (item.feedbackText || "").toLowerCase().includes(q);
+
+    const category = (item.feedbackType || item.category || "").toLowerCase();
+    const matchesCategory =
+      feedbackCategoryFilter === "all" || category.includes(feedbackCategoryFilter);
+
+    const matchesStatus =
+      feedbackStatusFilter === "all" ||
+      (feedbackStatusFilter === "archived" && item.archived === true) ||
+      (feedbackStatusFilter === "active" && !item.archived);
+
+    return matchesSearch && matchesCategory && matchesStatus;
   });
 
   // CSV Export Handler
   const exportCSV = () => {
     if (activeSection === "decks") {
       if (decksList.length === 0) return;
-      const headers = [
-        "ID (Slug)",
-        "Deck Name",
-        "Icon",
-        "Cards Count",
-        "Trending",
-        "Available",
-        "Words List",
-      ];
+      const headers = ["ID (Slug)", "Deck Name", "Icon", "Cards Count", "Trending", "Available", "Words List"];
       const rows = decksList.map((d) => [
         `"${d.id}"`,
         `"${(d.name || "").replace(/"/g, '""')}"`,
@@ -497,47 +655,42 @@ export const AdminDashboard = () => {
         d.isAvailable ? "YES" : "NO",
         `"${(d.words || []).join("; ").replace(/"/g, '""')}"`,
       ]);
-      downloadCSV(
-        `guessup_decks_export_${new Date().toISOString().split("T")[0]}.csv`,
-        headers,
-        rows,
-      );
+      downloadCSV(`guessup_decks_export_${new Date().toISOString().split("T")[0]}.csv`, headers, rows);
     } else {
-      const data =
-        testersSubTab === "registrations" ? testersList : feedbackList;
+      const data = testersSubTab === "registrations" ? testersList : feedbackList;
       if (data.length === 0) return;
       let headers = [];
       let rows = [];
 
       if (testersSubTab === "registrations") {
-        headers = ["ID", "Name", "Email", "Registered Date"];
+        headers = ["ID", "Name", "Email", "Role", "Device", "Registered Date"];
         rows = data.map((item) => [
           `"${item.id || ""}"`,
           `"${(item.name || "").replace(/"/g, '""')}"`,
           `"${(item.email || "").replace(/"/g, '""')}"`,
+          `"${item.role || "Beta Tester"}"`,
+          `"${item.deviceType || item.device || "iOS"}"`,
           `"${item.submittedAt || ""}"`,
         ]);
       } else {
-        headers = ["ID", "Email", "Feedback Note", "Submitted Date"];
+        headers = ["ID", "Name", "Email", "Category", "Device", "Feedback Note", "Archived", "Submitted Date"];
         rows = data.map((item) => [
           `"${item.id || ""}"`,
+          `"${(item.name || "").replace(/"/g, '""')}"`,
           `"${(item.email || "").replace(/"/g, '""')}"`,
+          `"${item.feedbackType || "General"}"`,
+          `"${item.deviceType || "Web"}"`,
           `"${(item.feedbackText || "").replace(/"/g, '""')}"`,
+          item.archived ? "YES" : "NO",
           `"${item.submittedAt || ""}"`,
         ]);
       }
-      downloadCSV(
-        `guessup_${testersSubTab}_export_${new Date().toISOString().split("T")[0]}.csv`,
-        headers,
-        rows,
-      );
+      downloadCSV(`guessup_${testersSubTab}_export_${new Date().toISOString().split("T")[0]}.csv`, headers, rows);
     }
   };
 
   const downloadCSV = (filename, headers, rows) => {
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
+    const csvContent = "data:text/csv;charset=utf-8," + [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -555,15 +708,10 @@ export const AdminDashboard = () => {
     }
     if (data.length === 0) return;
 
-    const dataStr =
-      "data:text/json;charset=utf-8," +
-      encodeURIComponent(JSON.stringify(data, null, 2));
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(data, null, 2));
     const link = document.createElement("a");
     link.setAttribute("href", dataStr);
-    link.setAttribute(
-      "download",
-      `guessup_${activeSection}_export_${new Date().toISOString().split("T")[0]}.json`,
-    );
+    link.setAttribute("download", `guessup_${activeSection}_export_${new Date().toISOString().split("T")[0]}.json`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -578,7 +726,6 @@ export const AdminDashboard = () => {
     w.toLowerCase().includes(infoWordsSearch.toLowerCase()),
   );
 
-  // Parsed list of new words for preview inside Add Words dialog
   const parsedNewWordsList = newWordsInput
     .split(/[\n,]+/)
     .map((w) => w.trim())
@@ -586,7 +733,7 @@ export const AdminDashboard = () => {
 
   return (
     <div className="max-w-7xl mx-auto px-4 md:px-8 py-10 flex flex-col gap-8 text-text-dark">
-      {/* Header bar */}
+      {/* Header Bar */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-surface-dark border-2 border-border-dark p-6 rounded-3xl shadow-lg">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black">
@@ -594,15 +741,13 @@ export const AdminDashboard = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-2xl font-black tracking-tight">
-                Admin Master Dashboard
-              </h1>
+              <h1 className="text-2xl font-black tracking-tight">Admin Master Suite</h1>
               <span className="text-[0.65rem] font-extrabold uppercase px-2 py-0.5 rounded-full bg-success/20 text-success border border-success/30">
-                Firestore Sync
+                Firebase Auth & Firestore
               </span>
             </div>
             <p className="text-xs text-muted-dark mt-0.5">
-              Manage Game Decks & Word Catalog, Beta Testers, and User Feedback.
+              Logged in as <strong className="text-white">{user?.email || "Administrator"}</strong>
             </p>
           </div>
         </div>
@@ -630,18 +775,11 @@ export const AdminDashboard = () => {
             <span className="text-xs uppercase font-black tracking-wider text-primary flex items-center gap-2">
               <Layers className="w-4 h-4" /> Section 1: Deck Management
             </span>
-            <span className="text-3xl font-black text-white">
-              {decksList.length} Decks
-            </span>
+            <span className="text-3xl font-black text-white">{decksList.length} Decks</span>
             <span className="text-xs text-muted-dark font-semibold">
-              {decksList.reduce(
-                (acc, curr) => acc + (curr.words ? curr.words.length : 0),
-                0,
-              )}{" "}
-              word cards configured
+              {decksList.reduce((acc, curr) => acc + (curr.words ? curr.words.length : 0), 0)} word cards configured
             </span>
           </div>
-
           <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black">
             <Layers className="w-6 h-6 text-primary" />
           </div>
@@ -661,18 +799,13 @@ export const AdminDashboard = () => {
               <Users className="w-4 h-4" /> Section 2: Testers & Feedback
             </span>
             <div className="flex items-baseline gap-3">
-              <span className="text-3xl font-black text-white">
-                {testersList.length} Testers
-              </span>
-              <span className="text-xs text-primary font-bold">
-                ({feedbackList.length} notes)
-              </span>
+              <span className="text-3xl font-black text-white">{testersList.length} Testers</span>
+              <span className="text-xs text-primary font-bold">({feedbackList.length} notes)</span>
             </div>
             <span className="text-xs text-muted-dark font-semibold">
               Beta list signups & user feedback entries
             </span>
           </div>
-
           <div className="w-12 h-12 rounded-2xl bg-primary/10 border border-primary/30 flex items-center justify-center text-primary font-black">
             <Users className="w-6 h-6 text-primary" />
           </div>
@@ -697,10 +830,8 @@ export const AdminDashboard = () => {
                   : "text-muted-dark hover:text-white"
               }`}
             >
-              <Users className="w-3.5 h-3.5" /> Beta Testers List (
-              {testersList.length})
+              <Users className="w-3.5 h-3.5" /> Beta Testers ({testersList.length})
             </button>
-
             <button
               onClick={() => setTestersSubTab("feedback")}
               className={`flex-1 md:flex-none px-4 py-2 rounded-lg font-extrabold text-xs transition-all cursor-pointer flex items-center justify-center gap-1.5 ${
@@ -709,22 +840,21 @@ export const AdminDashboard = () => {
                   : "text-muted-dark hover:text-white"
               }`}
             >
-              <MessageSquare className="w-3.5 h-3.5" /> Feedback Notes (
-              {feedbackList.length})
+              <MessageSquare className="w-3.5 h-3.5" /> Feedback Notes ({feedbackList.length})
             </button>
           </div>
         )}
 
-        {/* Search & Action Buttons */}
+        {/* Search & Actions */}
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto justify-between md:justify-end">
           <div className="relative w-full md:w-56">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-dark" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted" />
             <input
               type="text"
               placeholder={`Search ${activeSection}...`}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+              className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-card border border-border text-text text-xs font-semibold placeholder:text-muted outline-none focus:border-primary transition-all"
             />
           </div>
 
@@ -734,6 +864,15 @@ export const AdminDashboard = () => {
               className="px-4 py-2 rounded-xl bg-primary text-accent font-black text-xs flex items-center gap-1.5 hover:scale-105 active:scale-95 transition-all shadow-md cursor-pointer"
             >
               <Plus className="w-4 h-4" /> Create New Deck
+            </button>
+          )}
+
+          {activeSection === "testers" && testersSubTab === "registrations" && (
+            <button
+              onClick={openCreateTesterModal}
+              className="px-4 py-2 rounded-xl bg-primary text-accent font-black text-xs flex items-center gap-1.5 hover:scale-105 active:scale-95 transition-all shadow-md cursor-pointer"
+            >
+              <Plus className="w-4 h-4" /> Add Beta Tester
             </button>
           )}
 
@@ -756,13 +895,12 @@ export const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* --- SECTION 1: DECKS MANAGEMENT (CRUD & TOGGLES) --- */}
+      {/* --- SECTION 1: DECKS MANAGEMENT --- */}
       {activeSection === "decks" && (
         <div className="flex flex-col gap-6">
           {loadingDecks ? (
             <div className="flex items-center justify-center p-12 text-muted-dark gap-3 text-sm bg-surface-dark border-2 border-border-dark rounded-3xl">
-              <RefreshCw className="w-5 h-5 animate-spin text-primary" />{" "}
-              Syncing Firestore decks catalog...
+              <RefreshCw className="w-5 h-5 animate-spin text-primary" /> Syncing Firestore decks catalog...
             </div>
           ) : filteredDecks.length === 0 ? (
             <div className="text-center p-12 text-muted-dark bg-surface-dark border-2 border-border-dark rounded-3xl">
@@ -781,56 +919,39 @@ export const AdminDashboard = () => {
                   key={deck.id}
                   whileHover={{ y: -4 }}
                   className="bg-surface-dark border-2 border-border-dark rounded-3xl p-6 flex flex-col justify-between gap-6 shadow-md relative overflow-hidden group"
-                  style={{
-                    borderColor: deck.color
-                      ? `${deck.color}40`
-                      : "var(--color-border-dark)",
-                  }}
+                  style={{ borderColor: deck.color ? `${deck.color}40` : "var(--color-border-dark)" }}
                 >
-                  {/* Top Bar */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
                       <div
                         className="w-12 h-12 rounded-2xl flex items-center justify-center font-black text-2xl border-2 shadow-inner"
                         style={{
-                          backgroundColor: deck.color
-                            ? `${deck.color}20`
-                            : "rgba(255,214,0,0.15)",
+                          backgroundColor: deck.color ? `${deck.color}20` : "rgba(255,214,0,0.15)",
                           borderColor: deck.color || "var(--color-primary)",
                         }}
                       >
                         {deck.icon || "🎮"}
                       </div>
                       <div>
-                        <h3 className="font-extrabold text-lg text-white flex items-center gap-2">
-                          {deck.name}
-                        </h3>
-                        <span className="text-[0.7rem] font-mono text-muted-dark block">
-                          id: {deck.id}
-                        </span>
+                        <h3 className="font-extrabold text-lg text-white flex items-center gap-2">{deck.name}</h3>
+                        <span className="text-[0.7rem] font-mono text-muted-dark block">id: {deck.id}</span>
                       </div>
                     </div>
 
                     {deck.isTrending && (
-                      <span
-                        className="p-1.5 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs"
-                        title="Trending 🔥"
-                      >
+                      <span className="p-1.5 rounded-lg bg-orange-500/20 text-orange-400 border border-orange-500/30 text-xs" title="Trending 🔥">
                         <Flame className="w-4 h-4" />
                       </span>
                     )}
                   </div>
 
-                  {/* Description & Word Count */}
                   <div className="flex flex-col gap-2">
                     <p className="text-xs text-muted-dark leading-relaxed line-clamp-2">
-                      {deck.description ||
-                        "No description provided for this deck."}
+                      {deck.description || "No description provided for this deck."}
                     </p>
-                    <div className="flex items-center justify-between pt-2 border-t border-border-dark/60 text-xs font-bold">
+                    <div className="flex items-center justify-between pt-2 border-t border-border-dark text-xs font-bold">
                       <span className="text-primary flex items-center gap-1">
-                        <Tag className="w-3.5 h-3.5" />{" "}
-                        {deck.words ? deck.words.length : 0} Word Cards
+                        <Tag className="w-3.5 h-3.5" /> {deck.words ? deck.words.length : 0} Word Cards
                       </span>
                       <button
                         onClick={() => openAddWordsModal(deck)}
@@ -841,21 +962,13 @@ export const AdminDashboard = () => {
                     </div>
                   </div>
 
-                  {/* QUICK INLINE VISIBILITY TOGGLE SWITCH */}
                   <div className="flex items-center justify-between p-3 rounded-2xl bg-surface-card-dark/60 border border-border-dark">
                     <div className="flex items-center gap-2">
-                      {deck.isAvailable ? (
-                        <Eye className="w-4 h-4 text-success" />
-                      ) : (
-                        <EyeOff className="w-4 h-4 text-muted-dark" />
-                      )}
+                      {deck.isAvailable ? <Eye className="w-4 h-4 text-success" /> : <EyeOff className="w-4 h-4 text-muted-dark" />}
                       <span className="text-xs font-bold text-white">
-                        {deck.isAvailable
-                          ? "Visible to Players"
-                          : "Hidden from Players"}
+                        {deck.isAvailable ? "Visible to Players" : "Hidden from Players"}
                       </span>
                     </div>
-
                     <Switch
                       checked={deck.isAvailable}
                       onChange={() => handleInlineToggleAvailable(deck)}
@@ -864,20 +977,12 @@ export const AdminDashboard = () => {
                     />
                   </div>
 
-                  {/* Action Buttons */}
                   <div className="flex items-center gap-2 pt-1">
                     <button
                       onClick={() => openEditDeckModal(deck)}
                       className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-primary hover:text-accent font-black text-xs flex items-center justify-center gap-1.5 transition-all border border-border-dark cursor-pointer"
                     >
                       <Edit className="w-3.5 h-3.5" /> View Deck Info
-                    </button>
-                    <button
-                      onClick={() => openAddWordsModal(deck)}
-                      className="py-2.5 px-3.5 rounded-xl bg-primary/15 text-primary hover:bg-primary hover:text-accent font-black text-xs flex items-center justify-center gap-1 transition-all border border-primary/30 cursor-pointer"
-                      title="Add New Words Dialog"
-                    >
-                      <Plus className="w-3.5 h-3.5" /> Add Words
                     </button>
                     <button
                       onClick={() => setDeleteConfirmDeck(deck)}
@@ -896,111 +1001,308 @@ export const AdminDashboard = () => {
 
       {/* --- SECTION 2: TESTERS & FEEDBACK LISTS --- */}
       {activeSection === "testers" && (
-        <div className="bg-surface-dark border-2 border-border-dark rounded-3xl overflow-hidden shadow-lg">
+        <div className="flex flex-col gap-6">
           {testersSubTab === "registrations" ? (
             loadingTesters ? (
-              <div className="flex items-center justify-center p-12 text-muted-dark gap-3 text-sm">
-                <RefreshCw className="w-5 h-5 animate-spin text-primary" />{" "}
-                Loading beta testers...
+              <div className="flex items-center justify-center p-12 text-muted-dark gap-3 text-sm bg-surface-dark border-2 border-border-dark rounded-3xl">
+                <RefreshCw className="w-5 h-5 animate-spin text-primary" /> Loading beta testers...
               </div>
             ) : filteredTesters.length === 0 ? (
-              <div className="text-center p-12 text-muted-dark">
-                <p className="text-sm font-bold">
-                  No beta testers registered yet.
-                </p>
+              <div className="text-center p-12 text-muted-dark bg-surface-dark border-2 border-border-dark rounded-3xl">
+                <p className="text-sm font-bold">No beta testers registered yet.</p>
+                <button
+                  onClick={openCreateTesterModal}
+                  className="mt-4 px-5 py-2.5 rounded-xl bg-primary text-accent font-black text-xs inline-flex items-center gap-2 cursor-pointer"
+                >
+                  <Plus className="w-4 h-4" /> Add First Beta Tester
+                </button>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-surface-card-dark border-b border-border-dark uppercase font-black tracking-wider text-muted-dark">
-                    <tr>
-                      <th className="py-4 px-6">Name</th>
-                      <th className="py-4 px-6">Email Address</th>
-                      <th className="py-4 px-6">Registered Date</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border-dark">
-                    {filteredTesters.map((item, index) => (
-                      <tr
-                        key={item.id || index}
-                        className="hover:bg-white/5 transition-colors"
-                      >
-                        <td className="py-4 px-6 font-black text-white flex items-center gap-2">
-                          <User className="w-4 h-4 text-primary" />{" "}
-                          {item.name || "Anonymous"}
-                        </td>
-                        <td className="py-4 px-6 font-semibold text-primary">
-                          <a
-                            href={`mailto:${item.email}`}
-                            className="hover:underline flex items-center gap-1.5"
-                          >
-                            <Mail className="w-3.5 h-3.5 text-muted-dark" />{" "}
-                            {item.email}
-                          </a>
-                        </td>
-                        <td className="py-4 px-6 text-muted-dark">
-                          {item.submittedAt
-                            ? new Date(item.submittedAt).toLocaleDateString()
-                            : "Recent"}
-                        </td>
+              <div className="bg-surface-dark border-2 border-border-dark rounded-3xl overflow-hidden shadow-lg">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-surface-card-dark border-b border-border-dark uppercase font-black tracking-wider text-muted-dark">
+                      <tr>
+                        <th className="py-4 px-6">Name</th>
+                        <th className="py-4 px-6">Email Address</th>
+                        <th className="py-4 px-6">Role / Badge</th>
+                        <th className="py-4 px-6">Device</th>
+                        <th className="py-4 px-6">Joined Date</th>
+                        <th className="py-4 px-6 text-right">Actions</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody className="divide-y divide-border-dark">
+                      {filteredTesters.map((item, index) => (
+                        <tr key={item.id || index} className="hover:bg-white/5 transition-colors">
+                          <td className="py-4 px-6 font-black text-white flex items-center gap-2">
+                            <User className="w-4 h-4 text-primary" /> {item.name || "Anonymous"}
+                          </td>
+                          <td className="py-4 px-6 font-semibold text-primary">
+                            <a href={`mailto:${item.email}`} className="hover:underline flex items-center gap-1.5">
+                              <Mail className="w-3.5 h-3.5 text-muted-dark" /> {item.email}
+                            </a>
+                          </td>
+                          <td className="py-4 px-6 font-bold">
+                            <span className="px-2.5 py-1 rounded-full bg-primary/15 text-primary border border-primary/30 text-[0.65rem] uppercase tracking-wider">
+                              {item.role || "Beta Tester"}
+                            </span>
+                          </td>
+                          <td className="py-4 px-6 text-muted-dark font-medium flex items-center gap-1">
+                            <Smartphone className="w-3.5 h-3.5 text-muted" /> {item.deviceType || item.device || "iOS"}
+                          </td>
+                          <td className="py-4 px-6 text-muted-dark">
+                            {item.submittedAt ? new Date(item.submittedAt).toLocaleDateString() : "Recent"}
+                          </td>
+                          <td className="py-4 px-6 text-right space-x-2">
+                            <button
+                              onClick={() => openEditTesterModal(item)}
+                              className="p-2 rounded-xl bg-white/5 hover:bg-primary hover:text-accent transition-all border border-border-dark cursor-pointer inline-flex"
+                              title="Edit Tester"
+                            >
+                              <Edit className="w-3.5 h-3.5" />
+                            </button>
+                            <button
+                              onClick={() => setDeleteConfirmTester(item)}
+                              className="p-2 rounded-xl bg-error/15 text-error hover:bg-error hover:text-white transition-all border border-error/30 cursor-pointer inline-flex"
+                              title="Delete Tester"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )
-          ) : loadingFeedback ? (
-            <div className="flex items-center justify-center p-12 text-muted-dark gap-3 text-sm">
-              <RefreshCw className="w-5 h-5 animate-spin text-primary" />{" "}
-              Loading feedback notes...
-            </div>
-          ) : filteredFeedback.length === 0 ? (
-            <div className="text-center p-12 text-muted-dark">
-              <p className="text-sm font-bold">No feedback entries found.</p>
-            </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left text-xs">
-                <thead className="bg-surface-card-dark border-b border-border-dark uppercase font-black tracking-wider text-muted-dark">
-                  <tr>
-                    <th className="py-4 px-6">Email</th>
-                    <th className="py-4 px-6">Feedback & Comments</th>
-                    <th className="py-4 px-6">Date</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border-dark">
-                  {filteredFeedback.map((item, index) => (
-                    <tr
-                      key={item.id || index}
-                      className="hover:bg-white/5 transition-colors"
+            /* FEEDBACK SUB-TAB */
+            <div className="flex flex-col gap-4">
+              {/* Feedback Filters */}
+              <div className="flex flex-wrap items-center justify-between gap-4 bg-surface-dark border-2 border-border-dark p-4 rounded-2xl">
+                <div className="flex items-center gap-2 overflow-x-auto">
+                  <span className="text-xs font-black uppercase text-muted-dark mr-2">Category:</span>
+                  {["all", "bug", "feature", "deck", "general"].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setFeedbackCategoryFilter(cat)}
+                      className={`px-3 py-1.5 rounded-xl font-bold text-xs capitalize transition-all cursor-pointer ${
+                        feedbackCategoryFilter === cat
+                          ? "bg-primary text-accent shadow-sm"
+                          : "bg-surface-card-dark text-muted-dark hover:text-white border border-border-dark"
+                      }`}
                     >
-                      <td className="py-4 px-6 font-black text-primary shrink-0">
-                        <a
-                          href={`mailto:${item.email}`}
-                          className="hover:underline flex items-center gap-1.5"
-                        >
-                          <Mail className="w-3.5 h-3.5 text-muted-dark" />{" "}
-                          {item.email}
-                        </a>
-                      </td>
-                      <td className="py-4 px-6 font-medium text-text-dark leading-relaxed">
-                        {item.feedbackText}
-                      </td>
-                      <td className="py-4 px-6 text-muted-dark shrink-0">
-                        {item.submittedAt
-                          ? new Date(item.submittedAt).toLocaleDateString()
-                          : "Recent"}
-                      </td>
-                    </tr>
+                      {cat === "bug" ? "Bug Reports" : cat === "feature" ? "Feature Requests" : cat === "deck" ? "Deck Ideas" : cat}
+                    </button>
                   ))}
-                </tbody>
-              </table>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-black uppercase text-muted-dark mr-2">Status:</span>
+                  {["all", "active", "archived"].map((st) => (
+                    <button
+                      key={st}
+                      onClick={() => setFeedbackStatusFilter(st)}
+                      className={`px-3 py-1.5 rounded-xl font-bold text-xs capitalize transition-all cursor-pointer ${
+                        feedbackStatusFilter === st
+                          ? "bg-primary text-accent shadow-sm"
+                          : "bg-surface-card-dark text-muted-dark hover:text-white border border-border-dark"
+                      }`}
+                    >
+                      {st}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {loadingFeedback ? (
+                <div className="flex items-center justify-center p-12 text-muted-dark gap-3 text-sm bg-surface-dark border-2 border-border-dark rounded-3xl">
+                  <RefreshCw className="w-5 h-5 animate-spin text-primary" /> Loading feedback notes...
+                </div>
+              ) : filteredFeedback.length === 0 ? (
+                <div className="text-center p-12 text-muted-dark bg-surface-dark border-2 border-border-dark rounded-3xl">
+                  <p className="text-sm font-bold">No feedback entries match criteria.</p>
+                </div>
+              ) : (
+                <div className="bg-surface-dark border-2 border-border-dark rounded-3xl overflow-hidden shadow-lg">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-xs">
+                      <thead className="bg-surface-card-dark border-b border-border-dark uppercase font-black tracking-wider text-muted-dark">
+                        <tr>
+                          <th className="py-4 px-6">Submitter</th>
+                          <th className="py-4 px-6">Type & Device</th>
+                          <th className="py-4 px-6">Feedback Note</th>
+                          <th className="py-4 px-6">Status</th>
+                          <th className="py-4 px-6 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border-dark">
+                        {filteredFeedback.map((item, index) => (
+                          <tr key={item.id || index} className={`hover:bg-white/5 transition-colors ${item.archived ? "opacity-60" : ""}`}>
+                            <td className="py-4 px-6 shrink-0">
+                              <div className="font-black text-white">{item.name || "Anonymous"}</div>
+                              <a href={`mailto:${item.email}`} className="text-primary font-semibold hover:underline flex items-center gap-1">
+                                <Mail className="w-3 h-3 text-muted-dark" /> {item.email}
+                              </a>
+                            </td>
+                            <td className="py-4 px-6 shrink-0">
+                              <span className="px-2.5 py-1 rounded-full bg-surface-card-dark text-muted-dark border border-border-dark font-bold text-[0.65rem] uppercase block w-max">
+                                {item.feedbackType || item.category || "General"}
+                              </span>
+                              <span className="text-[0.65rem] text-muted-dark mt-1 block">
+                                Device: {item.deviceType || "Web"}
+                              </span>
+                            </td>
+                            <td className="py-4 px-6 font-medium text-text-dark leading-relaxed max-w-md">
+                              {item.feedbackText}
+                            </td>
+                            <td className="py-4 px-6 shrink-0">
+                              {item.archived ? (
+                                <span className="px-2.5 py-1 rounded-full bg-white/10 text-muted-dark border border-white/20 text-[0.65rem] uppercase font-bold">
+                                  Archived
+                                </span>
+                              ) : (
+                                <span className="px-2.5 py-1 rounded-full bg-success/20 text-success border border-success/30 text-[0.65rem] uppercase font-bold">
+                                  Active
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-4 px-6 text-right shrink-0 space-x-2">
+                              <button
+                                onClick={() => handleToggleArchiveFeedback(item)}
+                                className={`p-2 rounded-xl border transition-all cursor-pointer inline-flex ${
+                                  item.archived
+                                    ? "bg-primary/15 text-primary border-primary/30 hover:bg-primary hover:text-accent"
+                                    : "bg-white/5 text-muted-dark border-border-dark hover:bg-white/10 hover:text-white"
+                                }`}
+                                title={item.archived ? "Unarchive" : "Archive"}
+                              >
+                                <Archive className="w-3.5 h-3.5" />
+                              </button>
+                              <button
+                                onClick={() => setDeleteConfirmFeedback(item)}
+                                className="p-2 rounded-xl bg-error/15 text-error hover:bg-error hover:text-white transition-all border border-error/30 cursor-pointer inline-flex"
+                                title="Delete Feedback"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>
       )}
 
-      {/* --- DIALOG 1: DECK INFO DIALOG (METADATA + VIEW WORDS) --- */}
+      {/* --- DIALOG 1: ADD/EDIT TESTER MODAL --- */}
+      <AnimatePresence>
+        {isTesterModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.95, y: 20 }}
+              className="relative w-full max-w-md bg-surface-dark border-2 border-border-dark p-6 rounded-3xl shadow-2xl text-text-dark"
+            >
+              <button
+                onClick={() => setIsTesterModalOpen(false)}
+                className="absolute top-5 right-5 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted-dark hover:text-white transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+
+              <div className="flex items-center gap-3 mb-6 border-b border-border-dark pb-4">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black">
+                  <User className="w-6 h-6" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-black text-white">{editingTester ? "Edit Beta Tester" : "Add Beta Tester"}</h3>
+                  <p className="text-xs text-muted-dark">Manage tester credentials and badge status.</p>
+                </div>
+              </div>
+
+              <form onSubmit={handleSaveTester} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Tester Name *</label>
+                  <input
+                    type="text"
+                    placeholder="Full Name (e.g. Rahul Sharma)"
+                    value={testerName}
+                    onChange={(e) => setTesterName(e.target.value)}
+                    required
+                    className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Email Address *</label>
+                  <input
+                    type="email"
+                    placeholder="rahul@example.com"
+                    value={testerEmail}
+                    onChange={(e) => setTesterEmail(e.target.value)}
+                    required
+                    className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Device Type</label>
+                    <select
+                      value={testerDevice}
+                      onChange={(e) => setTesterDevice(e.target.value)}
+                      className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold outline-none focus:border-primary transition-all"
+                    >
+                      <option value="iOS">iOS (iPhone/iPad)</option>
+                      <option value="Android">Android</option>
+                      <option value="Web">Web Browser</option>
+                    </select>
+                  </div>
+
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Role Badge</label>
+                    <select
+                      value={testerRole}
+                      onChange={(e) => setTesterRole(e.target.value)}
+                      className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold outline-none focus:border-primary transition-all"
+                    >
+                      <option value="Beta Tester">Beta Tester</option>
+                      <option value="Alpha Crew">Alpha Crew</option>
+                      <option value="Top Contributor">Top Contributor</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="flex gap-3 mt-4">
+                  <button
+                    type="button"
+                    onClick={() => setIsTesterModalOpen(false)}
+                    className="flex-1 py-3 rounded-2xl border border-border-dark text-muted-dark font-extrabold text-xs hover:bg-white/5 transition-all cursor-pointer"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingTester}
+                    className="flex-1 py-3 rounded-2xl bg-primary text-accent font-black text-xs hover:scale-102 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
+                  >
+                    {savingTester ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Tester"}
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- DIALOG 2: DECK INFO DIALOG (METADATA + WORDS) --- */}
       <AnimatePresence>
         {isDeckModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md overflow-y-auto">
@@ -1010,7 +1312,6 @@ export const AdminDashboard = () => {
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               className="relative w-full max-w-3xl bg-surface-dark border-2 border-border-dark p-6 sm:p-8 rounded-3xl shadow-2xl text-text-dark my-8 max-h-[90vh] overflow-y-auto"
             >
-              {/* Close Button */}
               <button
                 onClick={() => setIsDeckModalOpen(false)}
                 className="absolute top-5 right-5 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted-dark hover:text-white transition-all cursor-pointer"
@@ -1018,46 +1319,37 @@ export const AdminDashboard = () => {
                 <X className="w-5 h-5" />
               </button>
 
-              {/* Title Header */}
               <div className="flex items-center gap-3 mb-6 border-b border-border-dark pb-4">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black text-xl">
                   {deckIcon || "🎮"}
                 </div>
                 <div>
                   <h3 className="text-xl font-black text-white">
-                    {editingDeck
-                      ? `Deck Info: ${editingDeck.name}`
-                      : "Create New Category Deck"}
+                    {editingDeck ? `Deck Info: ${editingDeck.name}` : "Create New Category Deck"}
                   </h3>
                   <p className="text-xs text-muted-dark">
-                    Configure deck metadata, dynamic slug, emoji picker, and
-                    view existing words.
+                    Configure deck metadata, dynamic slug, emoji picker, and view existing words.
                   </p>
                 </div>
               </div>
 
               <form onSubmit={handleSaveDeck} className="flex flex-col gap-6">
-                {/* Field 1: Deck Title (Dynamic Slug Generation) */}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="flex flex-col gap-1.5">
-                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
-                      Deck Title / Name *
-                    </label>
+                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Deck Title / Name *</label>
                     <input
                       type="text"
                       placeholder="e.g. Bollywood Blockbusters"
                       value={deckName}
                       onChange={(e) => handleNameChange(e.target.value)}
                       required
-                      className="w-full p-3.5 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary"
+                      className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
                     />
                   </div>
 
                   <div className="flex flex-col gap-1.5">
                     <div className="flex items-center justify-between">
-                      <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
-                        Deck ID / Slug (Firestore Document ID) *
-                      </label>
+                      <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Deck ID / Slug *</label>
                       {!editingDeck && (
                         <button
                           type="button"
@@ -1074,221 +1366,92 @@ export const AdminDashboard = () => {
                       value={deckId}
                       onChange={(e) => {
                         setAutoSlug(false);
-                        setDeckId(
-                          e.target.value
-                            .toLowerCase()
-                            .replace(/[^a-z0-9_]/g, "_"),
-                        );
+                        setDeckId(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, "_"));
                       }}
                       disabled={!!editingDeck}
                       required
-                      className="w-full p-3.5 rounded-2xl bg-surface-card-dark border border-border-dark/80 text-xs font-mono font-semibold outline-none focus:border-primary disabled:opacity-50"
+                      className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-mono font-semibold placeholder:text-muted-dark outline-none focus:border-primary disabled:opacity-50 transition-all"
                     />
                   </div>
                 </div>
 
-                {/* Field 2: Emoji Selection Palette */}
+                {/* Emoji Selection Palette */}
                 <div className="flex flex-col gap-2">
                   <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark flex items-center gap-1.5">
-                    <Smile className="w-3.5 h-3.5 text-primary" /> Choose Emoji
-                    Icon *
+                    <Smile className="w-3.5 h-3.5 text-primary" /> Choose Emoji Icon *
                   </label>
-
-                  <div className="flex flex-wrap gap-2 p-3 rounded-2xl bg-surface-card-dark/60 border border-border-dark">
+                  <div className="flex flex-wrap gap-2 p-3 rounded-2xl bg-surface-card-dark border border-border-dark">
                     {EMOJI_PALETTE.map((emoji) => (
                       <button
                         key={emoji}
                         type="button"
                         onClick={() => setDeckIcon(emoji)}
                         className={`w-9 h-9 rounded-xl text-lg flex items-center justify-center transition-all cursor-pointer ${
-                          deckIcon === emoji
-                            ? "bg-primary text-accent scale-110 shadow-md ring-2 ring-primary"
-                            : "bg-white/5 hover:bg-white/10 text-white"
+                          deckIcon === emoji ? "bg-primary scale-110 shadow-md" : "hover:bg-white/10"
                         }`}
                       >
                         {emoji}
                       </button>
                     ))}
-                    <div className="flex items-center gap-1.5">
-                      <label
-                        htmlFor="custom_emoji_field"
-                        className="text-sm text-white"
-                      >
-                        Use custom emoji
-                      </label>
-                      <input
-                        type="text"
-                        id="custom_emoji_field"
-                        placeholder="Custom..."
-                        value={deckIcon}
-                        onChange={(e) => setDeckIcon(e.target.value)}
-                        className="w-24 p-2 rounded-xl bg-surface-card-dark border border-border-dark/80 text-center text-sm outline-none focus:border-primary"
-                      />
-                    </div>
                   </div>
                 </div>
 
-                {/* Field 3: Colors & Sort Order */}
-                <div className="flex flex-col gap-2">
-                  <div className="flex items-center justify-between">
-                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark tracking-wider flex items-center gap-1.5">
-                      <SlidersHorizontal className="w-3.5 h-3.5 text-primary" />{" "}
-                      Deck Theme & Gradient Colors
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const randomHex = getRandomUnusedColor(decksList);
-                        setDeckColor(randomHex);
-                        setDeckGradientEnd(getDarkerShade(randomHex));
-                      }}
-                      className="text-[0.7rem] font-black text-primary hover:underline flex items-center gap-1 cursor-pointer bg-primary/10 hover:bg-primary/20 px-2.5 py-1 rounded-lg border border-primary/30 transition-all"
-                      title="Fetch a random vibrant color not used by existing decks"
-                    >
-                      <Wand2 className="w-3 h-3 text-primary" /> Auto-Randomize
-                      Unused
-                    </button>
-                  </div>
-
-                  <div className="grid md:grid-cols-3 gap-4 items-end">
-                    <ColorPicker
-                      label="Primary Deck Color"
-                      value={deckColor}
-                      defaultValue="#FFD600"
-                      onChange={(newHex) => {
-                        setDeckColor(newHex);
-                        setDeckGradientEnd(getDarkerShade(newHex));
-                      }}
-                    />
-
-                    <ColorPicker
-                      label="Gradient End Color"
-                      value={deckGradientEnd}
-                      defaultValue="#FF9100"
-                      onChange={(newHex) => setDeckGradientEnd(newHex)}
-                    />
-
-                    <div className="flex flex-col gap-2 bg-surface-card-dark/60 p-3.5 rounded-2xl border border-border-dark justify-between h-full">
-                      <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark tracking-wider">
-                        Sort Order Number
-                      </label>
-                      <input
-                        type="number"
-                        value={deckSortOrder}
-                        onChange={(e) => setDeckSortOrder(e.target.value)}
-                        className="w-full p-2.5 rounded-xl bg-surface-dark border border-border-dark/80 text-xs font-semibold text-white outline-none focus:border-primary transition-all"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Subtitle / Description */}
                 <div className="flex flex-col gap-1.5">
-                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
-                    Deck Subtitle / Description
-                  </label>
-                  <input
-                    type="text"
-                    placeholder="e.g. Iconic movies, dialogues, & superstars"
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Description</label>
+                  <textarea
+                    rows={2}
+                    placeholder="Brief overview of this deck's content..."
                     value={deckDesc}
                     onChange={(e) => setDeckDesc(e.target.value)}
-                    className="w-full p-3 rounded-xl bg-surface-card-dark border border-border-dark/80 text-xs font-semibold outline-none focus:border-primary"
+                    className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all resize-none"
                   />
                 </div>
 
-                {/* TOGGLE SWITCHES (Visibility & Trending) */}
                 <div className="grid md:grid-cols-2 gap-4">
-                  {/* Toggle Switch 1: Visibility */}
-                  <div
-                    onClick={() => setDeckIsAvailable(!deckIsAvailable)}
-                    className="flex items-center justify-between p-4 rounded-2xl bg-surface-card-dark border border-border-dark cursor-pointer select-none"
-                  >
-                    <div className="flex items-center gap-3">
-                      {deckIsAvailable ? (
-                        <Eye className="w-5 h-5 text-success" />
-                      ) : (
-                        <EyeOff className="w-5 h-5 text-muted-dark" />
-                      )}
-                      <div>
-                        <span className="text-xs font-black text-white block">
-                          {deckIsAvailable
-                            ? "Visible to Players"
-                            : "Hidden from Players"}
-                        </span>
-                        <span className="text-[0.65rem] text-muted-dark">
-                          {deckIsAvailable
-                            ? "Active in mobile app deck carousel"
-                            : "Hidden from game play screen"}
-                        </span>
-                      </div>
-                    </div>
-
-                    <Switch
-                      checked={deckIsAvailable}
-                      onChange={(val) => setDeckIsAvailable(val)}
-                      ariaLabel="Toggle deck visibility"
-                    />
-                  </div>
-
-                  {/* Toggle Switch 2: Trending */}
-                  <div
-                    onClick={() => setDeckIsTrending(!deckIsTrending)}
-                    className="flex items-center justify-between p-4 rounded-2xl bg-surface-card-dark border border-border-dark cursor-pointer select-none"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Flame
-                        className={`w-5 h-5 ${deckIsTrending ? "text-orange-400" : "text-muted-dark"}`}
-                      />
-                      <div>
-                        <span className="text-xs font-black text-white block">
-                          {deckIsTrending
-                            ? "Marked as Trending 🔥"
-                            : "Standard Deck"}
-                        </span>
-                        <span className="text-[0.65rem] text-muted-dark">
-                          Displays 🔥 badge on deck card
-                        </span>
-                      </div>
-                    </div>
-
-                    <Switch
-                      checked={deckIsTrending}
-                      onChange={(val) => setDeckIsTrending(val)}
-                      ariaLabel="Toggle trending status"
-                    />
-                  </div>
+                  <ColorPicker label="Primary Color" color={deckColor} onChange={setDeckColor} />
+                  <ColorPicker label="Gradient End Color" color={deckGradientEnd} onChange={setDeckGradientEnd} />
                 </div>
 
-                {/* INTERACTIVE WORD CHIPS EDITOR IN INFO DIALOG */}
-                <div className="pt-4 border-t border-border-dark">
-                  <WordTagInput
-                    words={currentDeckWords}
-                    onChange={(newWordsArray) => {
-                      setDeckWordsInput(newWordsArray.join(", "));
-                    }}
-                    placeholder="Add words separated by commas or enter..."
+                <div className="flex items-center justify-between p-4 rounded-2xl bg-surface-card-dark border border-border-dark">
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-white">Visible to Players</span>
+                    <span className="text-[0.65rem] text-muted-dark">Toggle whether this deck appears on the mobile app & web</span>
+                  </div>
+                  <Switch checked={deckIsAvailable} onChange={setDeckIsAvailable} ariaLabel="Deck Visibility" />
+                </div>
+
+                {/* Words Editor */}
+                <div className="flex flex-col gap-2 border-t border-border-dark pt-4">
+                  <div className="flex items-center justify-between">
+                    <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">
+                      Cards Word List ({currentDeckWords.length} Words)
+                    </label>
+                    <span className="text-[0.65rem] text-muted-dark">Separate with commas or newlines</span>
+                  </div>
+
+                  <textarea
+                    rows={5}
+                    placeholder="Enter words separated by commas (e.g. Sholay, DDLJ, 3 Idiots)..."
+                    value={deckWordsInput}
+                    onChange={(e) => setDeckWordsInput(e.target.value)}
+                    className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
                   />
                 </div>
 
-                {/* Footer Buttons */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-border-dark">
+                <div className="flex gap-3 pt-2">
                   <button
                     type="button"
                     onClick={() => setIsDeckModalOpen(false)}
-                    className="px-5 py-3 rounded-xl border border-border-dark text-muted-dark font-extrabold text-xs hover:bg-white/5 transition-all cursor-pointer"
+                    className="flex-1 py-3 rounded-2xl border border-border-dark text-muted-dark font-extrabold text-xs hover:bg-white/5 transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={savingDeck}
-                    className="px-6 py-3 rounded-xl bg-primary text-accent font-black text-xs hover:scale-105 active:scale-95 transition-all shadow-md cursor-pointer disabled:opacity-50"
+                    className="flex-1 py-3 rounded-2xl bg-primary text-accent font-black text-xs hover:scale-102 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    {savingDeck
-                      ? "Saving Deck..."
-                      : editingDeck
-                        ? "Save Deck Info"
-                        : "Create Deck"}
+                    {savingDeck ? <Loader2 className="w-4 h-4 animate-spin" /> : "Save Deck"}
                   </button>
                 </div>
               </form>
@@ -1297,17 +1460,16 @@ export const AdminDashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* --- DIALOG 2: DEDICATED ADD NEW WORDS DIALOG (SINGLE COMBINED FIELD) --- */}
+      {/* --- DIALOG 3: ADD WORDS ONLY DIALOG --- */}
       <AnimatePresence>
-        {isAddWordsModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        {isAddWordsModalOpen && editingDeck && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
             <motion.div
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-xl bg-surface-dark border-2 border-border-dark p-6 sm:p-8 rounded-3xl shadow-2xl text-text-dark my-8"
+              className="relative w-full max-w-lg bg-surface-dark border-2 border-border-dark p-6 rounded-3xl shadow-2xl text-text-dark"
             >
-              {/* Close Button */}
               <button
                 onClick={() => setIsAddWordsModalOpen(false)}
                 className="absolute top-5 right-5 p-2 rounded-xl bg-white/5 hover:bg-white/10 text-muted-dark hover:text-white transition-all cursor-pointer"
@@ -1315,54 +1477,56 @@ export const AdminDashboard = () => {
                 <X className="w-5 h-5" />
               </button>
 
-              {/* Dialog Header */}
-              <div className="flex items-center gap-3 border-b border-border-dark pb-4 mb-6">
+              <div className="flex items-center gap-3 mb-6 border-b border-border-dark pb-4">
                 <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black text-xl">
-                  {editingDeck?.icon || "🎮"}
+                  {editingDeck.icon || "🎮"}
                 </div>
                 <div>
-                  <h3 className="text-xl font-black text-white">
-                    Add New Words: {editingDeck?.name || "Deck"}
-                  </h3>
-                  <p className="text-xs text-muted-dark">
-                    Enter a single word card or paste multiple comma-separated
-                    words below.
-                  </p>
+                  <h3 className="text-xl font-black text-white">Add Words to "{editingDeck.name}"</h3>
+                  <p className="text-xs text-muted-dark">Current deck word count: {editingDeck.words ? editingDeck.words.length : 0} cards</p>
                 </div>
               </div>
 
-              <form
-                onSubmit={handleSaveNewWordsOnly}
-                className="flex flex-col gap-5"
-              >
-                {/* SINGLE COMBINED INPUT FIELD */}
-                {/* INTERACTIVE TAG CHIPS FIELD */}
-                <WordTagInput
-                  words={parsedNewWordsList}
-                  onChange={(newWordsArray) => {
-                    setNewWordsInput(newWordsArray.join(", "));
-                  }}
-                  placeholder="Type new words to append..."
-                />
+              <form onSubmit={handleSaveNewWordsOnly} className="flex flex-col gap-4">
+                <div className="flex flex-col gap-1.5">
+                  <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark">Enter New Words *</label>
+                  <textarea
+                    rows={4}
+                    placeholder="Enter words separated by commas or newlines (e.g. Word 1, Word 2)..."
+                    value={newWordsInput}
+                    onChange={(e) => setNewWordsInput(e.target.value)}
+                    required
+                    className="w-full p-3 rounded-2xl bg-surface-card-dark border border-border-dark text-white text-xs font-semibold placeholder:text-muted-dark outline-none focus:border-primary transition-all"
+                  />
+                </div>
 
-                {/* Footer Buttons */}
-                <div className="flex justify-end gap-3 pt-4 border-t border-border-dark">
+                {parsedNewWordsList.length > 0 && (
+                  <div className="p-3 rounded-2xl bg-surface-card-dark border border-border-dark flex flex-col gap-1">
+                    <span className="text-[0.65rem] font-bold uppercase text-primary">Previewing ({parsedNewWordsList.length} new words):</span>
+                    <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto">
+                      {parsedNewWordsList.map((w, idx) => (
+                        <span key={idx} className="px-2 py-0.5 rounded-lg bg-white/10 text-white text-[0.65rem] font-mono">
+                          {w}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex gap-3 mt-2">
                   <button
                     type="button"
                     onClick={() => setIsAddWordsModalOpen(false)}
-                    className="px-5 py-3 rounded-xl border border-border-dark text-muted-dark font-extrabold text-xs hover:bg-white/5 transition-all cursor-pointer"
+                    className="flex-1 py-3 rounded-2xl border border-border-dark text-muted-dark font-extrabold text-xs hover:bg-white/5 transition-all cursor-pointer"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
-                    disabled={savingNewWords || parsedNewWordsList.length === 0}
-                    className="px-6 py-3 rounded-xl bg-primary text-accent font-black text-xs hover:scale-105 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center gap-1.5"
+                    disabled={savingNewWords}
+                    className="flex-1 py-3 rounded-2xl bg-primary text-accent font-black text-xs hover:scale-102 active:scale-98 transition-all shadow-md cursor-pointer disabled:opacity-50 flex items-center justify-center gap-2"
                   >
-                    <Plus className="w-4 h-4" />{" "}
-                    {savingNewWords
-                      ? "Appending Words..."
-                      : `Save & Append ${parsedNewWordsList.length > 0 ? `${parsedNewWordsList.length} Word(s)` : "Words"}`}
+                    {savingNewWords ? <Loader2 className="w-4 h-4 animate-spin" /> : "Append Words"}
                   </button>
                 </div>
               </form>
@@ -1371,7 +1535,7 @@ export const AdminDashboard = () => {
         )}
       </AnimatePresence>
 
-      {/* --- MODAL 3: DELETE CONFIRMATION MODAL --- */}
+      {/* --- CONFIRMATION MODAL DELETE DECK --- */}
       <AnimatePresence>
         {deleteConfirmDeck && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
@@ -1379,31 +1543,99 @@ export const AdminDashboard = () => {
               initial={{ opacity: 0, scale: 0.9 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.9 }}
-              className="bg-surface-dark border-2 border-border-dark p-6 sm:p-8 rounded-3xl max-w-md w-full flex flex-col gap-4 text-center shadow-2xl"
+              className="relative w-full max-w-sm bg-surface-dark border-2 border-border-dark p-6 rounded-3xl shadow-2xl text-text-dark flex flex-col items-center text-center gap-4"
             >
-              <div className="w-14 h-14 rounded-full bg-error/20 border-2 border-error text-error flex items-center justify-center mx-auto">
-                <AlertTriangle className="w-8 h-8" />
+              <div className="w-12 h-12 rounded-2xl bg-error/15 text-error border border-error/30 flex items-center justify-center">
+                <Trash2 className="w-6 h-6" />
               </div>
-              <h3 className="text-xl font-black text-white">Delete Deck?</h3>
+              <h3 className="text-xl font-black text-white">Delete "{deleteConfirmDeck.name}"?</h3>
               <p className="text-xs text-muted-dark leading-relaxed">
-                Are you sure you want to permanently delete deck{" "}
-                <strong>"{deleteConfirmDeck.name}"</strong>? This will remove
-                all{" "}
-                {deleteConfirmDeck.words ? deleteConfirmDeck.words.length : 0}{" "}
-                word cards from Firestore.
+                This action will permanently delete this category deck and all associated word cards from Firestore.
               </p>
-              <div className="flex gap-3 mt-2">
+              <div className="flex gap-3 w-full mt-2">
                 <button
                   onClick={() => setDeleteConfirmDeck(null)}
-                  className="flex-1 py-3 rounded-xl border border-border-dark font-extrabold text-xs text-muted-dark hover:bg-white/5 transition-all cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl border border-border-dark font-extrabold text-xs text-muted-dark hover:bg-white/5 cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleDeleteDeck}
-                  className="flex-1 py-3 rounded-xl bg-error text-white font-black text-xs hover:scale-105 transition-all shadow-md cursor-pointer"
+                  className="flex-1 py-2.5 rounded-xl bg-error text-white font-black text-xs hover:bg-error/90 cursor-pointer shadow-md"
                 >
-                  Delete Permanently
+                  Delete Deck
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- CONFIRMATION MODAL DELETE TESTER --- */}
+      <AnimatePresence>
+        {deleteConfirmTester && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative w-full max-w-sm bg-surface-dark border-2 border-border-dark p-6 rounded-3xl shadow-2xl text-text-dark flex flex-col items-center text-center gap-4"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-error/15 text-error border border-error/30 flex items-center justify-center">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-black text-white">Remove Tester "{deleteConfirmTester.name}"?</h3>
+              <p className="text-xs text-muted-dark leading-relaxed">
+                This action will permanently remove this tester from the beta list in Firestore.
+              </p>
+              <div className="flex gap-3 w-full mt-2">
+                <button
+                  onClick={() => setDeleteConfirmTester(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-border-dark font-extrabold text-xs text-muted-dark hover:bg-white/5 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteTester}
+                  className="flex-1 py-2.5 rounded-xl bg-error text-white font-black text-xs hover:bg-error/90 cursor-pointer shadow-md"
+                >
+                  Remove Tester
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* --- CONFIRMATION MODAL DELETE FEEDBACK --- */}
+      <AnimatePresence>
+        {deleteConfirmFeedback && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.9 }}
+              className="relative w-full max-w-sm bg-surface-dark border-2 border-border-dark p-6 rounded-3xl shadow-2xl text-text-dark flex flex-col items-center text-center gap-4"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-error/15 text-error border border-error/30 flex items-center justify-center">
+                <Trash2 className="w-6 h-6" />
+              </div>
+              <h3 className="text-xl font-black text-white">Delete Feedback Note?</h3>
+              <p className="text-xs text-muted-dark leading-relaxed">
+                This action will permanently delete this feedback entry from Firestore.
+              </p>
+              <div className="flex gap-3 w-full mt-2">
+                <button
+                  onClick={() => setDeleteConfirmFeedback(null)}
+                  className="flex-1 py-2.5 rounded-xl border border-border-dark font-extrabold text-xs text-muted-dark hover:bg-white/5 cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleDeleteFeedback}
+                  className="flex-1 py-2.5 rounded-xl bg-error text-white font-black text-xs hover:bg-error/90 cursor-pointer shadow-md"
+                >
+                  Delete Note
                 </button>
               </div>
             </motion.div>

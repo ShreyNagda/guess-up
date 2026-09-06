@@ -50,13 +50,13 @@ export const ColorPicker = ({
   };
 
   return (
-    <div className="flex flex-col gap-2 bg-surface-card-dark/60 p-3.5 rounded-2xl border border-border-dark">
+    <div className="flex flex-col gap-2 bg-surface-card p-3.5 rounded-2xl border border-border">
       {/* Label Header */}
       <div className="flex items-center justify-between">
-        <label className="text-[0.7rem] font-extrabold uppercase text-muted-dark tracking-wider">
+        <label className="text-[0.7rem] font-extrabold uppercase text-muted tracking-wider">
           {label}
         </label>
-        <span className="text-[0.75rem] font-mono font-bold text-white uppercase">
+        <span className="text-[0.75rem] font-mono font-bold text-text uppercase">
           {currentColor}
         </span>
       </div>
@@ -65,7 +65,7 @@ export const ColorPicker = ({
       <div className="flex items-center gap-3.5">
         {/* Clickable Color Swatch + Native Picker */}
         <label
-          className="relative w-11 h-11 rounded-xl border-2 border-white/20 shadow-md cursor-pointer shrink-0 transition-transform hover:scale-105 active:scale-95 flex items-center justify-center overflow-hidden"
+          className="relative w-11 h-11 rounded-xl border-2 border-border shadow-md cursor-pointer shrink-0 transition-transform hover:scale-105 active:scale-95 flex items-center justify-center overflow-hidden"
           style={{ backgroundColor: currentColor }}
           title="Click to pick color"
         >
@@ -93,7 +93,7 @@ export const ColorPicker = ({
             onBlur={handleHexBlur}
             placeholder={defaultValue}
             maxLength={7}
-            className="w-full pl-3 pr-3 py-2.5 rounded-xl bg-surface-dark border border-border-dark text-xs font-mono font-bold text-white outline-none focus:border-primary transition-all uppercase"
+            className="w-full pl-3 pr-3 py-2.5 rounded-xl bg-surface border border-border text-xs font-mono font-bold text-text outline-none focus:border-primary transition-all uppercase placeholder:text-muted"
           />
         </div>
       </div>

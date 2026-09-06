@@ -1,6 +1,6 @@
 import React from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Lock, ShieldCheck } from "lucide-react";
+import { Lock, ShieldCheck, Globe, Share2, MessageCircle } from "lucide-react";
 import { useAdminAuth } from "../context/AdminAuthContext";
 
 export const Footer = () => {
@@ -16,55 +16,64 @@ export const Footer = () => {
   };
 
   return (
-    <footer className="border-t border-border-light dark:border-border-dark py-10 px-4 text-center mt-auto bg-transparent transition-colors duration-300">
-      <div className="max-w-6xl mx-auto flex flex-col gap-4 text-muted-light dark:text-muted-dark text-sm">
-        <div className="flex items-center justify-center gap-2">
-          <span className="font-extrabold text-text-light dark:text-text-dark">
-            Guess Up
-          </span>
-          <span className="text-xs text-primary font-black px-2 py-0.5 rounded-full bg-primary/10 border border-primary/30">
+    <footer className="border-t border-border/40 py-12 px-6 mt-auto bg-transparent relative">
+      <div className="max-w-4xl mx-auto flex flex-col items-center gap-6 text-center text-muted text-xs">
+        <div className="flex items-center gap-2">
+          <span className="font-extrabold text-text text-base tracking-tight">Guess Up</span>
+          <span className="text-[0.65rem] text-primary font-black px-2 py-0.5 rounded-full bg-primary/10 border border-primary/30 uppercase tracking-widest">
             Beta v1.0
           </span>
         </div>
 
-        <p className="text-xs opacity-75 max-w-md mx-auto leading-relaxed">
-          The ultimate motion-activated party charades game designed for Indian
-          youth and families.
+        <p className="max-w-md leading-relaxed">
+          The ultimate motion-activated party charades game designed for Indian youth, roommates, and families.
         </p>
 
-        <div className="flex flex-wrap justify-center items-center gap-6 mt-2 font-bold text-xs">
-          <Link
-            to="/privacy"
-            className="hover:text-primary transition-colors flex items-center gap-1"
-          >
+        {/* Social Links & Navigation */}
+        <div className="flex flex-wrap justify-center items-center gap-6 font-bold text-xs">
+          <a href="#hero" className="hover:text-primary transition-colors">
+            Home
+          </a>
+          <a href="#decks" className="hover:text-primary transition-colors">
+            Decks
+          </a>
+          <a href="#story" className="hover:text-primary transition-colors">
+            Origin Story
+          </a>
+          <a href="#testers" className="hover:text-primary transition-colors">
+            Testers Wall
+          </a>
+          <a href="#feedback" className="hover:text-primary transition-colors">
+            Feedback
+          </a>
+          <Link to="/privacy" className="hover:text-primary transition-colors flex items-center gap-1">
             <ShieldCheck className="w-3.5 h-3.5" /> Privacy Policy
           </Link>
-          <a href="/#story" className="hover:text-primary transition-colors">
-            Behind the Game
-          </a>
-          <a href="/#features" className="hover:text-primary transition-colors">
-            Features
-          </a>
-          <a href="/#feedback" className="hover:text-primary transition-colors">
-            Playtester Hub
-          </a>
-          <a href="/#download" className="hover:text-primary transition-colors">
-            Download App
-          </a>
+        </div>
 
-          {/* Discreet Admin Lock Button */}
+        {/* Social Icons & Discreet Admin Link */}
+        <div className="flex items-center justify-center gap-4 text-muted pt-2">
+          <a href="#hero" className="hover:text-primary transition-colors p-2" title="Website">
+            <Globe className="w-4 h-4" />
+          </a>
+          <a href="#feedback" className="hover:text-primary transition-colors p-2" title="Community Hub">
+            <MessageCircle className="w-4 h-4" />
+          </a>
+          <a href="#hero" className="hover:text-primary transition-colors p-2" title="Share App">
+            <Share2 className="w-4 h-4" />
+          </a>
           <button
             onClick={handleAdminClick}
-            className="hover:text-primary transition-colors flex items-center gap-1 opacity-60 hover:opacity-100 cursor-pointer ml-2"
+            className="hover:text-primary transition-colors p-2 opacity-50 hover:opacity-100 cursor-pointer text-[0.7rem] flex items-center gap-1"
             title="Admin Dashboard"
+            rel="nofollow"
           >
             <Lock className="w-3.5 h-3.5" />
-            <span>{isAdminLoggedIn ? "Admin Dashboard" : "Admin Lock"}</span>
           </button>
         </div>
 
-        <p className="text-[0.7rem] opacity-50 mt-4">
-          &copy; {new Date().getFullYear()} Guess Up. All rights reserved.
+        <p className="text-[0.7rem] opacity-50">
+          &copy; {new Date().getFullYear()} Guess Up. All rights reserved. Zero ad tracking.
         </p>
       </div>
     </footer>

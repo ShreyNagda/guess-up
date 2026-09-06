@@ -293,7 +293,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   GameAudioEngine().lightImpact();
                   Navigator.of(context).push(
                     CupertinoPageRoute(
-                      builder: (_) => const OnboardingScreen(isRevisiting: true),
+                      builder:
+                          (_) => const OnboardingScreen(isRevisiting: true),
                     ),
                   );
                 },
@@ -357,8 +358,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
 
             const SizedBox(height: 20),
-
-            // --- 5. Legal & Privacy Section ---
             _buildSectionTitle("LEGAL & PRIVACY", textColor),
             _build3DCardContainer(
               isDark: isDark,
@@ -440,12 +439,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 children: [
                   // App Logo Emblem
                   Container(
-                    width: 76,
-                    height: 76,
+                    height: 80,
+                    width: 80,
+                    clipBehavior: Clip.hardEdge,
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF141026) : Colors.white,
                       borderRadius: BorderRadius.circular(22),
-                      border: Border.all(color: primaryColor, width: 2.5),
+                      // border: Border.all(color: primaryColor, width: 2.5),
                       boxShadow: [
                         BoxShadow(
                           color: primaryColor.withAlpha(60),
@@ -454,15 +454,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ),
                       ],
                     ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12.0),
-                      child: Image.asset(
-                        isDark
-                            ? 'assets/images/logo_dark.png'
-                            : 'assets/images/logo_light.png',
-                        fit: BoxFit.contain,
-                      ),
-                    ),
+                    child: Image.asset('assets/images/guessup-icon.png'),
                   ),
                   const SizedBox(height: 14),
 

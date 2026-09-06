@@ -17,9 +17,9 @@ export const StickyActionHUD = ({
   const roundOptions = [3, 5, 7, 10];
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-surface-dark border-2.5 border-border-dark p-3.5 sm:p-5 rounded-[28px] shadow-2xl relative z-30">
+    <div className="w-full max-w-4xl mx-auto bg-surface border-2.5 border-border p-3.5 sm:p-5 rounded-[28px] shadow-2xl relative z-30">
       {/* Upper HUD Settings Row */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-3.5 pb-3.5 border-b border-border-dark">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-3.5 pb-3.5 border-b border-border">
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1">
           {/* Time Selector Pill */}
           <div className="relative">
@@ -28,14 +28,10 @@ export const StickyActionHUD = ({
               onChange={(e) =>
                 onTimeChange && onTimeChange(Number(e.target.value))
               }
-              className="appearance-none text-xs font-black px-3.5 py-2 pr-8 rounded-xl bg-surface-card-dark border border-border-dark text-primary outline-none cursor-pointer hover:border-primary transition-all"
+              className="appearance-none text-xs font-black px-3.5 py-2 pr-8 rounded-xl bg-surface-card border border-border text-primary outline-none cursor-pointer hover:border-primary transition-all"
             >
               {timeOptions.map((t) => (
-                <option
-                  key={t}
-                  value={t}
-                  className="bg-surface-dark text-white"
-                >
+                <option key={t} value={t} className="bg-surface text-text">
                   ⏱️ {t} sec
                 </option>
               ))}
@@ -50,14 +46,10 @@ export const StickyActionHUD = ({
               onChange={(e) =>
                 onRoundsChange && onRoundsChange(Number(e.target.value))
               }
-              className="appearance-none text-xs font-black px-3.5 py-2 pr-8 rounded-xl bg-surface-card-dark border border-border-dark text-primary outline-none cursor-pointer hover:border-primary transition-all"
+              className="appearance-none text-xs font-black px-3.5 py-2 pr-8 rounded-xl bg-surface-card border border-border text-primary outline-none cursor-pointer hover:border-primary transition-all"
             >
               {roundOptions.map((r) => (
-                <option
-                  key={r}
-                  value={r}
-                  className="bg-surface-dark text-white"
-                >
+                <option key={r} value={r} className="bg-surface text-text">
                   🏆 {r} rounds
                 </option>
               ))}
@@ -72,7 +64,7 @@ export const StickyActionHUD = ({
             className={`px-3.5 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-1.5 cursor-pointer ${
               isTeamMode
                 ? "bg-team-a text-accent shadow-sm"
-                : "bg-surface-card-dark border border-border-dark text-muted-dark hover:text-white"
+                : "bg-surface-card border border-border text-muted hover:text-text"
             }`}
           >
             <Users className="w-3.5 h-3.5" />
@@ -81,7 +73,7 @@ export const StickyActionHUD = ({
         </div>
 
         {/* Selected Deck Summary Info */}
-        <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-muted-dark">
+        <div className="hidden sm:flex items-center gap-2 text-xs font-bold text-muted">
           <span>Active Deck:</span>
           <span className="text-primary font-black flex items-center gap-1">
             {activeDeck ? activeDeck.icon || "🎮" : "🎬"}{" "}
@@ -97,7 +89,7 @@ export const StickyActionHUD = ({
         onClick={onPlayClick}
         className="w-full py-4 rounded-2xl bg-primary text-accent font-black text-lg sm:text-xl uppercase tracking-widest flex items-center justify-center gap-3 shadow-bevel-gold hover:shadow-2xl transition-all cursor-pointer relative overflow-hidden"
       >
-        <div className="absolute inset-0 bg-gradient-to-b from-white/30 to-transparent pointer-events-none" />
+        <div className="absolute inset-0 bg-linear-to-b from-white/30 to-transparent pointer-events-none" />
         <Play className="w-6 h-6 fill-accent stroke-accent" />
         <span>START CHARADES DEMO</span>
         <Sparkles className="w-5 h-5 text-accent" />

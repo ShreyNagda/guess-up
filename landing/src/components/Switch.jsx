@@ -29,7 +29,7 @@ export const Switch = ({
       aria-label={ariaLabel}
       disabled={disabled}
       onClick={handleClick}
-      className={`relative inline-flex items-center shrink-0 rounded-full p-1 cursor-pointer transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${trackWidth} ${
+      className={`relative inline-flex items-center shrink-0 rounded-full p-1 cursor-pointer transition-colors duration-200 outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 ${trackWidth} ${
         checked
           ? "bg-primary shadow-sm"
           : "bg-surface-card-dark border border-border-dark"

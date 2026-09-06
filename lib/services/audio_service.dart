@@ -15,6 +15,8 @@ class GameAudioEngine with WidgetsBindingObserver {
   bool _bgmInitialized = false;
   bool _shouldPlayMusic = true;
   bool _wasMusicPlayingBeforePause = false;
+  bool _isBgmPlaying = false;
+  bool _isGameActive = false;
   bool _hasVibrator = false;
 
   static const List<String> _sfxFiles = [
@@ -48,7 +50,9 @@ class GameAudioEngine with WidgetsBindingObserver {
         FlameAudio.bgm.initialize();
         _bgmInitialized = true;
 
-        if (GameStorageService().isMusicEnabled && _shouldPlayMusic) {
+        if (GameStorageService().isMusicEnabled &&
+            _shouldPlayMusic &&
+            !_isGameActive) {
           await startBgm();
         }
       } catch (e) {
@@ -68,11 +72,14 @@ class GameAudioEngine with WidgetsBindingObserver {
         if (_wasMusicPlayingBeforePause) return;
         _wasMusicPlayingBeforePause = true;
         FlameAudio.bgm.pause();
+        _isBgmPlaying = false;
       } else if (state == AppLifecycleState.resumed) {
-        if (GameStorageService().isMusicEnabled && _shouldPlayMusic) {
+        if (GameStorageService().isMusicEnabled &&
+            _shouldPlayMusic &&
+            !_isGameActive) {
           if (_wasMusicPlayingBeforePause) {
             _wasMusicPlayingBeforePause = false;
-            FlameAudio.bgm.resume();
+            resumeBgm();
           } else {
             startBgm();
           }
@@ -87,8 +94,16 @@ class GameAudioEngine with WidgetsBindingObserver {
   Future<void> startBgm() async {
     _shouldPlayMusic = true;
     if (!GameStorageService().isMusicEnabled || !_bgmInitialized) return;
+    if (_isGameActive) return;
+
+    if (_isBgmPlaying || FlameAudio.bgm.isPlaying) {
+      _isBgmPlaying = true;
+      return;
+    }
+
     try {
-      FlameAudio.bgm.play('assets/sounds/background.ogg', volume: 0.4);
+      await FlameAudio.bgm.play('assets/sounds/background.ogg', volume: 0.4);
+      _isBgmPlaying = true;
     } catch (e) {
       debugPrint("Error starting BGM: $e");
     }
@@ -96,21 +111,55 @@ class GameAudioEngine with WidgetsBindingObserver {
 
   Future<void> pauseBgm() async {
     _shouldPlayMusic = false;
+    _isBgmPlaying = false;
     if (!_bgmInitialized) return;
     try {
-      FlameAudio.bgm.pause();
+      await FlameAudio.bgm.pause();
     } catch (e) {
       debugPrint("Error pausing BGM: $e");
     }
   }
 
+  Future<void> resumeBgm() async {
+    _shouldPlayMusic = true;
+    if (!GameStorageService().isMusicEnabled || !_bgmInitialized) return;
+    if (_isGameActive) return;
+
+    if (_isBgmPlaying || FlameAudio.bgm.isPlaying) {
+      _isBgmPlaying = true;
+      return;
+    }
+
+    try {
+      await FlameAudio.bgm.resume();
+      _isBgmPlaying = true;
+    } catch (e) {
+      await startBgm();
+    }
+  }
+
   Future<void> stopBgm() async {
     _shouldPlayMusic = false;
+    _isBgmPlaying = false;
     if (!_bgmInitialized) return;
     try {
-      FlameAudio.bgm.stop();
+      await FlameAudio.bgm.stop();
     } catch (e) {
       debugPrint("Error stopping BGM: $e");
+    }
+  }
+
+  /// Controls BGM active state according to gameplay lifecycle.
+  /// When active is true (active gameplay): BGM is paused.
+  /// When active is false (paused or non-game UI): BGM is resumed.
+  void setGameActive(bool active) {
+    _isGameActive = active;
+    if (active) {
+      pauseBgm();
+    } else {
+      if (GameStorageService().isMusicEnabled) {
+        startBgm();
+      }
     }
   }
 

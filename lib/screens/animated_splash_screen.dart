@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
+import 'package:guess_up/constants/app_info.dart';
 import 'package:guess_up/screens/home_screen.dart';
 import 'package:guess_up/services/category_service.dart';
 import 'package:guess_up/services/audio_service.dart';
@@ -184,10 +185,10 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
                           ),
                         ],
                       ),
-                      child: const Column(
+                      child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text(
+                          const Text(
                             "GUESS UP",
                             style: TextStyle(
                               fontFamily: 'Manrope',
@@ -203,14 +204,34 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
                               ],
                             ),
                           ),
-                          SizedBox(height: 2),
-                          Text(
+                          const SizedBox(height: 2),
+                          const Text(
                             "PARTY CHARADES",
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w900,
                               letterSpacing: 3.0,
                               color: Colors.black87,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 3,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.black.withAlpha(30),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              "v${AppInfo.displayVersion}",
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.5,
+                                color: Colors.black87,
+                              ),
                             ),
                           ),
                         ],
@@ -304,6 +325,18 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
                         fontWeight: FontWeight.w900,
                         color: Colors.white70,
                         letterSpacing: 1.5,
+                      ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Text(
+                      "VERSION ${AppInfo.displayVersion}",
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 2.0,
+                        color: Colors.white38,
                       ),
                     ),
                   ],

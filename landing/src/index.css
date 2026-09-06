@@ -1,6 +1,25 @@
 @import "tailwindcss";
 
-@custom-variant dark (&:where(.dark, .dark *));
+@variant dark (&:where(.dark, .dark *));
+
+:root,
+.light {
+  --color-bg-val: #f4f6fc;
+  --color-surface-val: #ffffff;
+  --color-surface-card-val: #f8fafc;
+  --color-text-val: #0f0c1c;
+  --color-muted-val: #5a6072;
+  --color-border-val: rgba(0, 0, 0, 0.1);
+}
+
+.dark {
+  --color-bg-val: #0e0c1c;
+  --color-surface-val: #1e1938;
+  --color-surface-card-val: #261f47;
+  --color-text-val: #ffffff;
+  --color-muted-val: #a099c0;
+  --color-border-val: rgba(255, 255, 255, 0.12);
+}
 
 @theme {
   --font-sans: "Manrope", sans-serif;
@@ -8,6 +27,13 @@
   --color-primary: #ffd600;
   --color-primary-dark: #ffb700;
   --color-accent: #0e0c1c;
+
+  --color-bg: var(--color-bg-val);
+  --color-surface: var(--color-surface-val);
+  --color-surface-card: var(--color-surface-card-val);
+  --color-text: var(--color-text-val);
+  --color-muted: var(--color-muted-val);
+  --color-border: var(--color-border-val);
 
   --color-bg-dark: #0e0c1c;
   --color-bg-light: #f4f6fc;
@@ -80,14 +106,24 @@ html {
 
 body {
   font-family: var(--font-sans);
-  background-color: var(--color-bg-dark);
-  color: var(--color-text-dark);
+  background-color: var(--color-bg);
+  color: var(--color-text);
   transition:
     background-color 0.3s ease,
     color 0.3s ease;
 }
 
-.light body {
-  background-color: var(--color-bg-light);
-  color: var(--color-text-light);
+/* Global Form Input Theme Enforcement */
+input,
+textarea,
+select {
+  color: var(--color-text);
+  background-color: var(--color-surface-card);
+  border-color: var(--color-border);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--color-muted);
+  opacity: 0.75;
 }

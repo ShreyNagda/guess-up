@@ -1,96 +1,86 @@
 import React from "react";
 import { motion } from "motion/react";
-import { Cpu, HeartHandshake, Compass, Zap } from "lucide-react";
+import { Sparkles, Compass, Cpu, HeartHandshake, Zap, Flame } from "lucide-react";
 
 export const Story = () => {
   return (
-    <section
-      className="bg-surface-card-light/40 dark:bg-surface-card-dark/40 border-y border-border-light dark:border-border-dark py-16 md:py-24 px-4 md:px-8 backdrop-blur-sm"
-      id="story"
-    >
-      <div className="max-w-6xl mx-auto flex flex-col gap-12">
+    <section className="py-16 md:py-24 border-t border-border/40 relative" id="story">
+      <div className="max-w-4xl mx-auto px-6 flex flex-col gap-12">
         {/* Section Header */}
-        <div className="text-center max-w-2xl mx-auto flex flex-col gap-3">
-          <span className="text-xs uppercase tracking-widest font-black text-primary">
-            Behind The Game
+        <div className="text-center flex flex-col items-center gap-3">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/30 text-primary font-black text-xs uppercase tracking-widest">
+            <Sparkles className="w-3.5 h-3.5" /> The Origin Story
           </span>
-          <h2 className="text-3xl md:text-5xl font-black tracking-tight uppercase">
-            Built for Real Connections
+          <h2 className="text-3xl sm:text-4xl md:text-5xl font-black uppercase tracking-tight">
+            From Late-Night Prototyping to <br className="hidden sm:inline" />
+            <span className="text-primary">Party Unlocks</span>
           </h2>
-          <p className="text-muted-light dark:text-muted-dark text-base md:text-lg">
-            How a simple idea grew into the ultimate motion-activated charades
-            experience.
+          <p className="text-muted text-sm sm:text-base max-w-xl leading-relaxed">
+            The human spark behind Guess Up: how board game night frustration turned into an instant motion-activated guessing game.
           </p>
         </div>
 
-        {/* 3 Story Columns */}
-        <div className="grid md:grid-cols-3 gap-8">
+        {/* Editorial Story Layout */}
+        <div className="flex flex-col gap-8">
+          {/* Chapter 1 */}
           <motion.div
-            whileHover={{ y: -6 }}
-            className="bg-surface-light dark:bg-surface-dark border-2 border-border-light dark:border-border-dark p-8 rounded-3xl flex flex-col gap-4 shadow-sm hover:shadow-md transition-all"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="p-8 rounded-3xl bg-surface/70 border border-border/60 backdrop-blur-md flex flex-col sm:flex-row gap-6 items-start shadow-md hover:border-primary/40 transition-all"
           >
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black">
-              <Compass className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-black shrink-0">
+              <Compass className="w-7 h-7" />
             </div>
-            <h3 className="text-xl font-bold">1. The Inspiration</h3>
-            <p className="text-sm text-muted-light dark:text-muted-dark leading-relaxed">
-              We noticed existing charades games were clunky, filled with
-              intrusive ads, and lacking Indian pop-culture references. We
-              wanted a game where college friends, families, and roommates could
-              immediately laugh together without tutorial friction.
-            </p>
+            <div className="flex flex-col gap-2">
+              <span className="text-[0.7rem] font-black uppercase text-primary tracking-widest">Chapter 1</span>
+              <h3 className="text-xl font-extrabold text-text">The Board Game Night Frustration</h3>
+              <p className="text-muted text-xs sm:text-sm leading-relaxed">
+                It started during a Friday night house party. We were trying to play charades, but existing mobile apps were littered with mandatory video ads, clunky user interfaces, and generic decks that lacked authentic Indian pop-culture references. We knew there had to be a better way to bring friends together.
+              </p>
+            </div>
           </motion.div>
 
+          {/* Chapter 2 */}
           <motion.div
-            whileHover={{ y: -6 }}
-            className="bg-surface-light dark:bg-surface-dark border-2 border-border-light dark:border-border-dark p-8 rounded-3xl flex flex-col gap-4 shadow-sm hover:shadow-md transition-all"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.1 }}
+            className="p-8 rounded-3xl bg-surface/70 border border-border/60 backdrop-blur-md flex flex-col sm:flex-row gap-6 items-start shadow-md hover:border-primary/40 transition-all"
           >
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black">
-              <Cpu className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-black shrink-0">
+              <Cpu className="w-7 h-7" />
             </div>
-            <h3 className="text-xl font-bold">2. The Technology</h3>
-            <p className="text-sm text-muted-light dark:text-muted-dark leading-relaxed">
-              **Guess Up** reads real-time motion sensor and gyroscope streams
-              directly. By processing live orientation vectors, the game detects
-              smooth tilt-down (Correct) and tilt-up (Pass) gestures
-              effortlessly.
-            </p>
+            <div className="flex flex-col gap-2">
+              <span className="text-[0.7rem] font-black uppercase text-primary tracking-widest">Chapter 2</span>
+              <h3 className="text-xl font-extrabold text-text">The Gyroscope Breakthrough</h3>
+              <p className="text-muted text-xs sm:text-sm leading-relaxed">
+                During late-night prototyping, we tapped directly into hardware accelerometer and gyroscope streams. By calculating live gravity orientation vectors at 60 FPS, phone tilts felt instant: nod down for a point, tilt back to pass. No buttons needed while the phone rests on your forehead.
+              </p>
+            </div>
           </motion.div>
 
+          {/* Chapter 3 */}
           <motion.div
-            whileHover={{ y: -6 }}
-            className="bg-surface-light dark:bg-surface-dark border-2 border-border-light dark:border-border-dark p-8 rounded-3xl flex flex-col gap-4 shadow-sm hover:shadow-md transition-all"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: 0.2 }}
+            className="p-8 rounded-3xl bg-surface/70 border border-border/60 backdrop-blur-md flex flex-col sm:flex-row gap-6 items-start shadow-md hover:border-primary/40 transition-all"
           >
-            <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary font-black">
-              <HeartHandshake className="w-6 h-6" />
+            <div className="w-14 h-14 rounded-2xl bg-primary/15 border border-primary/40 flex items-center justify-center text-primary font-black shrink-0">
+              <HeartHandshake className="w-7 h-7" />
             </div>
-            <h3 className="text-xl font-bold">3. Note to Playtesters</h3>
-            <p className="text-sm text-muted-light dark:text-muted-dark leading-relaxed">
-              As a beta tester, your feedback shapes our game balance, deck
-              categories, and motion thresholds! Test both Solo and Team modes
-              with your friends and tell us what works best.
-            </p>
+            <div className="flex flex-col gap-2">
+              <span className="text-[0.7rem] font-black uppercase text-primary tracking-widest">Chapter 3</span>
+              <h3 className="text-xl font-extrabold text-text">Crafted for Indian Pop Culture</h3>
+              <p className="text-muted text-xs sm:text-sm leading-relaxed">
+                From 90s Bollywood dialogues and IPL cricket legends to tapri chai memes and hostel life jokes, Guess Up is tailor-made for Indian youth, roomies, and families. Every deck card is hand-curated to spark immediate hilarity.
+              </p>
+            </div>
           </motion.div>
         </div>
-
-        {/* Tech Specs Banner */}
-        {/* <div className="bg-surface-dark border-2 border-border-dark p-6 md:p-8 rounded-3xl flex flex-col sm:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-primary text-accent font-black flex items-center justify-center shrink-0">
-              <Zap className="w-6 h-6" />
-            </div>
-            <div>
-              <h4 className="font-extrabold text-base text-text-dark">60 FPS Hardware Sensing</h4>
-              <p className="text-xs text-muted-dark">Zero latency motion detection on both Android & iOS devices.</p>
-            </div>
-          </div>
-          <a
-            href="#feedback"
-            className="px-6 py-3 rounded-xl bg-primary text-accent font-black text-xs hover:scale-105 transition-all shrink-0 cursor-pointer"
-          >
-            Submit Feedback
-          </a>
-        </div> */}
       </div>
     </section>
   );

@@ -62,10 +62,7 @@ class GamePauseOverlay extends StatelessWidget {
                 TextButton.icon(
                   onPressed: onExitPressed, // Use the callback
                   icon: const Icon(Icons.exit_to_app, size: 24),
-                  label: const Text(
-                    "Exit Game",
-                    style: TextStyle(fontSize: 16),
-                  ),
+                  label: const Text("Exit", style: TextStyle(fontSize: 16)),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.white.withAlpha(
                       204,

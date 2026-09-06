@@ -15,7 +15,7 @@ export const BentoGrid = () => {
         <h2 className="text-3xl md:text-5xl font-black tracking-tight uppercase">
           Engineered for Fun
         </h2>
-        <p className="text-muted-light dark:text-muted-dark text-base md:text-lg">
+        <p className="text-muted text-base md:text-lg">
           Features built from the ground up for competitive house parties and
           casual hangouts.
         </p>
@@ -25,7 +25,7 @@ export const BentoGrid = () => {
         {/* Card 1: Team Battles (Span 2) */}
         <motion.div
           whileHover={{ y: -6 }}
-          className="md:col-span-2 bg-linear-to-br from-surface-dark to-surface-card-dark border-2 border-border-dark p-8 rounded-3xl flex flex-col justify-between gap-6 shadow-md relative overflow-hidden group"
+          className="md:col-span-2 bg-linear-to-br from-surface to-surface-card border-2 border-border p-8 rounded-3xl flex flex-col justify-between gap-6 shadow-md relative overflow-hidden group"
         >
           <div className="flex items-center justify-between">
             <div className="w-12 h-12 rounded-2xl bg-team-a/20 border-2 border-team-a flex items-center justify-center text-team-a">
@@ -37,8 +37,10 @@ export const BentoGrid = () => {
           </div>
 
           <div className="flex flex-col gap-2 z-10">
-            <h3 className="text-2xl font-black text-white">Team Battle Mode</h3>
-            <p className="text-muted-dark text-sm leading-relaxed max-w-lg">
+            <h3 className="text-2xl font-black text-text">
+              Team Battle Mode
+            </h3>
+            <p className="text-muted text-sm leading-relaxed max-w-lg">
               Simply divide your group into 2 equal teams! Play multi-round
               match games with automatic score tracking, round turn handoffs,
               and instant winner celebrations.
@@ -51,7 +53,9 @@ export const BentoGrid = () => {
               <span className="w-2.5 h-2.5 rounded-full bg-team-a"></span>
               <span>Team Cyan</span>
             </div>
-            <span className="font-black text-muted-dark text-xs">VS</span>
+            <span className="font-black text-muted text-xs">
+              VS
+            </span>
             <div className="flex items-center gap-2 bg-team-b/15 border border-team-b/40 px-4 py-2 rounded-xl text-team-b font-black text-xs">
               <span className="w-2.5 h-2.5 rounded-full bg-team-b"></span>
               <span>Team Purple</span>
@@ -62,7 +66,7 @@ export const BentoGrid = () => {
         {/* Card 2: Solo vs Everyone */}
         <motion.div
           whileHover={{ y: -6 }}
-          className="bg-surface-light dark:bg-surface-dark border-2 border-border-light dark:border-border-dark p-8 rounded-3xl flex flex-col justify-between gap-6 shadow-md"
+          className="bg-surface border-2 border-border p-8 rounded-3xl flex flex-col justify-between gap-6 shadow-md"
         >
           <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary">
             <Users className="w-6 h-6" />
@@ -70,7 +74,7 @@ export const BentoGrid = () => {
 
           <div className="flex flex-col gap-2">
             <h3 className="text-xl font-black">Solo vs. Everyone</h3>
-            <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
+            <p className="text-muted text-sm leading-relaxed">
               Pass the phone around in a free-for-all classic charades round!
               Everyone shouts clues while one guesser tries to score maximum
               points before time runs out.
@@ -85,7 +89,7 @@ export const BentoGrid = () => {
         {/* Card 3: Motion Controls */}
         <motion.div
           whileHover={{ y: -6 }}
-          className="bg-surface-light dark:bg-surface-dark border-2 border-border-light dark:border-border-dark p-8 rounded-3xl flex flex-col justify-between gap-6 shadow-md"
+          className="bg-surface border-2 border-border p-8 rounded-3xl flex flex-col justify-between gap-6 shadow-md"
         >
           <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary">
             <Smartphone className="w-6 h-6" />
@@ -93,14 +97,14 @@ export const BentoGrid = () => {
 
           <div className="flex flex-col gap-2">
             <h3 className="text-xl font-black">Hardware Motion Sensing</h3>
-            <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
+            <p className="text-muted text-sm leading-relaxed">
               Tilt down towards the floor for Correct (+1) or tilt up towards
               the ceiling to Pass. Forehead placement auto-detects positioning
               before starting!
             </p>
           </div>
 
-          <div className="flex items-center gap-2 text-xs font-bold text-muted-dark">
+          <div className="flex items-center gap-2 text-xs font-bold text-muted">
             <span className="w-2.5 h-2.5 rounded-full bg-success"></span> Tilt
             Down = Point
             <span className="w-2.5 h-2.5 rounded-full bg-primary ml-2"></span>{" "}
@@ -111,7 +115,7 @@ export const BentoGrid = () => {
         {/* Card 4: Desi Decks (Span 2) */}
         <motion.div
           whileHover={{ y: -6 }}
-          className="md:col-span-2 bg-surface-light dark:bg-surface-dark border-2 border-border-light dark:border-border-dark p-8 rounded-3xl flex flex-col justify-between gap-6 shadow-md"
+          className="md:col-span-2 bg-surface border-2 border-border p-8 rounded-3xl flex flex-col justify-between gap-6 shadow-md"
         >
           <div className="flex items-center justify-between">
             <div className="w-12 h-12 rounded-2xl bg-primary/10 border-2 border-primary flex items-center justify-center text-primary">
@@ -124,7 +128,7 @@ export const BentoGrid = () => {
 
           <div className="flex flex-col gap-2">
             <h3 className="text-2xl font-black">Curated Pop-Culture Decks</h3>
-            <p className="text-muted-light dark:text-muted-dark text-sm leading-relaxed">
+            <p className="text-muted text-sm leading-relaxed">
               Hand-crafted categories including Bollywood Blockbusters, Cricket
               Mania, Desi Foodies & Cravings, and Desi Youth & Vibes — plus
               custom deck creation for your own inside jokes!

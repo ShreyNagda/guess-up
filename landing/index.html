@@ -3,17 +3,42 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Guess Up - The Ultimate Party Charades Game!</title>
-    <link rel="icon" type="image/png" href="/images/logo.png" />
-    <!-- SEO Meta Tags -->
+    <title>Guess Up — The Motion-Activated Party Charades Game</title>
+    <link rel="icon" type="image/png" href="/images/guess_up_icon_rounded.png" />
+
+    <!-- Primary SEO Meta Tags -->
     <meta
       name="description"
-      content="Guess Up is a high-energy charades party game designed for Indian audiences. Put your phone on your forehead and guess Bollywood, Cricket, Food, and more from your friends' clues!"
+      content="Guess Up is a high-energy, motion-activated charades party game. Hold your phone to your forehead, guess Bollywood, Cricket, Food, and pop-culture clues, and tilt down to score!"
     />
     <meta
       name="keywords"
-      content="charades, party game, indian games, bollywood charades, cricket trivia, heads up, guess up, forehead game"
+      content="charades, party game, indian games, bollywood charades, cricket trivia, heads up, guess up, forehead game, motion charades, multiplayer party app"
     />
+    <meta name="author" content="Guess Up Team" />
+    <meta name="theme-color" content="#FFD600" />
+
+    <!-- Open Graph / Facebook / WhatsApp Meta Tags -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://guessup.app/" />
+    <meta property="og:title" content="Guess Up — The Motion-Activated Party Charades Game" />
+    <meta
+      property="og:description"
+      content="The high-energy social guessing game where phone tilts trigger hilarity. Curated Desi pop-culture decks, zero ad interruptions!"
+    />
+    <meta property="og:image" content="https://guessup.app/images/guess_up_icon_rounded.png" />
+    <meta property="og:site_name" content="Guess Up" />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:url" content="https://guessup.app/" />
+    <meta name="twitter:title" content="Guess Up — The Motion-Activated Party Charades Game" />
+    <meta
+      name="twitter:description"
+      content="Hold your phone to your forehead and guess clues from your friends. Powered by 60 FPS tilt sensing!"
+    />
+    <meta name="twitter:image" content="https://guessup.app/images/guess_up_icon_rounded.png" />
+
     <!-- Google Fonts - Manrope -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -21,6 +46,28 @@
       href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap"
       rel="stylesheet"
     />
+
+    <!-- JSON-LD Structured Data for Mobile & Software Application -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "MobileApplication",
+        "name": "Guess Up",
+        "operatingSystem": "iOS, Android",
+        "applicationCategory": "GameApplication",
+        "genre": "Party Game",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        },
+        "description": "Motion-activated social party charades game designed for Indian youth and families with hand-curated pop culture decks and zero ad interruptions.",
+        "author": {
+          "@type": "Organization",
+          "name": "Guess Up Team"
+        }
+      }
+    </script>
   </head>
   <body class="overflow-x-hidden">
     <div id="root"></div>

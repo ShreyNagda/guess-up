@@ -1,6 +1,14 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Plus, X, Tag, AlertCircle, Trash2, Search, Sparkles } from "lucide-react";
+import {
+  Plus,
+  X,
+  Tag,
+  AlertCircle,
+  Trash2,
+  Search,
+  Sparkles,
+} from "lucide-react";
 
 export const WordTagInput = ({
   words = [],
@@ -63,21 +71,24 @@ export const WordTagInput = ({
 
   const handleClearAll = () => {
     if (words.length === 0) return;
-    if (window.confirm("Are you sure you want to clear all words in this deck?")) {
+    if (
+      window.confirm("Are you sure you want to clear all words in this deck?")
+    ) {
       onChange([]);
     }
   };
 
   const filteredWords = words.filter((w) =>
-    w.toLowerCase().includes(searchFilter.toLowerCase().trim())
+    w.toLowerCase().includes(searchFilter.toLowerCase().trim()),
   );
 
   return (
     <div className="flex flex-col gap-3 w-full">
       {/* Input Header Bar */}
       <div className="flex items-center justify-between gap-2">
-        <label className="text-xs font-black uppercase tracking-wider text-muted-light dark:text-muted-dark flex items-center gap-1.5">
-          <Tag className="w-3.5 h-3.5 text-primary" /> Deck Words ({words.length} Cards)
+        <label className="text-xs font-black uppercase tracking-wider text-muted flex items-center gap-1.5">
+          <Tag className="w-3.5 h-3.5 text-primary" /> Deck Words (
+          {words.length} Cards)
         </label>
 
         {words.length > 0 && (
@@ -101,7 +112,7 @@ export const WordTagInput = ({
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             placeholder={placeholder}
-            className="w-full text-xs font-semibold px-3.5 py-2.5 rounded-xl border border-border-light dark:border-border-dark bg-surface-card-light dark:bg-surface-card-dark text-text-light dark:text-text-dark outline-none focus:border-primary transition-all placeholder:text-muted-light dark:placeholder:text-muted-dark shadow-inner"
+            className="w-full text-xs font-semibold text-text px-3.5 py-2.5 rounded-xl border border-border bg-surface-card outline-none transition-all placeholder:text-muted focus:border-primary shadow-inner"
           />
           <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[0.65rem] font-black uppercase px-2 py-0.5 rounded bg-primary/20 text-primary border border-primary/30 pointer-events-none hidden sm:inline-block">
             Press Enter or Comma
@@ -135,19 +146,19 @@ export const WordTagInput = ({
       {/* Filter Search Bar for Large Word Decks */}
       {words.length > 10 && (
         <div className="relative w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-dark" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted" />
           <input
             type="text"
             value={searchFilter}
             onChange={(e) => setSearchFilter(e.target.value)}
             placeholder="Search deck words..."
-            className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-border-light dark:border-border-dark bg-surface-light dark:bg-surface-dark text-[0.75rem] font-medium outline-none focus:border-primary transition-all"
+            className="w-full pl-8 pr-3 py-1.5 rounded-lg border border-border bg-surface text-text text-[0.75rem] font-medium outline-none transition-all placeholder:text-muted focus:border-primary"
           />
         </div>
       )}
 
       {/* Interactive Tag Chips Container */}
-      <div className="min-h-24 max-h-56 overflow-y-auto p-3 rounded-2xl bg-surface-card-light dark:bg-surface-card-dark border border-border-light dark:border-border-dark flex flex-wrap gap-2 shadow-inner">
+      <div className="min-h-24 max-h-56 overflow-y-auto p-3 rounded-2xl bg-surface-card border border-border flex flex-wrap gap-2 shadow-inner">
         {filteredWords.length > 0 ? (
           <AnimatePresence>
             {filteredWords.map((word, idx) => {
@@ -160,7 +171,7 @@ export const WordTagInput = ({
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.8, opacity: 0 }}
                   transition={{ duration: 0.15 }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-surface-light dark:bg-surface-dark border border-border-light dark:border-border-dark text-text-light dark:text-text-dark shadow-sm group hover:border-primary transition-all"
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-xl text-xs font-bold bg-surface border border-border text-text shadow-sm group hover:border-primary transition-all"
                 >
                   <span className="text-[0.65rem] text-muted-dark font-extrabold mr-0.5">
                     #{originalIndex + 1}
