@@ -199,4 +199,23 @@ class GameStorageService {
   ) async {
     await _wordHistoryBox.put('word_history_$categoryId', cooldownQueue);
   }
+
+  // --- Recent Deck Cooldown Operations (2 Games Memory) ---
+  List<String> getRecentDeckHistory() {
+    final list = _settingsBox.get('recentDeckHistory');
+    if (list is List) {
+      return list.map((e) => e.toString()).toList();
+    }
+    return [];
+  }
+
+  Future<void> recordDeckPlayed(String deckId) async {
+    final current = getRecentDeckHistory();
+    current.remove(deckId);
+    current.insert(0, deckId);
+    if (current.length > 2) {
+      current.removeRange(2, current.length);
+    }
+    await _settingsBox.put('recentDeckHistory', current);
+  }
 }

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guess-Up Admin</title>
+  <meta name="robots" content="noindex, nofollow">
+  <link rel="icon" type="image/png" href="../assets/guessup-icon.png">
+  <link rel="stylesheet" href="../css/admin.css">
+</head>
+<body>
+
+  <!-- ============================================================
+       LOGIN SCREEN
+       ============================================================ -->
+  <div class="login-screen" id="login-screen">
+    <div class="login-card">
+      <img src="../assets/guessup-icon.png" alt="Guess-Up" class="login-card__logo">
+      <h1 class="login-card__title">Guess-Up</h1>
+      <p class="login-card__subtitle">Admin Dashboard</p>
+
+      <form class="login-card__form" id="login-form">
+        <input type="email" class="login-card__input" id="login-email" placeholder="Admin email" required autocomplete="email">
+        <input type="password" class="login-card__input" id="login-password" placeholder="Password" required autocomplete="current-password">
+        <div class="login-card__error" id="login-error"></div>
+        <button type="submit" class="login-card__btn" id="login-btn">Sign In</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       ADMIN LAYOUT (Hidden until authenticated)
+       ============================================================ -->
+  <div class="admin-layout" id="admin-layout">
+
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar__header">
+        <div class="sidebar__logo">
+          <img src="../assets/guessup-icon.png" alt="Guess-Up">
+          <span>Admin</span>
+        </div>
+        <div class="sidebar__badge">guess-up-646e0</div>
+      </div>
+
+      <nav class="sidebar__nav">
+        <div class="sidebar__link active" data-view="dashboard" onclick="navigateTo('dashboard')">
+          <span class="sidebar__link-icon">📊</span>
+          Dashboard
+        </div>
+        <div class="sidebar__link" data-view="decks" onclick="navigateTo('decks')">
+          <span class="sidebar__link-icon">🎴</span>
+          Decks
+          <span class="sidebar__link-badge" id="decks-count">–</span>
+        </div>
+        <div class="sidebar__link" data-view="testers" onclick="navigateTo('testers')">
+          <span class="sidebar__link-icon">👥</span>
+          Beta Testers
+          <span class="sidebar__link-badge" id="testers-count">–</span>
+        </div>
+        <div class="sidebar__link" data-view="feedback" onclick="navigateTo('feedback')">
+          <span class="sidebar__link-icon">💬</span>
+          Feedback
+          <span class="sidebar__link-badge" id="feedback-count">–</span>
+        </div>
+        <div class="sidebar__link" data-view="config" onclick="navigateTo('config')">
+          <span class="sidebar__link-icon">⚙️</span>
+          Site Config
+        </div>
+      </nav>
+
+      <div class="sidebar__footer">
+        <div class="sidebar__user" id="sidebar-user">admin@guessup.com</div>
+        <button class="sidebar__logout" id="logout-btn" onclick="handleLogout()">Sign Out</button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <div class="topbar">
+        <h2 class="topbar__title" id="topbar-title">Dashboard</h2>
+        <div class="topbar__actions" id="topbar-actions"></div>
+      </div>
+
+      <div class="content-area" id="content-area">
+        <!-- Dynamic content rendered by admin.js -->
+      </div>
+    </main>
+  </div>
+
+  <!-- ============================================================
+       MODAL OVERLAY (Reusable)
+       ============================================================ -->
+  <div class="modal-overlay" id="modal-overlay">
+    <div class="modal" id="modal">
+      <div class="modal__header">
+        <h3 class="modal__title" id="modal-title">Modal</h3>
+        <button class="modal__close" onclick="closeModal()">✕</button>
+      </div>
+      <div class="modal__body" id="modal-body"></div>
+      <div class="modal__footer" id="modal-footer"></div>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <!-- ============================================================
+       SCRIPTS
+       ============================================================ -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="../js/firebase-config.js"></script>
+  <script src="../js/admin.js"></script>
+</body>
+</html>

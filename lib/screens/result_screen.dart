@@ -1,6 +1,9 @@
+import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:confetti/confetti.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:guess_up/models/category.dart';
 import 'package:guess_up/models/team_match_state.dart';
@@ -8,9 +11,13 @@ import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/screens/home_screen.dart';
 import 'package:guess_up/screens/team_pass_screen.dart';
 import 'package:guess_up/screens/team_winner_screen.dart';
+import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
+import 'package:guess_up/widgets/scorecard_card.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
 
 class ResultScreen extends StatefulWidget {
   final int score;
@@ -39,6 +46,8 @@ class _ResultScreenState extends State<ResultScreen> {
   int _correctCount = 0;
   int _passCount = 0;
   bool _hasRecordedTeamTurn = false;
+  final GlobalKey _scorecardKey = GlobalKey();
+  bool _isSharing = false;
 
   @override
   void initState() {
@@ -133,6 +142,49 @@ class _ResultScreenState extends State<ResultScreen> {
 
     if (widget.teamMatchState != null) {
       widget.teamMatchState!.adjustLastTeamScore(scoreDiff);
+    }
+  }
+
+  Future<void> _handleShareScorecard() async {
+    if (_isSharing) return;
+    setState(() => _isSharing = true);
+    GameAudioEngine().lightImpact();
+
+    try {
+      // Wait one frame so the RepaintBoundary reflects any recent score changes
+      await Future.delayed(const Duration(milliseconds: 100));
+      if (!mounted) return;
+
+      final boundary =
+          _scorecardKey.currentContext?.findRenderObject()
+              as RenderRepaintBoundary?;
+      if (boundary == null) {
+        debugPrint("Share: RepaintBoundary not found");
+        return;
+      }
+
+      final image = await boundary.toImage(pixelRatio: 3.0);
+      final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      if (byteData != null) {
+        final pngBytes = byteData.buffer.asUint8List();
+        final tempDir = await getTemporaryDirectory();
+        final file =
+            await File(
+              '${tempDir.path}/guessup_scorecard_${DateTime.now().millisecondsSinceEpoch}.png',
+            ).create();
+        await file.writeAsBytes(pngBytes);
+        final xFile = XFile(file.path);
+        await SharePlus.instance.share(
+          ShareParams(
+            files: [xFile],
+            text: '🎉 Scored $_currentScore pts in Guess Up!',
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint("Error sharing scorecard: $e");
+    } finally {
+      if (mounted) setState(() => _isSharing = false);
     }
   }
 
@@ -234,6 +286,34 @@ class _ResultScreenState extends State<ResultScreen> {
         ambientColor: isDark ? Colors.amber : theme.colorScheme.primary,
         child: Stack(
           children: [
+            // Hidden RepaintBoundary for solo scorecard export
+            // Positioned off-screen (not Offstage) so it still gets painted
+            // and toImage() can capture the rendered layer.
+            Positioned(
+              left: -9999,
+              top: -9999,
+              child: Material(
+                color: Colors.transparent,
+                child: RepaintBoundary(
+                  key: _scorecardKey,
+                  child: ScorecardCard(
+                    isTeamMode: widget.teamMatchState != null,
+                    teamCyanName:
+                        widget.teamMatchState?.teamCyanName ?? 'Team Cyan',
+                    teamCyanEmoji: widget.teamMatchState?.teamCyanEmoji ?? '⚡',
+                    teamCyanScore: widget.teamMatchState?.teamCyanScore ?? 0,
+                    teamMagentaName:
+                        widget.teamMatchState?.teamMagentaName ??
+                        'Team Magenta',
+                    teamMagentaEmoji:
+                        widget.teamMatchState?.teamMagentaEmoji ?? '🔥',
+                    teamMagentaScore:
+                        widget.teamMatchState?.teamMagentaScore ?? 0,
+                    soloScore: _currentScore,
+                  ),
+                ),
+              ),
+            ),
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(
@@ -295,7 +375,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                           color:
                                               isEarned
                                                   ? Colors.amber
-                                                  : Colors.white24,
+                                                  : Colors.black26,
                                         ),
                                       );
                                     },
@@ -568,6 +648,48 @@ class _ResultScreenState extends State<ResultScreen> {
                     // ==========================================
                     // 3. BOTTOM PART: Action Buttons & Controls
                     // ==========================================
+
+                    // Solo mode: Share Scorecard Button
+                    if (teamState == null) ...[
+                      SizedBox(
+                        width: double.infinity,
+                        height: 52,
+                        child: ElevatedButton.icon(
+                          onPressed: _isSharing ? null : _handleShareScorecard,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF6C5CE7),
+                            foregroundColor: Colors.white,
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
+                          icon:
+                              _isSharing
+                                  ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                  : const Icon(Icons.share_rounded, size: 22),
+                          label: Text(
+                            _isSharing
+                                ? "GENERATING CARD..."
+                                : "SHARE SCORECARD 📸",
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 15,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                    ],
+
                     Row(
                       children: [
                         Expanded(

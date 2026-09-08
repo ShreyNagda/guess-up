@@ -6,14 +6,13 @@ import 'package:flutter/services.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:guess_up/constants/app_info.dart';
 import 'package:guess_up/screens/home_screen.dart';
+import 'package:guess_up/screens/onboarding_screen.dart';
 import 'package:guess_up/services/category_service.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
 import 'package:guess_up/widgets/arcade_page_route.dart';
 
-/// Option A: Supercell Game Engine Bounce Splash Screen
-/// Features 3D Elastic Logo Drop + Dynamic 0% -> 100% Progress Bar + Floating Particles
 class AnimatedSplashScreen extends StatefulWidget {
   const AnimatedSplashScreen({super.key});
 
@@ -120,9 +119,15 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
     if (!mounted || _isInitializationComplete) return;
     _isInitializationComplete = true;
 
-    Navigator.of(
-      context,
-    ).pushReplacement(ArcadePageRoute(page: const HomeScreen()));
+    if (!storageService.hasSeenOnboarding) {
+      Navigator.of(context).pushReplacement(
+        ArcadePageRoute(page: const OnboardingScreen(isFirstAppLaunch: true)),
+      );
+    } else {
+      Navigator.of(
+        context,
+      ).pushReplacement(ArcadePageRoute(page: const HomeScreen()));
+    }
   }
 
   @override

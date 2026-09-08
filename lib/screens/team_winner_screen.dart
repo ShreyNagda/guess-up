@@ -324,9 +324,11 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
         child: Stack(
           children: [
             // Hidden RepaintBoundary widget for PNG Scorecard export
-            Offstage(
-              offstage: true,
-              child: SingleChildScrollView(
+            Positioned(
+              left: -9999,
+              top: -9999,
+              child: Material(
+                color: Colors.transparent,
                 child: RepaintBoundary(
                   key: _scorecardKey,
                   child: ScorecardCard(

@@ -3,212 +3,573 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>
-      GuessUp | Free Online Word Guessing Game & Motion Charades Party App
-    </title>
-
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://guessup-game.netlify.app/" />
-
-    <!-- Favicon -->
-    <link rel="icon" type="image/png" href="/images/favicon.ico" />
-
-    <!-- Primary Long-Tail SEO Meta Tags -->
+    <title>Guess-Up — The Party Game Where Everyone Acts It Out</title>
     <meta
       name="description"
-      content="Play GuessUp — the free online word guessing game and motion-activated browser trivia party app. Hold your phone to your forehead, guess Bollywood, Cricket, Food, and pop-culture clues, and tilt down to score! 100% ad-free party charades."
+      content="Guess-Up is the ultimate charades party game for Indian youths. One phone, everyone plays. Pick solo or team mode, hold the phone up, and let the room go wild. Android only. Made for India."
     />
     <meta
       name="keywords"
-      content="word guessing game, browser trivia party game, online charades, heads up online, indian party games, bollywood charades, cricket trivia game, forehead game online, motion charades app, multiplayer party app, free browser game"
+      content="charades game, party game India, guessing game Android, Guess Up, desi party game, word guessing"
     />
-    <meta name="author" content="Shrey Nagda" />
-    <meta name="theme-color" content="#FFD600" />
-    <meta name="robots" content="index, follow, max-image-preview:large" />
+    <meta name="author" content="Guess-Up" />
 
-    <!-- Open Graph / Facebook / WhatsApp Meta Tags -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content="https://guessup-game.netlify.app/" />
+    <!-- Open Graph -->
     <meta
       property="og:title"
-      content="GuessUp | Free Online Word Guessing Game & Motion Charades Party App"
+      content="Guess-Up — Act It Out. The Party Game."
     />
     <meta
       property="og:description"
-      content="The high-energy social word guessing game where phone tilts trigger hilarity. Curated Desi pop-culture decks, zero ad interruptions!"
+      content="The party game where one person holds the phone, everyone else acts it out, and the whole room races to guess the word. Android only. Made for India."
     />
-    <meta
-      property="og:image"
-      content="https://guessup-game.netlify.app/images/guess_up_icon_rounded.png"
-    />
-    <meta property="og:site_name" content="GuessUp" />
-    <meta property="og:locale" content="en_US" />
+    <meta property="og:image" content="assets/hero-party.png" />
+    <meta property="og:type" content="website" />
 
-    <!-- Twitter Card Meta Tags -->
+    <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:url" content="https://guessup-game.netlify.app/" />
-    <meta
-      name="twitter:title"
-      content="GuessUp | Free Online Word Guessing Game & Motion Charades Party App"
-    />
+    <meta name="twitter:title" content="Guess-Up — Act It Out." />
     <meta
       name="twitter:description"
-      content="Hold your phone to your forehead and guess clues from your friends. Powered by 60 FPS tilt sensing!"
-    />
-    <meta
-      name="twitter:image"
-      content="https://guessup-game.netlify.app/images/guess_up_icon_rounded.png"
+      content="The charades party game made for India. One phone, everyone plays."
     />
 
-    <!-- Web App Manifest & Apple Touch Icon for PWA -->
-    <link rel="manifest" href="/manifest.json" />
-    <link rel="apple-touch-icon" href="/images/guessup-icon.png" />
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="assets/guessup-icon.png" />
 
-    <!-- Google Fonts - Manrope -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800;900&display=swap"
-      rel="stylesheet"
-      fetchpriority="high"
-    />
-
-    <!-- JSON-LD Structured Data (VideoGame, SoftwareApplication & FAQPage) -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@graph": [
-          {
-            "@type": "SoftwareApplication",
-            "@id": "https://guessup-game.netlify.app/#software",
-            "name": "GuessUp",
-            "operatingSystem": "Android, Web Browser",
-            "applicationCategory": "GameApplication",
-            "genre": "Party Charades Game",
-            "offers": {
-              "@type": "Offer",
-              "price": "0",
-              "priceCurrency": "USD"
-            },
-            "description": "Free online word guessing game and motion-activated social party charades designed for Indian youth and families with hand-curated pop culture decks.",
-            "author": {
-              "@type": "Person",
-              "name": "Shrey Nagda",
-              "email": "shreynagda2714@gmail.com"
-            }
-          },
-          {
-            "@type": "VideoGame",
-            "@id": "https://guessup-game.netlify.app/#game",
-            "name": "GuessUp Party Charades",
-            "description": "Interactive motion tilt word guessing game with Bollywood, Cricket, and Desi pop culture trivia decks.",
-            "genre": ["Party", "Trivia", "Charades", "Word Game"],
-            "playMode": ["MultiPlayer", "CoOp"],
-            "gamePlatform": ["Android", "Web Browser"],
-            "numberOfPlayers": {
-              "@type": "QuantitativeValue",
-              "minValue": 2,
-              "maxValue": 20
-            }
-          },
-          {
-            "@type": "FAQPage",
-            "@id": "https://guessup-game.netlify.app/#faq",
-            "mainEntity": [
-              {
-                "@type": "Question",
-                "name": "Is Guess Up completely free of ads?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Yes! Unlike other charades apps that force 30-second unskippable video ads between rounds, Guess Up on Android is built for 100% uninterrupted party gameplay."
-                }
-              },
-              {
-                "@type": "Question",
-                "name": "How does motion tilt detection work on Android?",
-                "acceptedAnswer": {
-                  "@type": "Answer",
-                  "text": "Guess Up uses your Android phone's built-in accelerometer and gyroscope. When held to your forehead, tilting down registers a Correct point, and tilting up passes to the next card."
-                }
-              }
-            ]
-          }
-        ]
-      }
-    </script>
+    <!-- Styles -->
+    <link rel="stylesheet" href="css/style.css" />
   </head>
-  <body class="overflow-x-hidden bg-[#0e0c1c] text-white">
-    <!-- Static Discoverable Text Content for Search Crawlers & No-JS Clients -->
-    <noscript>
-      <header>
-        <h1>
-          GuessUp — Free Online Word Guessing Game & Motion Charades Party App
-        </h1>
-        <p>
-          The ultimate motion-activated party game for house parties, hostel
-          hangouts, and family gatherings.
-        </p>
-      </header>
-      <main>
-        <section>
-          <h2>How To Play GuessUp</h2>
-          <ol>
-            <li>
-              Select a category deck (e.g. Bollywood Buff, Cricket Fever, Sweet
-              & Spicy).
-            </li>
-            <li>
-              Hold your phone to your forehead with the screen facing your
-              friends.
-            </li>
-            <li>
-              Your friends shout clues while you guess the word displayed on
-              screen.
-            </li>
-            <li>
-              Nod your phone DOWN to score a point when guessed correctly!
-            </li>
-            <li>Tilt your phone UP to pass if you are stuck.</li>
-          </ol>
-        </section>
-        <section>
-          <h2>Popular Decks & Categories</h2>
-          <ul>
-            <li>
-              <strong>Bollywood Buff</strong>: Iconic Indian movies, famous
-              dialogues, and superstars.
-            </li>
-            <li>
-              <strong>Cricket Fever</strong>: Legendary players, IPL moments,
-              and iconic shots.
-            </li>
-            <li>
-              <strong>Sweet & Spicy</strong>: Street snacks, Indian delicacies,
-              and 2 AM cravings.
-            </li>
-            <li>
-              <strong>Incredible India</strong>: Famous monuments, cultural
-              festivals, and desi quirks.
-            </li>
-            <li>
-              <strong>Aamchi Mumbai</strong>: Local train vibes, Marine Drive,
-              and vada pav.
-            </li>
-          </ul>
-        </section>
-        <section>
-          <h2>Key Game Features</h2>
-          <ul>
-            <li>100% Ad-Free uninterrupted gameplay.</li>
-            <li>60 FPS real-time motion tilt gesture detection.</li>
-            <li>2-Team Battle Mode with automated scoreboard tracking.</li>
-            <li>Custom Deck Creation Engine.</li>
-          </ul>
-        </section>
-      </main>
-    </noscript>
+  <body>
+    <!-- ============================================================
+       NAVIGATION
+       ============================================================ -->
+    <nav class="nav" id="nav">
+      <a href="#" class="nav__logo">
+        <img
+          src="assets/guessup-icon.png"
+          alt="Guess-Up"
+          class="nav__logo-icon"
+        />
+        <span class="nav__logo-text">Guess-Up</span>
+      </a>
 
-    <div id="root"></div>
-    <script type="module" src="/src/main.jsx"></script>
+      <ul class="nav__links">
+        <li><a href="#the-game" class="nav__link">The Game</a></li>
+        <li><a href="#how-to-play" class="nav__link">How to Play</a></li>
+        <li><a href="#decks" class="nav__link">Community</a></li>
+      </ul>
+
+      <a href="#signup" class="nav__cta">Request Access</a>
+
+      <button
+        class="nav__hamburger"
+        id="nav-hamburger"
+        aria-label="Toggle menu"
+      >
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <div class="nav__mobile-menu" id="mobile-menu">
+      <a href="#the-game" onclick="closeMobileMenu()">The Game</a>
+      <a href="#how-to-play" onclick="closeMobileMenu()">How to Play</a>
+      <a href="#decks" onclick="closeMobileMenu()">Community</a>
+      <a
+        href="#signup"
+        onclick="closeMobileMenu()"
+        style="color: var(--color-primary)"
+        >Request Access</a
+      >
+    </div>
+
+    <!-- ============================================================
+       HERO SECTION
+       ============================================================ -->
+    <section class="hero" id="hero">
+      <div class="hero__bg">
+        <img
+          src="assets/hero-party.png"
+          alt="Friends playing Guess-Up at a party"
+        />
+      </div>
+
+      <div class="hero__content">
+        <div class="hero__tag reveal">
+          <span class="hero__tag-dot"></span>
+          PARTY MODE / NEW CHARADE INCOMING
+        </div>
+
+        <h1 class="hero__heading reveal reveal-delay-1">
+          ACT<br />
+          <span class="highlight">IT</span><br />
+          OUT.
+        </h1>
+
+        <p class="hero__description reveal reveal-delay-2">
+          The party game where one person holds the phone, everyone else acts it
+          out, and the whole room races to guess the word.
+        </p>
+
+        <div class="hero__actions reveal reveal-delay-3">
+          <a href="#signup" class="btn-primary" id="hero-cta">
+            JOIN THE BETA ⚡
+          </a>
+          <a href="#preview" class="btn-secondary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+              <polygon points="5,3 19,12 5,21" />
+            </svg>
+            WATCH THE TRAILER
+          </a>
+        </div>
+
+        <div class="hero__stats reveal reveal-delay-4">
+          <div class="hero__stat">
+            <div class="hero__stat-label">01 / mode</div>
+            <div class="hero__stat-value">Solo or team</div>
+          </div>
+          <div class="hero__stat">
+            <div class="hero__stat-label">02 / phone</div>
+            <div class="hero__stat-value">Android only</div>
+          </div>
+          <div class="hero__stat">
+            <div class="hero__stat-label">03 / party</div>
+            <div class="hero__stat-value">Made for India</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+       TICKER / MARQUEE
+       ============================================================ -->
+    <div class="ticker" id="ticker">
+      <div class="ticker__track">
+        <div class="ticker__content">
+          <span class="ticker__item">THE LEADERBOARD REMEMBERS</span>
+          <span class="ticker__separator">⚡ +</span>
+          <span class="ticker__item">NEW WORD DETECTED</span>
+          <span class="ticker__separator">⚡ +</span>
+          <span class="ticker__item">INSTAGRAM / YOUTUBE / REDDIT</span>
+          <span class="ticker__separator">⚡ +</span>
+          <span class="ticker__item">NO TWO GUESSES ARE ALIKE</span>
+          <span class="ticker__separator">⚡ +</span>
+          <span class="ticker__item">DAILY DROP / 09:00 UTC</span>
+          <span class="ticker__separator">⚡ +</span>
+          <span class="ticker__item">THE LEADERBOARD REMEMBERS</span>
+          <span class="ticker__separator">⚡ +</span>
+        </div>
+        <!-- Duplicate for seamless loop -->
+        <div class="ticker__content">
+          <span class="ticker__item">THE LEADERBOARD REMEMBERS</span>
+          <span class="ticker__separator">⚡ +</span>
+          <span class="ticker__item">NEW WORD DETECTED</span>
+          <span class="ticker__separator">⚡ +</span>
+          <span class="ticker__item">INSTAGRAM / YOUTUBE / REDDIT</span>
+          <span class="ticker__separator">⚡ +</span>
+          <span class="ticker__item">NO TWO GUESSES ARE ALIKE</span>
+          <span class="ticker__separator">⚡ +</span>
+          <span class="ticker__item">DAILY DROP / 09:00 UTC</span>
+          <span class="ticker__separator">⚡ +</span>
+          <span class="ticker__item">THE LEADERBOARD REMEMBERS</span>
+          <span class="ticker__separator">⚡ +</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================================
+       SECTION 01: THE GAME
+       ============================================================ -->
+    <section class="game-section" id="the-game">
+      <div class="container">
+        <div class="game__left">
+          <div class="section-label reveal">
+            <span class="section-label__number">01</span>
+            <span class="section-label__line"></span>
+            <span class="section-label__text">The Game</span>
+          </div>
+
+          <h2 class="section-heading reveal reveal-delay-1">
+            <span class="white">ONE<br />PHONE.</span><br />
+            <span class="highlight">EVERYONE</span><br />
+            <span class="white">PLAYS.</span>
+          </h2>
+        </div>
+
+        <div class="game__right">
+          <h3 class="game__subtitle reveal">
+            Guess-Up turns any room into game night.
+          </h3>
+
+          <p class="game__description reveal reveal-delay-1">
+            Pick solo mode for a quick brain break or team mode for the full
+            family showdown. Hold the Android phone up, act the word out, and
+            let your friends do the guessing.
+          </p>
+
+          <div class="stats-grid reveal reveal-delay-2">
+            <div class="stat-item">
+              <span class="stat-item__value">2 modes</span>
+              <span class="stat-item__label">Solo or team</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-item__value">1 phone</span>
+              <span class="stat-item__label">Held up high</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-item__value">∞ laughs</span>
+              <span class="stat-item__label">Per game night</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-item__value">100%</span>
+              <span class="stat-item__label">Android ready</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+       SECTION 02: HOW TO PLAY
+       ============================================================ -->
+    <section class="howto-section" id="how-to-play">
+      <div class="container">
+        <div class="howto__header">
+          <div>
+            <div class="section-label reveal">
+              <span class="section-label__number">02</span>
+              <span class="section-label__line"></span>
+              <span class="section-label__text">How to Play</span>
+            </div>
+
+            <h2 class="section-heading reveal reveal-delay-1">
+              <span class="white">ACT FAST.</span><br />
+              <span class="highlight">GUESS</span><br />
+              <span class="white">LOUDER.</span>
+            </h2>
+          </div>
+
+          <div class="howto__aside reveal reveal-delay-2">
+            <div class="howto__aside-line"></div>
+            <p class="howto__aside-text">
+              Three moves for a room<br />ready to roast the clue.
+            </p>
+          </div>
+        </div>
+
+        <div class="howto__cards">
+          <!-- Card 1 -->
+          <div class="howto-card reveal">
+            <div class="howto-card__header">
+              <span class="howto-card__number">01 / 03</span>
+              <div class="howto-card__icon">⚡</div>
+            </div>
+            <h3 class="howto-card__title">Pick a Deck</h3>
+            <p class="howto-card__desc">
+              Choose from Bollywood, Cricket, Desi Food, or bring your own
+              custom deck. Each one is packed with words your crew already
+              knows.
+            </p>
+            <div class="howto-card__footer">
+              <span class="howto-card__footer-label">Field Note 01</span>
+              <span class="howto-card__footer-arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="howto-card reveal reveal-delay-1">
+            <div class="howto-card__header">
+              <span class="howto-card__number">02 / 03</span>
+              <div class="howto-card__icon">📱</div>
+            </div>
+            <h3 class="howto-card__title">Hold It Up</h3>
+            <p class="howto-card__desc">
+              Put the phone on your forehead. The word appears — but only your
+              friends can see it. They act, you guess. Tilt down for correct,
+              tilt up to skip.
+            </p>
+            <div class="howto-card__footer">
+              <span class="howto-card__footer-label">Field Note 02</span>
+              <span class="howto-card__footer-arrow">→</span>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="howto-card reveal reveal-delay-2">
+            <div class="howto-card__header">
+              <span class="howto-card__number">03 / 03</span>
+              <div
+                class="howto-card__icon"
+                style="background: rgba(224, 64, 251, 0.12); color: #e040fb"
+              >
+                🏆
+              </div>
+            </div>
+            <h3 class="howto-card__title">Win the Round</h3>
+            <p class="howto-card__desc">
+              Race against the timer, rack up points, and compare scores. In
+              team mode, the best duo takes the crown. Bragging rights are
+              mandatory.
+            </p>
+            <div class="howto-card__footer">
+              <span class="howto-card__footer-label">Field Note 03</span>
+              <span class="howto-card__footer-arrow">→</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+       SECTION 03: WHAT'S INSIDE / DECKS
+       ============================================================ -->
+    <section class="decks-section" id="decks">
+      <div class="container">
+        <div class="decks__left">
+          <div class="section-label reveal">
+            <span class="section-label__number">03</span>
+            <span class="section-label__line"></span>
+            <span class="section-label__text">What's Inside</span>
+          </div>
+
+          <h2 class="section-heading reveal reveal-delay-1">
+            <span class="white">BRING</span><br />
+            <span class="highlight">YOUR</span><br />
+            <span class="white">FAVOURITES.</span>
+          </h2>
+
+          <p class="decks__description reveal reveal-delay-2">
+            Start with decks everyone in India can jump into, then keep the
+            party growing as new ways to play arrive.
+          </p>
+        </div>
+
+        <div class="decks__grid reveal reveal-delay-1">
+          <!-- Deck 01 -->
+          <div class="deck-card">
+            <div class="deck-card__status deck-card__status--available">✓</div>
+            <h3 class="deck-card__name">Bollywood Blockbusters</h3>
+            <p class="deck-card__desc">Films, stars, and iconic lines.</p>
+            <span class="deck-card__label">Deck 01</span>
+          </div>
+
+          <!-- Deck 02 -->
+          <div class="deck-card">
+            <div class="deck-card__status deck-card__status--available">✓</div>
+            <h3 class="deck-card__name">Cricket Mania</h3>
+            <p class="deck-card__desc">Bring the stadium energy home.</p>
+            <span class="deck-card__label">Deck 02</span>
+          </div>
+
+          <!-- Deck 03 -->
+          <div class="deck-card">
+            <div class="deck-card__status deck-card__status--available">✓</div>
+            <h3 class="deck-card__name">Desi Foodies</h3>
+            <p class="deck-card__desc">The fastest route to a debate.</p>
+            <span class="deck-card__label">Deck 03</span>
+          </div>
+
+          <!-- Deck 04 -->
+          <div class="deck-card">
+            <div class="deck-card__status deck-card__status--available">✓</div>
+            <h3 class="deck-card__name">Desi Youth &amp; Vibes</h3>
+            <p class="deck-card__desc">Bunking class to night out.</p>
+            <span class="deck-card__label">Deck 04</span>
+          </div>
+
+          <!-- Deck 05 - Coming Soon -->
+          <div class="deck-card">
+            <div class="deck-card__status deck-card__status--coming">○</div>
+            <h3 class="deck-card__name">More Indian Decks</h3>
+            <p class="deck-card__desc">More regional flavour is coming.</p>
+            <span class="deck-card__label">Deck 05</span>
+          </div>
+
+          <!-- Deck 06 - Coming Soon -->
+          <div class="deck-card">
+            <div class="deck-card__status deck-card__status--coming">○</div>
+            <h3 class="deck-card__name">Custom Decks</h3>
+            <p class="deck-card__desc">Make the clues your own.</p>
+            <span class="deck-card__label">Deck 06</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+       SECTION 04: APP PREVIEW / TRAILER
+       ============================================================ -->
+    <section class="preview-section" id="preview">
+      <div class="container">
+        <div class="section-label reveal" style="justify-content: center">
+          <span class="section-label__number">04</span>
+          <span class="section-label__line"></span>
+          <span class="section-label__text">See It In Action</span>
+        </div>
+
+        <h2
+          class="section-heading reveal reveal-delay-1"
+          style="text-align: center; margin-bottom: 0"
+        >
+          <span class="white">WATCH.</span><br />
+          <span class="highlight">PLAY.</span><br />
+          <span class="white">REPEAT.</span>
+        </h2>
+
+        <div class="preview__wrapper reveal reveal-delay-2">
+          <img
+            src="assets/phone-mockup.png"
+            alt="Guess-Up app on Android phone"
+            class="preview__image"
+          />
+          <div
+            class="preview__play-btn"
+            id="play-trailer-btn"
+            role="button"
+            aria-label="Play trailer"
+          >
+            <svg viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21" /></svg>
+          </div>
+        </div>
+
+        <p class="preview__caption reveal reveal-delay-3">
+          Trailer coming soon — drop your email below to get first access.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================================================
+       SECTION 05: BETA SIGNUP
+       ============================================================ -->
+    <section class="signup-section" id="signup">
+      <div class="container">
+        <div class="signup__inner">
+          <h2 class="signup__heading reveal">
+            <span class="white">BE THE</span><br />
+            <span class="highlight">FIRST</span>
+            <span class="white"> TO PLAY.</span>
+          </h2>
+
+          <p class="signup__subtext reveal reveal-delay-1">
+            Drop your name and email. We'll send you the APK before anyone else.
+          </p>
+
+          <!-- Form -->
+          <form class="signup__form reveal reveal-delay-2" id="signup-form">
+            <input
+              type="text"
+              class="signup__input"
+              id="signup-name"
+              placeholder="Your name"
+              required
+              autocomplete="name"
+            />
+            <input
+              type="email"
+              class="signup__input"
+              id="signup-email"
+              placeholder="Your email"
+              required
+              autocomplete="email"
+            />
+            <div class="signup__error" id="signup-error"></div>
+            <button type="submit" class="signup__submit" id="signup-submit">
+              REQUEST EARLY ACCESS ⚡
+            </button>
+            <p class="signup__disclaimer">
+              Android only. No spam. Unsubscribe anytime.
+            </p>
+          </form>
+
+          <!-- Success Message -->
+          <div class="signup__success" id="signup-success">
+            <div class="signup__success-icon">
+              <svg viewBox="0 0 24 24">
+                <path
+                  d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41L9 16.17z"
+                />
+              </svg>
+            </div>
+            <h3 class="signup__success-title">You're in! 🎉</h3>
+            <p class="signup__success-text">
+              We'll send you the APK link soon.<br />
+              Keep an eye on your inbox.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================
+       FOOTER
+       ============================================================ -->
+    <footer class="footer" id="footer">
+      <div class="container">
+        <div class="footer__top">
+          <div class="footer__brand">
+            <div class="footer__logo">
+              <img
+                src="assets/guessup-icon.png"
+                alt="Guess-Up"
+                class="footer__logo-icon"
+              />
+              <span class="footer__logo-text">Guess-Up</span>
+            </div>
+            <p class="footer__tagline">
+              Social-media-powered word-guessing showdown.
+            </p>
+          </div>
+
+          <ul class="footer__nav">
+            <li><a href="#the-game" class="footer__link">The Game</a></li>
+            <li><a href="#how-to-play" class="footer__link">How to Play</a></li>
+            <li><a href="#decks" class="footer__link">Community</a></li>
+            <li>
+              <a href="#" class="footer__link" target="_blank" rel="noopener"
+                >Instagram</a
+              >
+            </li>
+            <li>
+              <a href="#" class="footer__link" target="_blank" rel="noopener"
+                >YouTube</a
+              >
+            </li>
+            <li>
+              <a href="#" class="footer__link" target="_blank" rel="noopener"
+                >Reddit</a
+              >
+            </li>
+          </ul>
+        </div>
+
+        <div class="footer__divider"></div>
+
+        <div class="footer__bottom">
+          <span class="footer__copyright"
+            >© 2026 Guess-Up / All Guesses Reserved</span
+          >
+          <span class="footer__status">
+            <span class="footer__status-dot"></span>
+            Daily Challenge is Live
+          </span>
+        </div>
+      </div>
+    </footer>
+
+    <!-- ============================================================
+       SCRIPTS
+       ============================================================ -->
+    <!-- Firebase SDK (compat for simplicity) -->
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+    <!-- Firebase Config -->
+    <script src="js/firebase-config.js"></script>
+
+    <!-- Landing Page Logic -->
+    <script src="js/main.js"></script>
   </body>
 </html>

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,6 +11,7 @@ import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/screens/onboarding_screen.dart';
 import 'package:guess_up/services/category_service.dart';
 import 'package:guess_up/services/audio_service.dart';
+import 'package:guess_up/services/deck_randomizer.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
@@ -176,6 +178,30 @@ class _HomeScreenState extends State<HomeScreen> {
     _storageService.setLastCategoryIds([deck.id]);
   }
 
+  void _handleShuffleDeck() {
+    if (_decks.isEmpty) return;
+    _audioEngine.mediumImpact();
+    HapticFeedback.mediumImpact();
+
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder:
+          (dialogCtx) => _SurpriseMeDialog(
+            decks: _decks,
+            audioEngine: _audioEngine,
+            onSelectDeck: (deck) {
+              _selectDeck(deck);
+            },
+            onPlayDeck: (deck) {
+              _selectDeck(deck);
+              Navigator.of(dialogCtx).pop();
+              _handleStartGame();
+            },
+          ),
+    );
+  }
+
   void _showDeckDescriptionModal(Category deck) {
     _audioEngine.lightImpact();
     showModalBottomSheet(
@@ -325,6 +351,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     _audioEngine.extraLightImpact();
 
+    _storageService.recordDeckPlayed(selected.first.id);
     _storageService.setLastCategoryIds([selected.first.id]);
     _storageService.setLastDeckId(selected.first.id);
     _storageService.setGameDuration(_gameDuration);
@@ -1267,75 +1294,127 @@ class _HomeScreenState extends State<HomeScreen> {
 
           const SizedBox(height: 12),
 
-          // Primary Hero Play CTA Button
-          BouncyGameButton(
-            onTap: _handleStartGame,
-            child: Container(
-              height: 58,
-              width: double.infinity,
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFFFFEA00), Color(0xFFFF9100)],
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                ),
-                borderRadius: BorderRadius.circular(22),
-                border: Border.all(color: Colors.white, width: 2.5),
-                boxShadow: const [
-                  // Solid 3D Dark Bottom Push Bevel
-                  BoxShadow(color: Color(0xFF8E4800), offset: Offset(0, 5)),
-                  BoxShadow(
-                    color: Colors.amberAccent,
-                    blurRadius: 16,
-                    spreadRadius: -2,
-                    offset: Offset(0, 2),
+          // Action Row: Shuffle Button + Primary Hero Play CTA Button
+          Row(
+            children: [
+              // Shuffle Deck Button
+              Tooltip(
+                message: "Shuffle Decks",
+                child: BouncyGameButton(
+                  onTap: _handleShuffleDeck,
+                  child: Container(
+                    width: 58,
+                    height: 58,
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF261F47) : Colors.white,
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(
+                        color:
+                            isDark
+                                ? Colors.amberAccent.withAlpha(160)
+                                : Colors.amber.shade700,
+                        width: 2.5,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color:
+                              isDark ? const Color(0xFF0C091A) : Colors.black26,
+                          offset: const Offset(0, 5),
+                        ),
+                        BoxShadow(
+                          color: Colors.amber.withAlpha(60),
+                          blurRadius: 10,
+                          spreadRadius: -1,
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Icon(
+                        Icons.shuffle_rounded,
+                        color:
+                            isDark ? Colors.amberAccent : Colors.amber.shade800,
+                        size: 26,
+                      ),
+                    ),
                   ),
-                ],
+                ),
               ),
-              child: Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Flexible(
-                        child: FittedBox(
-                          fit: BoxFit.scaleDown,
-                          child: Text(
-                            _isTeamMode ? "PLAY TEAM BATTLE" : "PLAY SOLO",
-                            style: const TextStyle(
-                              color: Colors.black,
-                              fontSize: 15,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 1.2,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.white70,
-                                  offset: Offset(0, 1),
+              const SizedBox(width: 10),
+
+              // Primary Hero Play CTA Button
+              Expanded(
+                child: BouncyGameButton(
+                  onTap: _handleStartGame,
+                  child: Container(
+                    height: 58,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFFEA00), Color(0xFFFF9100)],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: Colors.white, width: 2.5),
+                      boxShadow: const [
+                        // Solid 3D Dark Bottom Push Bevel
+                        BoxShadow(
+                          color: Color(0xFF8E4800),
+                          offset: Offset(0, 5),
+                        ),
+                        BoxShadow(
+                          color: Colors.amberAccent,
+                          blurRadius: 16,
+                          spreadRadius: -2,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Flexible(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(
+                                  _isTeamMode
+                                      ? "PLAY TEAM BATTLE"
+                                      : "PLAY SOLO",
+                                  style: const TextStyle(
+                                    color: Colors.black,
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.2,
+                                    shadows: [
+                                      Shadow(
+                                        color: Colors.white70,
+                                        offset: Offset(0, 1),
+                                      ),
+                                    ],
+                                  ),
                                 ),
-                              ],
+                              ),
                             ),
-                          ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.all(4),
+                              child: const Icon(
+                                Icons.play_arrow_rounded,
+                                color: Colors.black,
+                                size: 22,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.all(4),
-                        // decoration: const BoxDecoration(
-                        //   color: Colors.black,
-                        //   shape: BoxShape.circle,
-                        // ),
-                        child: const Icon(
-                          Icons.play_arrow_rounded,
-                          color: Colors.black,
-                          size: 22,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
         ],
       ),
@@ -1392,6 +1471,383 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           items: items,
           onChanged: onChanged,
+        ),
+      ),
+    );
+  }
+}
+
+class _SurpriseMeDialog extends StatefulWidget {
+  final List<Category> decks;
+  final GameAudioEngine audioEngine;
+  final ValueChanged<Category> onSelectDeck;
+  final ValueChanged<Category> onPlayDeck;
+
+  const _SurpriseMeDialog({
+    required this.decks,
+    required this.audioEngine,
+    required this.onSelectDeck,
+    required this.onPlayDeck,
+  });
+
+  @override
+  State<_SurpriseMeDialog> createState() => _SurpriseMeDialogState();
+}
+
+class _SurpriseMeDialogState extends State<_SurpriseMeDialog>
+    with SingleTickerProviderStateMixin {
+  bool _isShuffling = true;
+  Category? _chosenDeck;
+  Category? _displayDeck;
+  Timer? _shuffleTimer;
+  late AnimationController _spinController;
+
+  @override
+  void initState() {
+    super.initState();
+    _spinController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    )..repeat();
+    _startShuffleAnimation();
+  }
+
+  @override
+  void dispose() {
+    _shuffleTimer?.cancel();
+    _spinController.dispose();
+    super.dispose();
+  }
+
+  void _startShuffleAnimation() {
+    if (widget.decks.isEmpty) return;
+
+    setState(() {
+      _isShuffling = true;
+    });
+    widget.audioEngine.extraLightImpact();
+
+    int tickCount = 0;
+    const maxTicks = 16;
+    final random = Random();
+
+    _shuffleTimer?.cancel();
+    _shuffleTimer = Timer.periodic(const Duration(milliseconds: 75), (timer) {
+      tickCount++;
+      if (!mounted) {
+        timer.cancel();
+        return;
+      }
+
+      final randomIndex = random.nextInt(widget.decks.length);
+      setState(() {
+        _displayDeck = widget.decks[randomIndex];
+      });
+
+      if (tickCount >= maxTicks) {
+        timer.cancel();
+        final finalDeck = DeckRandomizer.pickWeightedRandomDeck(widget.decks);
+        widget.onSelectDeck(finalDeck);
+
+        setState(() {
+          _chosenDeck = finalDeck;
+          _displayDeck = finalDeck;
+          _isShuffling = false;
+        });
+        widget.audioEngine.lightImpact();
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+    final activeDeck =
+        _displayDeck ?? (widget.decks.isNotEmpty ? widget.decks.first : null);
+    final deckColor = activeDeck?.themeColor ?? AppTheme.lightPrimaryColor;
+
+    return Dialog(
+      backgroundColor: isDark ? const Color(0xFF191430) : Colors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(28),
+        side: BorderSide(
+          color:
+              isDark
+                  ? Colors.amberAccent.withAlpha(100)
+                  : Colors.amber.shade700,
+          width: 2.5,
+        ),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Title Header
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.amber.withAlpha(40),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.amber, width: 1.5),
+                  ),
+                  child: const Text("🎲", style: TextStyle(fontSize: 20)),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        "Surprise Me",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.8,
+                          color:
+                              isDark ? Colors.white : const Color(0xFF1E1938),
+                        ),
+                      ),
+                      Text(
+                        _isShuffling
+                            ? "Shuffling deck cards..."
+                            : "Deck selected!",
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color:
+                              isDark
+                                  ? Colors.amberAccent
+                                  : Colors.amber.shade800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: Icon(
+                    Icons.close_rounded,
+                    color: isDark ? Colors.white60 : Colors.black54,
+                    size: 22,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 20),
+
+            // Card Shuffle Preview Container
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(24),
+                gradient: LinearGradient(
+                  colors: [
+                    deckColor.withAlpha(isDark ? 90 : 50),
+                    deckColor.withAlpha(isDark ? 40 : 20),
+                  ],
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                ),
+                border: Border.all(color: deckColor.withAlpha(180), width: 2.0),
+                boxShadow: [
+                  BoxShadow(
+                    color: deckColor.withAlpha(50),
+                    blurRadius: 16,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (_isShuffling) ...[
+                    // Shuffling Animation State
+                    RotationTransition(
+                      turns: Tween(
+                        begin: 0.0,
+                        end: 1.0,
+                      ).animate(_spinController),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withAlpha(30),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          activeDeck?.icon.isNotEmpty == true
+                              ? activeDeck!.icon
+                              : "🎴",
+                          style: const TextStyle(fontSize: 48),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      activeDeck?.name.toUpperCase() ?? "SHUFFLING...",
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        color: isDark ? Colors.white : Colors.black,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        SizedBox(
+                          width: 14,
+                          height: 14,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color:
+                                isDark
+                                    ? Colors.amberAccent
+                                    : Colors.amber.shade800,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          "Picking a random deck...",
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isDark ? Colors.white70 : Colors.black87,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ] else ...[
+                    // Shuffled Choice Result State
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.amber,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        "🎯 YOUR LUCKY DECK",
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: Colors.black,
+                          letterSpacing: 1.0,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    Text(
+                      _chosenDeck?.icon.isNotEmpty == true
+                          ? _chosenDeck!.icon
+                          : "🎴",
+                      style: const TextStyle(fontSize: 52),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      _chosenDeck?.name.toUpperCase() ?? "",
+                      textAlign: TextAlign.center,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w900,
+                        fontSize: 20,
+                        color: isDark ? Colors.white : const Color(0xFF0F0C1C),
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    if (_chosenDeck?.description != null &&
+                        _chosenDeck!.description!.isNotEmpty) ...[
+                      const SizedBox(height: 6),
+                      Text(
+                        _chosenDeck!.description!,
+                        textAlign: TextAlign.center,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: TextStyle(
+                          fontSize: 12,
+                          color:
+                              isDark ? Colors.white70 : const Color(0xFF5A6072),
+                          height: 1.3,
+                        ),
+                      ),
+                    ],
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Action Buttons: Shuffle Again vs Play
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _isShuffling ? null : _startShuffleAnimation,
+                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    label: const Text(
+                      "SHUFFLE AGAIN",
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: isDark ? Colors.white : Colors.black,
+                      side: BorderSide(
+                        color: isDark ? Colors.white38 : Colors.black26,
+                        width: 1.5,
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed:
+                        _isShuffling || _chosenDeck == null
+                            ? null
+                            : () => widget.onPlayDeck(_chosenDeck!),
+                    icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                    label: const Text(
+                      "PLAY",
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber,
+                      foregroundColor: Colors.black,
+                      elevation: 4,
+                      shadowColor: Colors.amber.withAlpha(120),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );

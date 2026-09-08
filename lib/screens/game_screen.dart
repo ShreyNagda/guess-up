@@ -11,6 +11,7 @@ import 'package:guess_up/services/deck_randomizer.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/game_pause_overlay.dart';
 import 'package:guess_up/widgets/game_top_bar.dart';
+import 'package:guess_up/widgets/three_dot_loader.dart';
 import 'package:guess_up/widgets/tilt_detector.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 import 'package:timer_controller/timer_controller.dart';
@@ -41,6 +42,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   bool hasStartTimerEnded = false;
   bool canDetectTilt = true;
   bool isLoadingWords = true;
+  bool _isOrientationLoading = true;
   int getReadyCountdown = 3;
   int score = 0;
   int currentIndex = 0;
@@ -66,18 +68,27 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
-    SystemChrome.setPreferredOrientations([
-      DeviceOrientation.landscapeLeft,
-      DeviceOrientation.landscapeRight,
-    ]);
+    _setPortraitOrientation();
     WidgetsBinding.instance.addObserver(this);
     WakelockPlus.enable();
     gameTimerController = TimerController.seconds(widget.time);
     _subscription = accelerometerEventStream().listen(_handleAccelerometer);
     _fetchInitialWords();
-    _setLandscapeOrientation();
+    _initOrientationFlow();
     GameAudioEngine().setGameActive(true);
+  }
+
+  Future<void> _initOrientationFlow() async {
+    setState(() {
+      _isOrientationLoading = true;
+    });
+    await Future.delayed(const Duration(milliseconds: 750));
+    _setLandscapeOrientation();
+    if (mounted) {
+      setState(() {
+        _isOrientationLoading = false;
+      });
+    }
   }
 
   @override
@@ -209,6 +220,41 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     }
   }
 
+  Future<void> _finishOrExitGame({bool endRoundToResults = true}) async {
+    if (isGameFinished) return;
+    isGameFinished = true;
+    gameTimerController.pause();
+    GameAudioEngine().setGameActive(false);
+
+    if (mounted) {
+      setState(() {
+        _isOrientationLoading = true;
+      });
+    }
+
+    _setPortraitOrientation();
+    await Future.delayed(const Duration(milliseconds: 750));
+
+    if (!mounted) return;
+
+    if (endRoundToResults) {
+      Navigator.of(context).pushReplacement(
+        CupertinoPageRoute(
+          builder:
+              (_) => ResultScreen(
+                score: score,
+                time: widget.time,
+                scoreMap: scoreMap,
+                selectedCategories: widget.selectedCategories,
+                teamMatchState: widget.teamMatchState,
+              ),
+        ),
+      );
+    } else {
+      Navigator.of(context).pop();
+    }
+  }
+
   Future<void> _handleExitGamePressed() async {
     final bool wasRunning =
         gameTimerController.value.status == TimerStatus.running;
@@ -222,9 +268,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       barrierDismissible: false,
       builder:
           (dialogContext) => AlertDialog(
-            title: const Text("Exit Game?"),
+            title: const Text("End Round?"),
             content: const Text(
-              "Are you sure you want to leave? Your game progress will be lost.",
+              "Are you sure you want to end this round early? Your current scorecard results will be displayed.",
             ),
             actions: [
               TextButton(
@@ -237,8 +283,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 ),
                 onPressed: () => Navigator.of(dialogContext).pop(true),
                 child: const Text(
-                  "Exit",
-                  style: TextStyle(color: Colors.white),
+                  "END ROUND",
+                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -251,9 +297,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
           isGamePaused = false;
         });
       }
-      _setPortraitOrientation();
-      await Future.delayed(const Duration(milliseconds: 50));
-      if (mounted) Navigator.of(context).pop();
+      _finishOrExitGame(endRoundToResults: true);
     } else {
       if (wasRunning && !isGamePaused) {
         gameTimerController.start();
@@ -369,6 +413,10 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
+    if (_isOrientationLoading) {
+      return const ThreeDotLoader();
+    }
+
     final theme = Theme.of(context);
     return PopScope(
       canPop: false,
@@ -394,21 +442,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
             if (!mounted) return;
             GameAudioEngine().playEndBeep();
             GameAudioEngine().heavyImpact();
-            setState(() => isGameFinished = true);
-            GameAudioEngine().setGameActive(false);
-            _setPortraitOrientation();
-            Navigator.of(context).pushReplacement(
-              CupertinoPageRoute(
-                builder:
-                    (_) => ResultScreen(
-                      score: score,
-                      time: widget.time,
-                      scoreMap: scoreMap,
-                      selectedCategories: widget.selectedCategories,
-                      teamMatchState: widget.teamMatchState,
-                    ),
-              ),
-            );
+            _finishOrExitGame(endRoundToResults: true);
           }
         },
         child: TimerControllerBuilder(
@@ -504,7 +538,10 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                           child: IconButton(
                             icon: Icon(
                               Icons.arrow_back_ios_new_rounded,
-                              color: isDark ? Colors.white : const Color(0xFF0F0C1C),
+                              color:
+                                  isDark
+                                      ? Colors.white
+                                      : const Color(0xFF0F0C1C),
                               size: 22,
                             ),
                             onPressed: _handleExitGamePressed,
@@ -685,9 +722,14 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                         textAlign: TextAlign.center,
                         style: theme.textTheme.headlineSmall?.copyWith(
                           fontWeight: FontWeight.w900,
-                          color: isTeamMode
-                              ? (isDark ? Colors.white : const Color(0xFF0F0C1C))
-                              : (isDark ? Colors.amber : const Color(0xFFD97700)),
+                          color:
+                              isTeamMode
+                                  ? (isDark
+                                      ? Colors.white
+                                      : const Color(0xFF0F0C1C))
+                                  : (isDark
+                                      ? Colors.amber
+                                      : const Color(0xFFD97700)),
                           letterSpacing: 1.5,
                           fontSize: 24,
                         ),
@@ -697,7 +739,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                         "Screen facing your friends! Countdown starts automatically when held flat.",
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: isDark ? Colors.white70 : const Color(0xFF5A6072),
+                          color:
+                              isDark ? Colors.white70 : const Color(0xFF5A6072),
                           height: 1.3,
                         ),
                         softWrap: true,

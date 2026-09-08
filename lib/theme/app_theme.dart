@@ -29,7 +29,6 @@ class AppTheme {
   static const Color errorColor = Color(0xFFD32F2F);
   static const Color hintColor = Color(0xFF5A6072);
 
-  // --- Soothing Team Mode Palette (Cyan & Magenta) ---
   static Color teamAColor = Colors.cyan.shade200;
   static Color teamBColor = Colors.pink.shade200;
   static const String teamAName = "Team A";
@@ -37,12 +36,9 @@ class AppTheme {
   static const String teamAEmoji = "";
   static const String teamBEmoji = "";
 
-  // --- 2. MODERN TYPESCALE & EMOJI FONT ---
   static const String fontFamily = 'Manrope';
   static const String emojiFontFamily = 'NotoEmoji';
 
-  /// Helper to get a TextStyle specifically formatted for NotoEmoji font
-  /// (Renders white in dark mode and black in light mode by default)
   static TextStyle emojiStyle({
     required BuildContext context,
     double? fontSize,

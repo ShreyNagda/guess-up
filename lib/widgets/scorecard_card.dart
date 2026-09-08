@@ -14,6 +14,7 @@ class ScorecardCard extends StatelessWidget {
   final Color? winnerColor;
   final int soloScore;
   final int totalRounds;
+  final Map<String, String>? scoreMap;
 
   const ScorecardCard({
     super.key,
@@ -29,6 +30,7 @@ class ScorecardCard extends StatelessWidget {
     this.winnerColor,
     this.soloScore = 0,
     this.totalRounds = 3,
+    this.scoreMap,
   });
 
   @override

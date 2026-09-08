@@ -26,6 +26,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool isMusicOn = true;
   bool isSfxOn = true;
   bool isHapticsOn = true;
+  int selectedDuration = 60;
   String _tiltSensitivity = 'Normal';
 
   @override
@@ -50,6 +51,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         isMusicOn = storage.isMusicEnabled;
         isSfxOn = storage.isSfxEnabled;
         isHapticsOn = storage.isHapticsEnabled;
+        selectedDuration = storage.gameDuration;
         _tiltSensitivity = storage.tiltSensitivity;
       });
     }
@@ -68,6 +70,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     } catch (e) {
       debugPrint("Could not launch $url: $e");
     }
+  }
+
+  Future<void> _updateDuration(int seconds) async {
+    if (mounted) setState(() => selectedDuration = seconds);
+    await GameStorageService().setGameDuration(seconds);
   }
 
   void _updateTheme(ThemeMode newMode) {
@@ -196,7 +203,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 20),
 
-            // --- 2. Controls Section ---
+            // --- 2. Game Duration Section ---
+            _buildSectionTitle("ROUND DURATION", textColor),
+            _build3DCardContainer(
+              isDark: isDark,
+              child: Row(
+                children:
+                    [45, 60, 90, 120].map((time) {
+                      return Expanded(
+                        child: _buildDurationButton(
+                          time,
+                          isSelected: selectedDuration == time,
+                          isDark: isDark,
+                        ),
+                      );
+                    }).toList(),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // --- 3. Audio & Haptics Section ---
             _buildSectionTitle("AUDIO & HAPTICS", textColor),
             _build3DCardContainer(
               isDark: isDark,
@@ -246,7 +273,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 20),
 
-            // --- 3. Tilt Sensitivity Section ---
+            // --- 4. Forehead Tilt Sensitivity Section ---
             _buildSectionTitle("FOREHEAD TILT SENSITIVITY", textColor),
             _build3DCardContainer(
               isDark: isDark,
@@ -284,7 +311,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 20),
 
-            // --- 4. Tutorial & Help Section ---
+            // --- 5. Tutorial & Help Section ---
             _buildSectionTitle("TUTORIAL & HELP", textColor),
             _build3DCardContainer(
               isDark: isDark,
@@ -358,6 +385,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
 
             const SizedBox(height: 20),
+
+            // --- 6. Legal & Privacy Section ---
             _buildSectionTitle("LEGAL & PRIVACY", textColor),
             _build3DCardContainer(
               isDark: isDark,
@@ -431,7 +460,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
             const SizedBox(height: 20),
 
-            // --- 5. About & Credits Section ---
+            // --- 7. About & Credits Section ---
             _buildSectionTitle("ABOUT & CREDITS", textColor),
             _build3DCardContainer(
               isDark: isDark,
@@ -445,7 +474,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF141026) : Colors.white,
                       borderRadius: BorderRadius.circular(22),
-                      // border: Border.all(color: primaryColor, width: 2.5),
                       boxShadow: [
                         BoxShadow(
                           color: primaryColor.withAlpha(60),
@@ -674,6 +702,59 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  Widget _buildDurationButton(
+    int time, {
+    required bool isSelected,
+    required bool isDark,
+  }) {
+    final primaryColor =
+        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
+
+    return BouncyGameButton(
+      onTap: () => _updateDuration(time),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color:
+              isSelected
+                  ? primaryColor
+                  : (isDark
+                      ? Colors.black.withAlpha(60)
+                      : Colors.grey.shade100),
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: isSelected ? Colors.white : Colors.transparent,
+            width: isSelected ? 1.5 : 0,
+          ),
+        ),
+        child: Column(
+          children: [
+            Icon(
+              Icons.timer_rounded,
+              color:
+                  isSelected
+                      ? Colors.black
+                      : (isDark ? Colors.white70 : Colors.black54),
+              size: 20,
+            ),
+            const SizedBox(height: 4),
+            Text(
+              "${time}s",
+              style: TextStyle(
+                fontWeight: FontWeight.w900,
+                fontSize: 11,
+                color:
+                    isSelected
+                        ? Colors.black
+                        : (isDark ? Colors.white70 : Colors.black54),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   Widget _buildToggleButton(
     String label,
     IconData icon,
@@ -703,6 +784,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               icon,

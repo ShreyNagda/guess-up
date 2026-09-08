@@ -92,24 +92,28 @@ class _AmbientBackgroundState extends State<AmbientBackground>
             ),
           ),
 
-          // 4. Floating Animated Arcade Particles
+          // 4. Floating Animated Arcade Particles (Isolated RepaintBoundary)
           Positioned.fill(
-            child: AnimatedBuilder(
-              animation: _particleController,
-              builder: (context, _) {
-                return CustomPaint(
-                  painter: _ArcadeParticlePainter(
-                    particles: _particles,
-                    progress: _particleController.value,
-                    particleColor: isDark ? Colors.amberAccent : widget.ambientColor,
-                  ),
-                );
-              },
+            child: RepaintBoundary(
+              child: AnimatedBuilder(
+                animation: _particleController,
+                builder: (context, _) {
+                  return CustomPaint(
+                    painter: _ArcadeParticlePainter(
+                      particles: _particles,
+                      progress: _particleController.value,
+                      particleColor: isDark ? Colors.amberAccent : widget.ambientColor,
+                    ),
+                  );
+                },
+              ),
             ),
           ),
 
-          // 5. Child Foreground Content
-          widget.child,
+          // 5. Child Foreground Content (Isolated RepaintBoundary)
+          RepaintBoundary(
+            child: widget.child,
+          ),
         ],
       ),
     );

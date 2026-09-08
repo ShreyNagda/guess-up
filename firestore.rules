@@ -7,11 +7,11 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
-    // Testers collection - public read & create, authenticated admin update & delete
+    // Testers collection - public read & create/write for registration, authenticated admin delete
     match /testers/{testerId} {
       allow read: if true;
-      allow create: if true;
-      allow update, delete: if request.auth != null;
+      allow create, update: if request.resource.data.email != null;
+      allow delete: if request.auth != null;
     }
 
     // Feedback collection - public create only, authenticated admin read/update/delete
