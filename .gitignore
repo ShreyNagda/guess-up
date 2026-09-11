@@ -44,5 +44,12 @@ app.*.map.json
 /android/app/profile
 /android/app/release
 
-
-/landing/*.env
+# Web / Landing Project Ignores
+**/node_modules/
+**/.next/
+**/.pnpm-store/
+**/out/
+*.tsbuildinfo
+.env
+.env.local
+.env.*.local
