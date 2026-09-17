@@ -4,7 +4,7 @@ export const PLAY_STORE_APP_URL =
   "https://play.google.com/store/apps/details?id=com.shreynagda.guess_up";
 
 export const getSiteUrl = (): string =>
-  process.env.NEXT_PUBLIC_SITE_URL || "https://bujho.netlify.app";
+  process.env.NEXT_PUBLIC_SITE_URL || "https://bujho.vercel.app";
 
 /**
  * Standardized Common Email Footer for all Bujho HTML Emails

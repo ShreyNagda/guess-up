@@ -129,11 +129,19 @@ class ScorecardCard extends StatelessWidget {
                           ),
                         ],
                       ),
-                      child: const Row(
+                      child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Text('✨ ', style: TextStyle(fontSize: 14)),
-                          Text(
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(6),
+                            child: Image.asset(
+                              'assets/images/bujho-icon.png',
+                              width: 20,
+                              height: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Text(
                             'BUJHO',
                             style: TextStyle(
                               color: Colors.black,
@@ -148,7 +156,7 @@ class ScorecardCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      'INSTAGRAM STORY SCORECARD 📱',
+                      'INSTAGRAM STORY SCORECARD',
                       style: TextStyle(
                         color: Colors.white.withAlpha(230),
                         fontSize: 10,
@@ -526,14 +534,17 @@ class ScorecardCard extends StatelessWidget {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(
-                          CupertinoIcons.sparkles,
-                          color: AppTheme.darkPrimaryColor,
-                          size: 13,
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: Image.asset(
+                            'assets/images/bujho-icon.png',
+                            width: 14,
+                            height: 14,
+                          ),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: 6),
                         Text(
-                          '#BujhoGame • bujho.netlify.app',
+                          '#BujhoGame • bujho.vercel.app',
                           style: TextStyle(
                             color: Colors.white.withAlpha(230),
                             fontSize: 10,
