@@ -36,7 +36,7 @@ class AppTheme {
   static const String teamAEmoji = "";
   static const String teamBEmoji = "";
 
-  static const String fontFamily = 'Manrope';
+  static const String fontFamily = 'LilitaOne';
   static const String emojiFontFamily = 'NotoEmoji';
 
   static TextStyle emojiStyle({

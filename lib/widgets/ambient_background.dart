@@ -35,15 +35,15 @@ class _AmbientBackgroundState extends State<AmbientBackground>
       duration: const Duration(seconds: 12),
     )..repeat();
 
-    // Generate 14 floating arcade particles (stars, diamonds, dots)
-    for (int i = 0; i < 14; i++) {
+    // Generate 24 floating arcade micro particles (stars, sparkling diamonds, glowing dots)
+    for (int i = 0; i < 24; i++) {
       _particles.add(
         _ArcadeParticle(
           x: _random.nextDouble(),
           y: _random.nextDouble(),
-          speed: 0.15 + (_random.nextDouble() * 0.25),
-          size: 6 + (_random.nextDouble() * 12),
-          opacity: 0.25 + (_random.nextDouble() * 0.45),
+          speed: 0.12 + (_random.nextDouble() * 0.28),
+          size: 5 + (_random.nextDouble() * 10),
+          opacity: 0.35 + (_random.nextDouble() * 0.50),
           isStar: i % 2 == 0,
         ),
       );
@@ -60,7 +60,7 @@ class _AmbientBackgroundState extends State<AmbientBackground>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final Color baseBackgroundColor =
-        isDark ? const Color(0xFF0E0C1C) : const Color(0xFFF0F3F9);
+        isDark ? const Color(0xFF0E0C1C) : const Color(0xFFF4F6FC);
 
     return RepaintBoundary(
       child: Stack(
@@ -76,8 +76,8 @@ class _AmbientBackgroundState extends State<AmbientBackground>
                 center: widget.center,
                 radius: widget.radius,
                 colors: [
-                  widget.ambientColor.withAlpha(isDark ? 110 : 65),
-                  widget.ambientColor.withAlpha(isDark ? 40 : 15),
+                  widget.ambientColor.withAlpha(isDark ? 110 : 80),
+                  widget.ambientColor.withAlpha(isDark ? 40 : 25),
                   Colors.transparent,
                 ],
                 stops: const [0.0, 0.55, 1.0],
@@ -92,7 +92,7 @@ class _AmbientBackgroundState extends State<AmbientBackground>
             ),
           ),
 
-          // 4. Floating Animated Arcade Particles (Isolated RepaintBoundary)
+          // 4. Floating Animated Arcade Micro Particles (Isolated RepaintBoundary)
           Positioned.fill(
             child: RepaintBoundary(
               child: AnimatedBuilder(
@@ -103,6 +103,7 @@ class _AmbientBackgroundState extends State<AmbientBackground>
                       particles: _particles,
                       progress: _particleController.value,
                       particleColor: isDark ? Colors.amberAccent : widget.ambientColor,
+                      isDark: isDark,
                     ),
                   );
                 },
@@ -142,11 +143,13 @@ class _ArcadeParticlePainter extends CustomPainter {
   final List<_ArcadeParticle> particles;
   final double progress;
   final Color particleColor;
+  final bool isDark;
 
   _ArcadeParticlePainter({
     required this.particles,
     required this.progress,
     required this.particleColor,
+    required this.isDark,
   });
 
   @override
@@ -156,12 +159,17 @@ class _ArcadeParticlePainter extends CustomPainter {
       final double px = p.x * size.width;
       final double py = currentY * size.height;
 
+      final Color effectiveColor =
+          isDark
+              ? particleColor
+              : (p.isStar ? particleColor : Colors.amber.shade700);
+
       final paint = Paint()
-        ..color = particleColor.withAlpha((p.opacity * 255).toInt())
+        ..color = effectiveColor.withAlpha((p.opacity * 255).toInt())
         ..style = PaintingStyle.fill;
 
       if (p.isStar) {
-        // Draw 4-point Star
+        // Draw 4-point Sparkle Star
         final path = Path();
         final double s = p.size;
         path.moveTo(px, py - s);
@@ -172,13 +180,17 @@ class _ArcadeParticlePainter extends CustomPainter {
         canvas.drawPath(path, paint);
       } else {
         // Draw Soft Glowing Circle
-        canvas.drawCircle(Offset(px, py), p.size * 0.4, paint);
+        canvas.drawCircle(Offset(px, py), p.size * 0.45, paint);
       }
     }
   }
 
   @override
-  bool shouldRepaint(covariant _ArcadeParticlePainter oldDelegate) => true;
+  bool shouldRepaint(covariant _ArcadeParticlePainter oldDelegate) {
+    return progress != oldDelegate.progress ||
+        particleColor != oldDelegate.particleColor ||
+        isDark != oldDelegate.isDark;
+  }
 }
 
 class _ArcadeGridPainter extends CustomPainter {

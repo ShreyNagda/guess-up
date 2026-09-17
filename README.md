@@ -1,11 +1,11 @@
-# Guess Up (guesse up)
+# Bujho
 
 [![Flutter](https://img.shields.io/badge/Built%20with-Flutter-blue.svg)](https://flutter.dev/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE.md)
 
 **Act, Hint, Laugh!**
 
-Guess Up is a mobile-based charades party game, designed especially for Indian youths and audiences. Put your phone on your forehead and guess the word based on your friends' clues!
+Bujho is a mobile-based charades party game, designed especially for Indian youths and audiences. Put your phone on your forehead and guess the word based on your friends' clues!
 
 ## ✨ Features
 

@@ -1,9 +1,8 @@
 import 'dart:async';
 import 'dart:math';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:guess_up/blocs/deck/deck_cubit.dart';
 import 'package:guess_up/models/category.dart';
 import 'package:guess_up/models/team_match_state.dart';
 import 'package:guess_up/screens/create_custom_deck_screen.dart';
@@ -15,10 +14,11 @@ import 'package:guess_up/services/deck_randomizer.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
-import 'package:guess_up/widgets/arcade_page_route.dart';
+import 'package:guess_up/widgets/custom_page_route.dart';
 import 'package:guess_up/widgets/bouncy_game_button.dart';
 import 'package:guess_up/widgets/quick_settings_modal.dart';
 import 'package:guess_up/widgets/team_customization_modal.dart';
+import 'package:guess_up/widgets/trending_deck_modal.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -45,8 +45,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _searchQuery = '';
   final TextEditingController _searchController = TextEditingController();
 
-  final List<int> _timeOptions = [30, 45, 60, 90, 120, 180];
-  final List<int> _roundOptions = [3, 5, 7, 10];
+  final List<int> _timeOptions = [30, 60, 90, 120];
+  final List<int> _roundOptions = [1, 2, 3, 4, 5];
 
   List<Category> get _filteredDecks {
     if (_searchQuery.trim().isEmpty) return _decks;
@@ -114,14 +114,31 @@ class _HomeScreenState extends State<HomeScreen> {
       if (!mounted) return;
       final currentCustom = _storageService.getCustomDecks();
       final updated = _mergeDecks(currentCustom, firestoreDecks);
-      setState(() {
-        _decks = updated;
-        if (!_selectedDeckIds.any((id) => updated.any((d) => d.id == id))) {
-          if (updated.isNotEmpty) {
-            _selectedDeckIds = {updated.first.id};
+      // Rebuild if deck count, words count, trending flag, or deck properties changed
+      final hasChanged =
+          _decks.length != updated.length ||
+          !_decks.every(
+            (d) => updated.any(
+              (u) =>
+                  u.id == d.id &&
+                  u.words.length == d.words.length &&
+                  u.isTrending == d.isTrending &&
+                  u.name == d.name &&
+                  u.icon == d.icon &&
+                  u.gradient.join(',') == d.gradient.join(','),
+            ),
+          );
+
+      if (hasChanged) {
+        setState(() {
+          _decks = updated;
+          if (!_selectedDeckIds.any((id) => updated.any((d) => d.id == id))) {
+            if (updated.isNotEmpty) {
+              _selectedDeckIds = {updated.first.id};
+            }
           }
-        }
-      });
+        });
+      }
     });
   }
 
@@ -153,9 +170,7 @@ class _HomeScreenState extends State<HomeScreen> {
         id: "fallback",
         name: "Party Charades",
         icon: "👑",
-        color: "#E50914",
-        gradientEnd: "#8B0000",
-        words: ["Guess Up", "Charades", "Party Time"],
+        words: ["Bujho", "Charades", "Party Time"],
       );
     }
     final selected =
@@ -245,7 +260,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       child: Center(
                         child: Text(
-                          deck.icon,
+                          deck.icon.isNotEmpty ? deck.icon : "🎴",
                           style: const TextStyle(fontSize: 28),
                         ),
                       ),
@@ -255,17 +270,47 @@ class _HomeScreenState extends State<HomeScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            deck.name.toUpperCase(),
-                            style: theme.textTheme.titleLarge?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 20,
-                              letterSpacing: 0.5,
-                            ),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  deck.name.toUpperCase(),
+                                  style: theme.textTheme.titleLarge?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 20,
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                              ),
+                              if (deck.isCustom)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber.withAlpha(40),
+                                    borderRadius: BorderRadius.circular(10),
+                                    border: Border.all(
+                                      color: Colors.amber,
+                                      width: 1,
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    "CUSTOM",
+                                    style: TextStyle(
+                                      color: Colors.amberAccent,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w900,
+                                      letterSpacing: 0.8,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                           const SizedBox(height: 4),
                           Text(
-                            "Single Deck Mode",
+                            "${deck.words.length} Words",
                             style: TextStyle(
                               fontSize: 12,
                               color: theme.hintColor,
@@ -278,9 +323,9 @@ class _HomeScreenState extends State<HomeScreen> {
                   ],
                 ),
                 const SizedBox(height: 16),
-                if (deck.description != null && deck.description!.isNotEmpty)
+                if (deck.description.isNotEmpty)
                   Text(
-                    deck.description!,
+                    deck.description,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       height: 1.4,
                       color: theme.textTheme.bodyMedium?.color?.withAlpha(210),
@@ -311,12 +356,172 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                   ),
                 ),
+                if (deck.isCustom) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      // EDIT BUTTON
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: OutlinedButton.icon(
+                            onPressed: () async {
+                              Navigator.of(modalCtx).pop();
+                              final updated = await Navigator.push<bool>(
+                                context,
+                                CupertinoPageRoute(
+                                  builder:
+                                      (_) => CreateCustomDeckScreen(
+                                        existingDeck: deck,
+                                      ),
+                                ),
+                              );
+                              if (updated == true) {
+                                _reloadDecks();
+                              }
+                            },
+                            icon: const Icon(CupertinoIcons.pen, size: 16),
+                            label: const Text(
+                              "EDIT DECK",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 12,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: deckColor,
+                              side: BorderSide(color: deckColor, width: 2),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // DELETE BUTTON
+                      Expanded(
+                        child: SizedBox(
+                          height: 44,
+                          child: ElevatedButton.icon(
+                            onPressed:
+                                () => _confirmDeleteCustomDeck(modalCtx, deck),
+                            icon: const Icon(
+                              CupertinoIcons.trash_fill,
+                              size: 16,
+                            ),
+                            label: const Text(
+                              "DELETE",
+                              style: TextStyle(
+                                fontWeight: FontWeight.w900,
+                                fontSize: 12,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFFE53935),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ],
             ),
           ),
         );
       },
     );
+  }
+
+  void _reloadDecks() {
+    final customDecks = _storageService.getCustomDecks();
+    final firestoreDecks = _categoryService.cachedCategories;
+    final updated = _mergeDecks(customDecks, firestoreDecks);
+    setState(() {
+      _decks = updated;
+      if (!_selectedDeckIds.any((id) => updated.any((d) => d.id == id))) {
+        if (updated.isNotEmpty) {
+          _selectedDeckIds = {updated.first.id};
+        }
+      }
+    });
+  }
+
+  Future<void> _confirmDeleteCustomDeck(
+    BuildContext dialogContext,
+    Category deck,
+  ) async {
+    _audioEngine.heavyImpact();
+    HapticFeedback.vibrate();
+
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (confirmCtx) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1938),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            "Delete Custom Deck?",
+            style: TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w900,
+              fontSize: 16,
+            ),
+          ),
+          content: Text(
+            "Are you sure you want to permanently delete \"${deck.name}\"? This action cannot be undone.",
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(confirmCtx).pop(false),
+              child: const Text(
+                "CANCEL",
+                style: TextStyle(color: Colors.white54),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(confirmCtx).pop(true),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFE53935),
+                foregroundColor: Colors.white,
+              ),
+              child: const Text(
+                "DELETE",
+                style: TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirm == true) {
+      if (dialogContext.mounted) {
+        Navigator.of(dialogContext).pop();
+      }
+      await _storageService.deleteCustomDeck(deck.id);
+      _selectedDeckIds.remove(deck.id);
+      _reloadDecks();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text("Deleted custom deck \"${deck.name}\""),
+          backgroundColor: const Color(0xFFE53935),
+          duration: const Duration(milliseconds: 300),
+        ),
+      );
+    }
   }
 
   void _switchGameMode(bool isTeam) {
@@ -326,9 +531,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _isTeamMode = isTeam;
     });
     _storageService.setTeamMode(isTeam);
-    if (isTeam) {
-      _openTeamCustomization();
-    }
+    // if (isTeam) {
+    //   _openTeamCustomization();
+    // }
   }
 
   void _openTeamCustomization() {
@@ -348,6 +553,9 @@ class _HomeScreenState extends State<HomeScreen> {
   void _handleStartGame() {
     final selected = _selectedDecks;
     if (selected.isEmpty) return;
+
+    // Pop any open dialogs/modals (like TrendingDeckModal) so dialog is removed from stack before pushing GameScreen
+    Navigator.of(context).popUntil((route) => route.isFirst);
 
     _audioEngine.extraLightImpact();
 
@@ -372,22 +580,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
     if (_storageService.dontShowHowToPlay) {
       Navigator.of(context).push(
-        ArcadePageRoute(
-          page: GameScreen(
-            time: _gameDuration,
-            selectedCategories: selected,
-            teamMatchState: teamState,
-          ),
+        CustomPageRoute(
+          builder:
+              (_) => GameScreen(
+                time: _gameDuration,
+                selectedCategories: selected,
+                teamMatchState: teamState,
+              ),
         ),
       );
     } else {
       Navigator.of(context).push(
-        ArcadePageRoute(
-          page: OnboardingScreen(
-            selectedCategories: selected,
-            gameTime: _gameDuration,
-            teamMatchState: teamState,
-          ),
+        CustomPageRoute(
+          builder:
+              (_) => OnboardingScreen(
+                selectedCategories: selected,
+                gameTime: _gameDuration,
+                teamMatchState: teamState,
+              ),
         ),
       );
     }
@@ -411,10 +621,14 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           title: Row(
             children: [
-              Icon(Icons.exit_to_app_rounded, color: primaryColor, size: 28),
+              Icon(
+                CupertinoIcons.xmark_circle_fill,
+                color: primaryColor,
+                size: 28,
+              ),
               const SizedBox(width: 10),
               Text(
-                "EXIT GUESS UP?",
+                "EXIT BUJHO?",
                 style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
@@ -520,9 +734,9 @@ class _HomeScreenState extends State<HomeScreen> {
               children: [
                 // 1. TOP BAR
                 _buildTopBar(isDark),
-                const SizedBox(height: 6),
+                const SizedBox(height: 4),
 
-                // 2. SEARCH BAR (SEARCH BY TITLE OR DESCRIPTION)
+                // 3. SEARCH BAR (SEARCH BY TITLE OR DESCRIPTION)
                 if (!_isLoading) _buildSearchBar(isDark),
                 const SizedBox(height: 8),
 
@@ -586,15 +800,58 @@ class _HomeScreenState extends State<HomeScreen> {
                   ),
                 ],
               ),
-              child: Icon(Icons.settings_outlined, size: 22, color: iconColor),
+              child: Icon(
+                CupertinoIcons.gear_alt_fill,
+                size: 22,
+                color: iconColor,
+              ),
             ),
           ),
 
           // 3D Arcade Title Text Header
           _buildArcadeTitleText(isDark),
 
-          // Symmetric balancing spacer
-          const SizedBox(width: 44, height: 44),
+          // Trending Deck button (if any decks are marked trending)
+          Builder(
+            builder: (context) {
+              final trendingList = _decks.where((d) => d.isTrending).toList();
+              if (trendingList.isNotEmpty) {
+                return BouncyGameButton(
+                  onTap: () {
+                    _audioEngine.lightImpact();
+                    TrendingDeckScreen.show(
+                      context,
+                      trendingDecks: trendingList,
+                      gameDuration: _gameDuration,
+                      isTeamMode: _isTeamMode,
+                      teamRounds: _teamRounds,
+                      onPlay: (selected) {
+                        _selectDeck(selected);
+                        _handleStartGame();
+                      },
+                    );
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: isDark ? const Color(0xFF261F47) : Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.amberAccent, width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.amberAccent.withAlpha(isDark ? 90 : 40),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: const Text("🔥", style: TextStyle(fontSize: 18)),
+                  ),
+                );
+              }
+              return const SizedBox(width: 44, height: 44);
+            },
+          ),
         ],
       ),
     );
@@ -610,9 +867,9 @@ class _HomeScreenState extends State<HomeScreen> {
       children: [
         // 3D Shadow Layer (Bottom Bevel Offset)
         Text(
-          "GUESS UP",
+          "BUJHO",
           style: TextStyle(
-            fontFamily: 'Manrope',
+            fontFamily: AppTheme.fontFamily,
             fontSize: 28,
             fontWeight: FontWeight.w900,
             letterSpacing: 3.0,
@@ -646,9 +903,9 @@ class _HomeScreenState extends State<HomeScreen> {
             ).createShader(bounds);
           },
           child: const Text(
-            "GUESS UP",
+            "BUJHO",
             style: TextStyle(
-              fontFamily: 'Manrope',
+              fontFamily: AppTheme.fontFamily,
               fontSize: 28,
               fontWeight: FontWeight.w900,
               letterSpacing: 3.0,
@@ -690,7 +947,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Row(
           children: [
             Icon(
-              Icons.search_rounded,
+              CupertinoIcons.search,
               color: isDark ? Colors.amberAccent : AppTheme.lightPrimaryColor,
               size: 22,
             ),
@@ -729,7 +986,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   });
                 },
                 child: Icon(
-                  Icons.cancel_rounded,
+                  CupertinoIcons.clear_thick_circled,
                   color: textColor.withAlpha(140),
                   size: 20,
                 ),
@@ -746,30 +1003,24 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return BouncyGameButton(
       onTap: () async {
-        _audioEngine.mediumImpact();
-        final created = await Navigator.of(
-          context,
-        ).push<bool>(ArcadePageRoute(page: const CreateCustomDeckScreen()));
-        if (created == true && mounted) {
-          context.read<DeckCubit>().loadDecks();
+        _audioEngine.lightImpact();
+        final created = await Navigator.of(context).push<bool>(
+          CustomPageRoute(builder: (_) => const CreateCustomDeckScreen()),
+        );
+        if (created == true) {
+          _reloadDecks();
         }
       },
       child: Container(
         decoration: BoxDecoration(
+          color:
+              isDark ? Colors.white.withAlpha(12) : Colors.black.withAlpha(8),
           borderRadius: BorderRadius.circular(24),
-          gradient: LinearGradient(
-            colors:
-                isDark
-                    ? [const Color(0xFF261F47), const Color(0xFF191430)]
-                    : [Colors.white, const Color(0xFFF3F4F6)],
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-          ),
-          border: Border.all(color: primaryColor.withAlpha(160), width: 2.5),
+          border: Border.all(color: primaryColor.withAlpha(180), width: 2.0),
           boxShadow: [
             BoxShadow(
-              color: isDark ? const Color(0xFF0C091A) : Colors.black45,
-              offset: const Offset(0, 6),
+              color: isDark ? const Color(0xFF0C091A) : Colors.black26,
+              offset: const Offset(0, 5),
               blurRadius: 0,
             ),
           ],
@@ -778,7 +1029,7 @@ class _HomeScreenState extends State<HomeScreen> {
           borderRadius: BorderRadius.circular(21),
           child: Stack(
             children: [
-              // Top Gloss Highlight Strip
+              // Top Gloss Reflection Strip
               Positioned(
                 top: 0,
                 left: 0,
@@ -788,7 +1039,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        Colors.white.withAlpha(40),
+                        Colors.white.withAlpha(35),
                         Colors.white.withAlpha(0),
                       ],
                       begin: Alignment.topCenter,
@@ -813,7 +1064,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           border: Border.all(color: primaryColor, width: 2),
                         ),
                         child: Icon(
-                          Icons.add_rounded,
+                          CupertinoIcons.add,
                           size: 32,
                           color: primaryColor,
                         ),
@@ -881,18 +1132,17 @@ class _HomeScreenState extends State<HomeScreen> {
 
         final deck = filtered[index];
         final isSelected = _selectedDeckIds.contains(deck.id);
-        final deckColor = deck.themeColor;
-        final gradientEnd = deck.gradientEndColor;
 
         return BouncyGameButton(
           onTap: () => _selectDeck(deck),
+          onLongPress: () => _showDeckDescriptionModal(deck),
           child: Container(
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(24),
               gradient: LinearGradient(
-                colors: [deckColor, gradientEnd],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
+                colors: deck.gradientColors,
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
               ),
               border:
                   isSelected
@@ -962,7 +1212,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           ],
                         ),
                         child: Icon(
-                          Icons.check_circle_rounded,
+                          CupertinoIcons.checkmark_circle_fill,
                           size: 14,
                           color: Colors.amberAccent,
                         ),
@@ -983,7 +1233,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           border: Border.all(color: Colors.white.withAlpha(90)),
                         ),
                         child: const Icon(
-                          Icons.info_outline_rounded,
+                          CupertinoIcons.info_circle_fill,
                           color: Colors.white,
                           size: 16,
                         ),
@@ -1157,7 +1407,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     // Timer Dropdown Pill
                     Expanded(
                       child: _buildDropdownPill<int>(
-                        icon: Icons.timer_outlined,
+                        icon: CupertinoIcons.timer_fill,
                         value: _gameDuration,
                         label: "${_gameDuration}s",
                         items:
@@ -1183,7 +1433,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 8),
                       Expanded(
                         child: _buildDropdownPill<int>(
-                          icon: Icons.flag_outlined,
+                          icon: CupertinoIcons.flag_fill,
                           value: _teamRounds,
                           label: "$_teamRounds Rds",
                           items:
@@ -1234,6 +1484,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   children: [
                     Expanded(
                       child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Flexible(
                             child: Text(
@@ -1273,17 +1524,13 @@ class _HomeScreenState extends State<HomeScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.all(5),
-                      decoration: const BoxDecoration(
-                        color: Colors.amber,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.edit_rounded,
-                        size: 13,
-                        color: Colors.black,
+                    SizedBox(width: 5),
+                    BouncyGameButton(
+                      onTap: _openTeamCustomization,
+                      child: Icon(
+                        CupertinoIcons.pencil_circle_fill,
+                        size: 20,
+                        color: isDark ? Colors.white : Colors.black,
                       ),
                     ),
                   ],
@@ -1330,10 +1577,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
                     child: Center(
                       child: Icon(
-                        Icons.shuffle_rounded,
+                        CupertinoIcons.shuffle,
                         color:
                             isDark ? Colors.amberAccent : Colors.amber.shade800,
-                        size: 26,
+                        size: 24,
                       ),
                     ),
                   ),
@@ -1402,9 +1649,9 @@ class _HomeScreenState extends State<HomeScreen> {
                             Container(
                               padding: const EdgeInsets.all(4),
                               child: const Icon(
-                                Icons.play_arrow_rounded,
+                                CupertinoIcons.play_fill,
                                 color: Colors.black,
-                                size: 22,
+                                size: 20,
                               ),
                             ),
                           ],
@@ -1457,9 +1704,9 @@ class _HomeScreenState extends State<HomeScreen> {
         child: DropdownButton<T>(
           value: value,
           icon: Icon(
-            Icons.keyboard_arrow_down_rounded,
+            CupertinoIcons.chevron_down,
             color: textColor.withAlpha(220),
-            size: 20,
+            size: 16,
           ),
           dropdownColor: isDark ? const Color(0xFF242424) : Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -1594,7 +1841,6 @@ class _SurpriseMeDialogState extends State<_SurpriseMeDialog>
                     shape: BoxShape.circle,
                     border: Border.all(color: Colors.amber, width: 1.5),
                   ),
-                  child: const Text("🎲", style: TextStyle(fontSize: 20)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1630,7 +1876,7 @@ class _SurpriseMeDialogState extends State<_SurpriseMeDialog>
                 IconButton(
                   onPressed: () => Navigator.of(context).pop(),
                   icon: Icon(
-                    Icons.close_rounded,
+                    CupertinoIcons.xmark,
                     color: isDark ? Colors.white60 : Colors.black54,
                     size: 22,
                   ),
@@ -1671,7 +1917,7 @@ class _SurpriseMeDialogState extends State<_SurpriseMeDialog>
                     RotationTransition(
                       turns: Tween(
                         begin: 0.0,
-                        end: 1.0,
+                        end: 0.0,
                       ).animate(_spinController),
                       child: Container(
                         padding: const EdgeInsets.all(16),
@@ -1727,26 +1973,6 @@ class _SurpriseMeDialogState extends State<_SurpriseMeDialog>
                       ],
                     ),
                   ] else ...[
-                    // Shuffled Choice Result State
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.amber,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        "🎯 YOUR LUCKY DECK",
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
-                          color: Colors.black,
-                          letterSpacing: 1.0,
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 14),
                     Text(
                       _chosenDeck?.icon.isNotEmpty == true
@@ -1768,10 +1994,10 @@ class _SurpriseMeDialogState extends State<_SurpriseMeDialog>
                       ),
                     ),
                     if (_chosenDeck?.description != null &&
-                        _chosenDeck!.description!.isNotEmpty) ...[
+                        _chosenDeck!.description.isNotEmpty) ...[
                       const SizedBox(height: 6),
                       Text(
-                        _chosenDeck!.description!,
+                        _chosenDeck!.description,
                         textAlign: TextAlign.center,
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
@@ -1795,7 +2021,7 @@ class _SurpriseMeDialogState extends State<_SurpriseMeDialog>
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _isShuffling ? null : _startShuffleAnimation,
-                    icon: const Icon(Icons.refresh_rounded, size: 18),
+                    icon: const Icon(CupertinoIcons.refresh, size: 18),
                     label: const Text(
                       "SHUFFLE AGAIN",
                       style: TextStyle(
@@ -1824,7 +2050,7 @@ class _SurpriseMeDialogState extends State<_SurpriseMeDialog>
                         _isShuffling || _chosenDeck == null
                             ? null
                             : () => widget.onPlayDeck(_chosenDeck!),
-                    icon: const Icon(Icons.play_arrow_rounded, size: 20),
+                    icon: const Icon(CupertinoIcons.play_fill, size: 18),
                     label: const Text(
                       "PLAY",
                       style: TextStyle(

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:sensors_plus/sensors_plus.dart';
 
+import 'package:guess_up/constants/game_constants.dart';
 import 'package:guess_up/services/storage_service.dart';
 
 class TiltDetector extends StatefulWidget {
@@ -27,24 +28,24 @@ class _TiltDetectorState extends State<TiltDetector> {
   double get passThreshold {
     switch (GameStorageService().tiltSensitivity) {
       case 'Low':
-        return 9.5;
+        return GameConstants.tiltPassThresholdLow;
       case 'High':
-        return 7.0;
+        return GameConstants.tiltPassThresholdHigh;
       case 'Normal':
       default:
-        return 8.5;
+        return GameConstants.tiltPassThresholdNormal;
     }
   }
 
   double get correctThreshold {
     switch (GameStorageService().tiltSensitivity) {
       case 'Low':
-        return 8.5;
+        return GameConstants.tiltCorrectThresholdLow;
       case 'High':
-        return 5.5;
+        return GameConstants.tiltCorrectThresholdHigh;
       case 'Normal':
       default:
-        return 7.0;
+        return GameConstants.tiltCorrectThresholdNormal;
     }
   }
 
@@ -78,7 +79,7 @@ class _TiltDetectorState extends State<TiltDetector> {
       // If tilt is not allowed (cooling down or initial setup), wait for phone to be relatively flat (reset)
       if (!isTiltAllowed) {
         // "Flat" is roughly close to 0 on Z-axis (plumb line is Y-axis in landscape)
-        if (currentZ.abs() < 3.0) {
+        if (currentZ.abs() < GameConstants.tiltResetThreshold) {
           if (mounted && !isTiltAllowed) {
             setState(() {
               isTiltAllowed = true;
@@ -87,18 +88,26 @@ class _TiltDetectorState extends State<TiltDetector> {
         }
         return;
       }
-      // Trigger tilt events and disable further tilt until reset
+      final isInverted = GameStorageService().isInvertedControls;
       if (currentZ > passThreshold) {
-        // Tilted towards user (Screen up/back towards head) -> Pass
-        widget.onTiltUp();
+        // Tilted towards user (Screen up / back towards head)
+        if (isInverted) {
+          widget.onTiltDown(); // Inverted: Tilt Up = Correct
+        } else {
+          widget.onTiltUp(); // Default: Tilt Up = Pass
+        }
         if (mounted) {
           setState(() {
             isTiltAllowed = false;
           });
         }
       } else if (currentZ < -correctThreshold) {
-        // Tilted away from user (Screen down/forehead down) -> Correct
-        widget.onTiltDown();
+        // Tilted away from user (Screen down / forehead down)
+        if (isInverted) {
+          widget.onTiltUp(); // Inverted: Tilt Down = Pass
+        } else {
+          widget.onTiltDown(); // Default: Tilt Down = Correct
+        }
         if (mounted) {
           setState(() {
             isTiltAllowed = false;

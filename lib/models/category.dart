@@ -3,63 +3,86 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-/// Single unified model representing a game Deck / Category in Guess Up.
-/// Serves both Firestore remote decks and local custom decks.
 class Category {
   final String id;
   final String name;
   final String icon;
+  final String description;
   final List<String> words;
-  final String? description;
-  final String? color;
-  final String? gradientEnd;
+  final int wordsCount;
+  final List<String> gradient;
+  final bool isAvailable;
   final bool isTrending;
   final int sortOrder;
-  final int? wordsCount;
-  final String? imageUrl;
-  final bool isAvailable;
-  final bool isLocked;
-  final String? lockReason;
-  final Map<String, dynamic>? theme;
-  final DateTime? createdAt;
   final DateTime? updatedAt;
-  final bool isCustom;
 
   Category({
     required this.id,
-    required this.name,
+    required String name,
+    String? title,
     required this.icon,
-    required this.words,
-    this.description,
-    this.color,
-    this.gradientEnd,
+    required List<String> words,
+    String? description,
+    String? desc,
+    int? wordsCount,
+    this.gradient = const [],
+    this.isAvailable = true,
     this.isTrending = false,
     this.sortOrder = 0,
-    this.wordsCount,
-    this.imageUrl,
-    this.isAvailable = true,
-    this.isLocked = false,
-    this.lockReason,
-    this.theme,
-    this.createdAt,
     this.updatedAt,
     bool? isCustom,
-  }) : isCustom =
-           isCustom ?? (id.startsWith('custom') || id.contains('custom'));
+  }) : name = name.isNotEmpty ? name : (title ?? 'Unnamed Category'),
+       description = description ?? desc ?? '',
+       words =
+           words
+               .map((w) => w.replaceAll('"', '').trim())
+               .where((w) => w.isNotEmpty)
+               .toList(),
+       wordsCount =
+           wordsCount ??
+           words
+               .map((w) => w.replaceAll('"', '').trim())
+               .where((w) => w.isNotEmpty)
+               .length;
 
-  /// Alias for color hex string
-  String? get colorHex => color;
-
-  /// Alias for title
+  /// Backward compatibility getter alias for title
   String get title => name;
 
+  /// Backward compatibility getter alias for cards
+  List<String> get cards => words;
+
+  /// Backward compatibility getter alias for desc
+  String get desc => description;
+
+  /// Compatibility getter for isCustom
+  bool get isCustom => id.startsWith('custom') || id.contains('custom');
+
+  /// Main color hex string using gradient[0] as primary
+  String get mainColorHex {
+    if (gradient.isNotEmpty && gradient[0].trim().isNotEmpty) {
+      return gradient[0].trim();
+    }
+    return '#FFD600';
+  }
+
+  /// Alias for color hex string
+  String get colorHex => mainColorHex;
+
+  /// End gradient color hex string using the last element of gradient
+  String get gradientEndColorHex {
+    if (gradient.length > 1 && gradient.last.trim().isNotEmpty) {
+      return gradient.last.trim();
+    }
+    return mainColorHex;
+  }
+
   /// Total words count
-  int get count => wordsCount ?? words.length;
+  int get count => wordsCount;
 
   /// Deck description provided from database or fallback
   String get categoryDescription {
-    if (description != null && description!.trim().isNotEmpty) {
-      return description!;
+    if (description.trim().isNotEmpty) {
+      return description;
     }
     return "Party deck for charades.";
   }
@@ -67,7 +90,7 @@ class Category {
   /// Parse hex color string to Color
   static Color parseHex(
     String? hex, {
-    Color fallback = const Color(0xFFFFC107),
+    Color fallback = const Color(0xFFFFD600),
   }) {
     if (hex == null || hex.isEmpty) return fallback;
     try {
@@ -80,23 +103,15 @@ class Category {
   }
 
   /// Primary theme color for the deck
-  Color get themeColor {
-    if (color != null && color!.isNotEmpty) {
-      return parseHex(color);
-    }
-    if (theme != null && theme!['accentColor'] != null) {
-      return parseHex(theme!['accentColor'].toString());
-    }
-    return const Color(0xFFFFC107);
-  }
+  Color get themeColor => parseHex(mainColorHex);
 
   /// Color alias for themeColor
   Color get primaryColor => themeColor;
 
-  /// End gradient color (defaults to gradientEnd or 20% darker tone of themeColor)
+  /// End gradient color using last element of gradient or darkened fallback
   Color get gradientEndColor {
-    if (gradientEnd != null && gradientEnd!.isNotEmpty) {
-      return parseHex(gradientEnd);
+    if (gradient.length > 1 && gradient.last.trim().isNotEmpty) {
+      return parseHex(gradient.last);
     }
     final hsl = HSLColor.fromColor(themeColor);
     final darkenedHsl = hsl.withLightness(
@@ -105,13 +120,24 @@ class Category {
     return darkenedHsl.toColor();
   }
 
-  /// Linear gradient colors pair: [color, gradientEnd]
-  List<Color> get gradientColors => [themeColor, gradientEndColor];
+  /// Linear gradient colors list supporting 1, 2, or 3 hex colors from gradient field
+  List<Color> get gradientColors {
+    if (gradient.isNotEmpty) {
+      final parsed =
+          gradient
+              .where((g) => g.trim().isNotEmpty)
+              .map((g) => parseHex(g.trim()))
+              .toList();
+      if (parsed.length >= 2) return parsed;
+      if (parsed.length == 1) return [parsed[0], gradientEndColor];
+    }
+    return [themeColor, gradientEndColor];
+  }
 
-  /// Get seasonal/festive badge text if present (e.g. "FESTIVE 🪔" or "IPL 🏏")
+  /// Get seasonal/festive badge text if present
   String? get badgeText {
     if (isTrending) return "🔥 Trending";
-    return theme?['badgeText']?.toString();
+    return null;
   }
 
   factory Category.fromDocument(DocumentSnapshot doc) {
@@ -121,8 +147,23 @@ class Category {
     if (data['words'] is List) {
       wordsList =
           (data['words'] as List)
-              .map((e) => e?.toString() ?? '')
+              .map((e) => e?.toString().replaceAll('"', '').trim() ?? '')
               .where((e) => e.isNotEmpty)
+              .toList();
+    } else if (data['cards'] is List) {
+      wordsList =
+          (data['cards'] as List)
+              .map((e) => e?.toString().replaceAll('"', '').trim() ?? '')
+              .where((e) => e.isNotEmpty)
+              .toList();
+    }
+
+    List<String> gradientList = [];
+    if (data['gradient'] is List) {
+      gradientList =
+          (data['gradient'] as List)
+              .map((e) => e?.toString() ?? '')
+              .where((e) => e.trim().isNotEmpty)
               .toList();
     }
 
@@ -135,21 +176,15 @@ class Category {
         final s = val.toString().toLowerCase();
         available = s == 'true' || s == 'active' || s == 'available';
       }
-    } else if (data.containsKey('status')) {
-      final s = data['status']?.toString().toLowerCase() ?? '';
-      available = s == 'active' || s == 'available' || s == 'true';
     }
 
-    final String titleVal =
+    final String nameVal =
         data['name']?.toString() ??
         data['title']?.toString() ??
         'Unnamed Category';
 
-    final String colorVal =
-        data['color']?.toString() ??
-        data['colorHex']?.toString() ??
-        data['accentColor']?.toString() ??
-        '#FFC107';
+    final String descVal =
+        data['description']?.toString() ?? data['desc']?.toString() ?? '';
 
     final int wordsCountVal =
         data['wordsCount'] is int
@@ -164,8 +199,7 @@ class Category {
 
     final bool trendingVal =
         data['isTrending'] == true ||
-        data['isTrending']?.toString().toLowerCase() == 'true' ||
-        (data['theme'] is Map && data['theme']['isTrending'] == true);
+        data['isTrending']?.toString().toLowerCase() == 'true';
 
     DateTime? parseDate(dynamic d) {
       if (d is Timestamp) return d.toDate();
@@ -175,30 +209,16 @@ class Category {
 
     return Category(
       id: doc.id,
-      name: titleVal,
+      name: nameVal,
       icon: data['icon']?.toString() ?? '🎮',
       words: wordsList,
-      description: data['description']?.toString() ?? data['desc']?.toString(),
-      color: colorVal,
-      gradientEnd: data['gradientEnd']?.toString(),
+      description: descVal,
+      gradient: gradientList,
       isTrending: trendingVal,
       sortOrder: sortVal,
       wordsCount: wordsCountVal,
-      imageUrl: data['imageUrl']?.toString(),
       isAvailable: available,
-      isLocked:
-          data['isLocked'] == true || data['isLocked']?.toString() == 'true',
-      lockReason: data['lockReason']?.toString(),
-      theme:
-          data['theme'] is Map
-              ? Map<String, dynamic>.from(data['theme'])
-              : null,
-      createdAt: parseDate(data['createdAt']),
       updatedAt: parseDate(data['updatedAt']),
-      isCustom:
-          data['isCustom'] == true ||
-          doc.id.startsWith('custom') ||
-          doc.id.contains('custom'),
     );
   }
 
@@ -207,8 +227,23 @@ class Category {
     if (json['words'] is List) {
       wordsList =
           (json['words'] as List)
-              .map((e) => e?.toString() ?? '')
+              .map((e) => e?.toString().replaceAll('"', '').trim() ?? '')
               .where((e) => e.isNotEmpty)
+              .toList();
+    } else if (json['cards'] is List) {
+      wordsList =
+          (json['cards'] as List)
+              .map((e) => e?.toString().replaceAll('"', '').trim() ?? '')
+              .where((e) => e.isNotEmpty)
+              .toList();
+    }
+
+    List<String> gradientList = [];
+    if (json['gradient'] is List) {
+      gradientList =
+          (json['gradient'] as List)
+              .map((e) => e?.toString() ?? '')
+              .where((e) => e.trim().isNotEmpty)
               .toList();
     }
 
@@ -221,21 +256,15 @@ class Category {
         final s = val.toString().toLowerCase();
         available = s == 'true' || s == 'active' || s == 'available';
       }
-    } else if (json.containsKey('status')) {
-      final s = json['status']?.toString().toLowerCase() ?? '';
-      available = s == 'active' || s == 'available' || s == 'true';
     }
 
-    final String titleVal =
+    final String nameVal =
         json['name']?.toString() ??
         json['title']?.toString() ??
         'Unnamed Category';
 
-    final String colorVal =
-        json['color']?.toString() ??
-        json['colorHex']?.toString() ??
-        json['accentColor']?.toString() ??
-        '#FFC107';
+    final String descVal =
+        json['description']?.toString() ?? json['desc']?.toString() ?? '';
 
     final int wordsCountVal =
         json['wordsCount'] is int
@@ -250,63 +279,40 @@ class Category {
 
     final bool trendingVal =
         json['isTrending'] == true ||
-        json['isTrending']?.toString().toLowerCase() == 'true' ||
-        (json['theme'] is Map && json['theme']['isTrending'] == true);
+        json['isTrending']?.toString().toLowerCase() == 'true';
 
     final String catId = json['id']?.toString() ?? '';
 
     return Category(
       id: catId,
-      name: titleVal,
+      name: nameVal,
       icon: json['icon']?.toString() ?? '🎮',
       words: wordsList,
-      description: json['description']?.toString() ?? json['desc']?.toString(),
-      color: colorVal,
-      gradientEnd: json['gradientEnd']?.toString(),
+      description: descVal,
+      gradient: gradientList,
       isTrending: trendingVal,
       sortOrder: sortVal,
       wordsCount: wordsCountVal,
-      imageUrl: json['imageUrl']?.toString(),
       isAvailable: available,
-      isLocked:
-          json['isLocked'] == true || json['isLocked']?.toString() == 'true',
-      lockReason: json['lockReason']?.toString(),
-      theme:
-          json['theme'] is Map
-              ? Map<String, dynamic>.from(json['theme'])
-              : null,
-      createdAt:
-          json['createdAt'] != null
-              ? DateTime.tryParse(json['createdAt'].toString())
-              : null,
       updatedAt:
           json['updatedAt'] != null
               ? DateTime.tryParse(json['updatedAt'].toString())
               : null,
-      isCustom:
-          json['isCustom'] == true ||
-          catId.startsWith('custom') ||
-          catId.contains('custom'),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
-      'id': id,
       'name': name,
-      'icon': icon,
-      'words': words,
       'description': description,
-      'color': color,
-      'gradientEnd': gradientEnd,
+      'icon': icon,
+      'isAvailable': isAvailable,
       'isTrending': isTrending,
       'sortOrder': sortOrder,
-      'wordsCount': wordsCount ?? words.length,
-      'isCustom': isCustom,
-      if (imageUrl != null) 'imageUrl': imageUrl,
-      'isAvailable': isAvailable,
-      'createdAt': createdAt?.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
+      'words': words,
+      'wordsCount': wordsCount,
+      if (gradient.isNotEmpty) 'gradient': gradient,
+      if (updatedAt != null) 'updatedAt': updatedAt?.toIso8601String(),
     };
   }
 

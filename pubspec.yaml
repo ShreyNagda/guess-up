@@ -1,5 +1,5 @@
 name: "guess_up"
-description: "Guess Up is a mobile-based charades party game, designed especially for Indian youths and audiences. Put your phone on your forehead and guess the word based on your friends' clues!"
+description: "Bujho is a mobile-based charades party game, designed especially for Indian youths and audiences. Put your phone on your forehead and guess the word based on your friends' clues!"
 
 publish_to: "none"
 
@@ -33,8 +33,12 @@ dependencies:
   url_launcher: ^6.3.1
   share_plus: ^13.3.0
   path_provider: ^2.1.5
+  google_fonts: ^8.2.1
+  cupertino_icons: ^1.0.9
 
 dev_dependencies:
+  flutter_test:
+    sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.3
   build_runner: ^2.4.9
@@ -46,19 +50,19 @@ flutter_launcher_icons:
   android: true
   adaptive_icon_foreground_inset: 10
   ios: false
-  image_path: "assets/images/guessup-icon.png"
-  adaptive_icon_foreground: "assets/images/guessup-foreground.png"
-  adaptive_icon_background: "assets/images/guessup-background.png"
+  image_path: "assets/images/bujho-icon.png"
+  adaptive_icon_foreground: "assets/images/bujho-foreground.png"
+  adaptive_icon_background: "assets/images/bujho-background.png"
 
 flutter_native_splash:
   color: "#ffffff"
   color_dark: "#000000"
-  image: "assets/images/guessup-splash-icon.png"
-  image_dark: "assets/images/guessup-splash-icon.png"
+  image: "assets/images/bujho-splash-icon.png"
+  image_dark: "assets/images/bujho-splash-icon.png"
   android_gravity: center
   android_12:
-    image: "assets/images/guessup-splash-icon.png"
-    image_dark: "assets/images/guessup-splash-icon.png"
+    image: "assets/images/bujho-splash-icon.png"
+    image_dark: "assets/images/bujho-splash-icon.png"
 
 flutter:
   uses-material-design: true
@@ -75,3 +79,9 @@ flutter:
     - family: NotoEmoji
       fonts:
         - asset: assets/fonts/NotoEmoji.ttf
+    - family: LilitaOne
+      fonts:
+        - asset: assets/fonts/LilitaOne.ttf
+    - family: RussoOne
+      fonts:
+        - asset: assets/fonts/RussoOne.ttf

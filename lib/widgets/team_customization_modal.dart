@@ -1,6 +1,8 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
+import 'package:guess_up/services/team_generator_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/bouncy_game_button.dart';
 
@@ -72,7 +74,7 @@ class _TeamCustomizationModalState extends State<TeamCustomizationModal> {
   late String _selectedMagentaEmoji;
 
   // Unique Team Avatar Emojis reserved specifically for Team Avatars
-  static const List<String> _cyanEmojiOptions = [
+  static const List<String> _baseCyanEmojiOptions = [
     '⚡',
     '🐺',
     '🦅',
@@ -81,8 +83,12 @@ class _TeamCustomizationModalState extends State<TeamCustomizationModal> {
     '⚔️',
     '🥊',
     '🎯',
+    '🐼',
+    '🌀',
+    '👑',
+    '🦡',
   ];
-  static const List<String> _magentaEmojiOptions = [
+  static const List<String> _baseMagentaEmojiOptions = [
     '🔥',
     '🐉',
     '🦁',
@@ -91,7 +97,25 @@ class _TeamCustomizationModalState extends State<TeamCustomizationModal> {
     '🛸',
     '🚀',
     '💣',
+    '🐆',
+    '🦦',
+    '🪐',
+    '🦊',
   ];
+
+  List<String> get _cyanEmojiOptions {
+    if (!_baseCyanEmojiOptions.contains(_selectedCyanEmoji)) {
+      return [_selectedCyanEmoji, ..._baseCyanEmojiOptions];
+    }
+    return _baseCyanEmojiOptions;
+  }
+
+  List<String> get _magentaEmojiOptions {
+    if (!_baseMagentaEmojiOptions.contains(_selectedMagentaEmoji)) {
+      return [_selectedMagentaEmoji, ..._baseMagentaEmojiOptions];
+    }
+    return _baseMagentaEmojiOptions;
+  }
 
   @override
   void initState() {
@@ -109,6 +133,41 @@ class _TeamCustomizationModalState extends State<TeamCustomizationModal> {
     _cyanNameController.dispose();
     _magentaNameController.dispose();
     super.dispose();
+  }
+
+  void _randomizeCyanTeam() {
+    GameAudioEngine().lightImpact();
+    final team = TeamGeneratorService.getRandomTeam(
+      excludeName: _magentaNameController.text.trim(),
+      excludeEmoji: _selectedMagentaEmoji,
+    );
+    setState(() {
+      _cyanNameController.text = team.name;
+      _selectedCyanEmoji = team.emoji;
+    });
+  }
+
+  void _randomizeMagentaTeam() {
+    GameAudioEngine().lightImpact();
+    final team = TeamGeneratorService.getRandomTeam(
+      excludeName: _cyanNameController.text.trim(),
+      excludeEmoji: _selectedCyanEmoji,
+    );
+    setState(() {
+      _magentaNameController.text = team.name;
+      _selectedMagentaEmoji = team.emoji;
+    });
+  }
+
+  void _randomizeBothTeams() {
+    GameAudioEngine().mediumImpact();
+    final pair = TeamGeneratorService.getRandomPair();
+    setState(() {
+      _cyanNameController.text = pair.teamCyan.name;
+      _selectedCyanEmoji = pair.teamCyan.emoji;
+      _magentaNameController.text = pair.teamMagenta.name;
+      _selectedMagentaEmoji = pair.teamMagenta.emoji;
+    });
   }
 
   void _handleSave() {
@@ -160,38 +219,53 @@ class _TeamCustomizationModalState extends State<TeamCustomizationModal> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Handle indicator
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.withAlpha(100),
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-
-            // Header
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: AppTheme.darkPrimaryColor.withAlpha(40),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Text('⚔️', style: TextStyle(fontSize: 24)),
+                IconButton(
+                  onPressed: () {
+                    GameAudioEngine().lightImpact();
+                    Navigator.of(context).pop();
+                  },
+                  icon: const Icon(CupertinoIcons.xmark),
                 ),
-                const SizedBox(width: 12),
-                Text(
-                  'Customize Teams',
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
-                    color: isDark ? Colors.white : AppTheme.lightTextColor,
-                    fontFamily: 'Manrope',
+                Expanded(
+                  child: Text(
+                    'Customize Teams',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w900,
+                      color: isDark ? Colors.white : AppTheme.lightTextColor,
+                      fontFamily: AppTheme.fontFamily,
+                    ),
+                  ),
+                ),
+                // Global Quick Randomizer Button
+                BouncyGameButton(
+                  onTap: _randomizeBothTeams,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 8,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withAlpha(isDark ? 50 : 35),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.amber, width: 1.5),
+                    ),
+                    child: const Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'RANDOMIZE',
+                          style: TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.w900,
+                            color: Colors.amber,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ],
@@ -209,6 +283,7 @@ class _TeamCustomizationModalState extends State<TeamCustomizationModal> {
                 setState(() => _selectedCyanEmoji = emoji);
                 GameAudioEngine().extraLightImpact();
               },
+              onRandomize: _randomizeCyanTeam,
               isDark: isDark,
             ),
 
@@ -225,6 +300,7 @@ class _TeamCustomizationModalState extends State<TeamCustomizationModal> {
                 setState(() => _selectedMagentaEmoji = emoji);
                 GameAudioEngine().extraLightImpact();
               },
+              onRandomize: _randomizeMagentaTeam,
               isDark: isDark,
             ),
 
@@ -240,20 +316,17 @@ class _TeamCustomizationModalState extends State<TeamCustomizationModal> {
                   color: AppTheme.darkPrimaryColor,
                   borderRadius: BorderRadius.circular(18),
                   boxShadow: const [
-                    BoxShadow(
-                      color: Color(0xFFCCAC00),
-                      offset: Offset(0, 4),
-                    ),
+                    BoxShadow(color: Color(0xFFCCAC00), offset: Offset(0, 4)),
                   ],
                 ),
                 child: const Text(
-                  'SAVE TEAM NAMES ⚡',
+                  'SAVE TEAMS',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w900,
                     color: Colors.black,
                     letterSpacing: 0.5,
-                    fontFamily: 'Manrope',
+                    fontFamily: AppTheme.fontFamily,
                   ),
                 ),
               ),
@@ -272,6 +345,7 @@ class _TeamCustomizationModalState extends State<TeamCustomizationModal> {
     required String selectedEmoji,
     required List<String> emojiOptions,
     required Function(String) onEmojiSelected,
+    required VoidCallback onRandomize,
     required bool isDark,
   }) {
     return Container(
@@ -285,20 +359,55 @@ class _TeamCustomizationModalState extends State<TeamCustomizationModal> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+              Row(
+                children: [
+                  Container(
+                    width: 12,
+                    height: 12,
+                    decoration: BoxDecoration(
+                      color: color,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w800,
+                      color: color,
+                      fontFamily: AppTheme.fontFamily,
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w800,
-                  color: color,
-                  fontFamily: 'Manrope',
+              BouncyGameButton(
+                onTap: onRandomize,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: color.withAlpha(isDark ? 40 : 25),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: color.withAlpha(120)),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(
+                        'ROLL',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                          color: color,
+                          letterSpacing: 0.5,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -320,7 +429,10 @@ class _TeamCustomizationModalState extends State<TeamCustomizationModal> {
               ),
               prefixIcon: Padding(
                 padding: const EdgeInsets.all(12),
-                child: Text(selectedEmoji, style: const TextStyle(fontSize: 20)),
+                child: Text(
+                  selectedEmoji,
+                  style: const TextStyle(fontSize: 20),
+                ),
               ),
               filled: true,
               fillColor:

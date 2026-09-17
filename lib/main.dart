@@ -12,6 +12,8 @@ import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 
+import 'package:guess_up/services/sensor_service.dart';
+
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
@@ -30,6 +32,17 @@ void main() async {
   // 1. Initialize Game Object Storage
   final storageService = GameStorageService();
   await storageService.init();
+
+  // 2. Hardware Accelerometer Availability Check
+  try {
+    final isAccelSupported = await SensorService().checkAccelerometerAvailability();
+    storageService.isAccelerometerSupported = isAccelSupported;
+    if (!isAccelSupported) {
+      await storageService.setControlMode('tap');
+    }
+  } catch (e) {
+    debugPrint("Sensor check bypass: $e");
+  }
 
   // 2. Pre-load Audio RAM Sound Pool Assets in background (non-blocking & fault-tolerant)
   try {

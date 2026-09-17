@@ -2,11 +2,13 @@
   "categories": [
     {
       "id": "bollywood_blockbusters",
-      "name": "Bollywood Blockbusters",
+      "name": "Bollywood Hits",
       "icon": "🎬",
       "color": "#E50914",
       "gradientEnd": "#8B0000",
       "isTrending": true,
+      "description": "Blockbuster Hindi movies, iconic dialogues & Bollywood stars for Indian film buffs!",
+      "tags": ["desi", "bollywood", "movies", "chill", "indian"],
       "words": [
         "Sholay",
         "Dilwale Dulhania Le Jayenge",
@@ -23,16 +25,20 @@
         "Chak De India",
         "Pushpa",
         "Jawan",
-        "Stree 2"
+        "Stree 2",
+        "Animal",
+        "Jawaan"
       ]
     },
     {
       "id": "cricket_mania",
-      "name": "Cricket Mania",
+      "name": "Cricket Legends",
       "icon": "🏏",
       "color": "#0080FF",
       "gradientEnd": "#003366",
       "isTrending": true,
+      "description": "IPL stars, legendary matches, iconic shots & cricket fever!",
+      "tags": ["desi", "cricket", "sports", "wild", "indian"],
       "words": [
         "Virat Kohli",
         "MS Dhoni",
@@ -45,16 +51,20 @@
         "Bouncer",
         "Rohit Sharma",
         "Jasprit Bumrah",
-        "World Cup"
+        "World Cup",
+        "Hardik Pandya",
+        "No Ball"
       ]
     },
     {
       "id": "desi_foodies",
-      "name": "Desi Foodies",
-      "icon": "🍔",
+      "name": "Indian Food & Chai",
+      "icon": "🥟",
       "color": "#FF9900",
       "gradientEnd": "#CC5500",
       "isTrending": true,
+      "description": "Street food cravings, tapri chai, biryani & delicious Indian treats!",
+      "tags": ["chill", "desi", "food", "family", "indian"],
       "words": [
         "Butter Chicken",
         "Pani Puri",
@@ -67,16 +77,20 @@
         "Vada Pav",
         "Jalebi",
         "Tapri Chai",
-        "Momos"
+        "Momos",
+        "Rasgulla",
+        "Chole Kulche"
       ]
     },
     {
       "id": "desi_youth_vibes",
-      "name": "Desi Youth & Vibes",
+      "name": "Desi Party & Vibes",
       "icon": "😎",
       "color": "#9C27B0",
       "gradientEnd": "#4A148C",
       "isTrending": true,
+      "description": "Night outs, Jugaad, Shaadi dance steps & Indian youth party vibes!",
+      "tags": ["wild", "youth", "party", "desi", "indian"],
       "words": [
         "Bunking Class",
         "Maggi at 2 AM",
@@ -89,7 +103,30 @@
         "Shaadi Dance",
         "Street Shopping",
         "Canteen Gossip",
-        "Night Out"
+        "Night Out",
+        "Baraat Entry"
+      ]
+    },
+    {
+      "id": "office_gossip_in",
+      "name": "Office Gossip (SFW)",
+      "icon": "☕",
+      "color": "#009688",
+      "gradientEnd": "#004D40",
+      "isTrending": false,
+      "description": "Corporate lingo, Chai break discussions & office party fun!",
+      "tags": ["wild", "office", "gossip", "party", "work"],
+      "words": [
+        "Chai Break",
+        "HR Email",
+        "Appraisal",
+        "Work From Home",
+        "Zoom Call muted",
+        "Friday Happy Hour",
+        "Sick Leave",
+        "Coffee Machine Gossip",
+        "Deadline",
+        "Out of Office"
       ]
     }
   ],

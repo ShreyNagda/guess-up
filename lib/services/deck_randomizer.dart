@@ -4,12 +4,32 @@ import 'package:guess_up/services/storage_service.dart';
 
 class DeckRandomizer {
   static final Random _random = Random();
+  static final Map<String, List<String>> _wordPoolCache = {};
+  static final Map<String, DateTime> _cacheTimestamps = {};
+  static const Duration _cacheDuration = Duration(minutes: 3);
+
+  /// Clears the in-memory shuffled word pool cache
+  static void clearWordPoolCache() {
+    _wordPoolCache.clear();
+    _cacheTimestamps.clear();
+  }
 
   /// Async shuffled word generator respecting GameStorageService word cooldowns
   static Future<List<String>> getShuffledWordsAsync(
     List<Category> selectedCategories,
   ) async {
     if (selectedCategories.isEmpty) return [];
+
+    // Cache key based on sorted selected category IDs
+    final cacheKey = (selectedCategories.map((c) => c.id).toList()..sort()).join(',');
+    final cachedTimestamp = _cacheTimestamps[cacheKey];
+    if (cachedTimestamp != null &&
+        DateTime.now().difference(cachedTimestamp) < _cacheDuration) {
+      final cachedPool = _wordPoolCache[cacheKey];
+      if (cachedPool != null && cachedPool.isNotEmpty) {
+        return List<String>.from(cachedPool)..shuffle(_random);
+      }
+    }
 
     final Map<String, List<String>> categoryWordPools = {};
     int maxCategoryWordCount = 0;
@@ -32,8 +52,10 @@ class DeckRandomizer {
 
     // Single Deck
     if (categoryWordPools.length == 1) {
-      final words = categoryWordPools.values.first;
-      return words.toSet().toList();
+      final words = categoryWordPools.values.first.toSet().toList();
+      _wordPoolCache[cacheKey] = List<String>.from(words);
+      _cacheTimestamps[cacheKey] = DateTime.now();
+      return words;
     }
 
     // Multi-Deck: Round-Robin Interleaving with Localized Jitter
@@ -63,6 +85,9 @@ class DeckRandomizer {
         interleavedResult[j] = temp;
       }
     }
+
+    _wordPoolCache[cacheKey] = List<String>.from(interleavedResult);
+    _cacheTimestamps[cacheKey] = DateTime.now();
 
     return interleavedResult;
   }

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 class BouncyGameButton extends StatefulWidget {
   final Widget child;
   final VoidCallback onTap;
+  final VoidCallback? onLongPress;
   final double targetScale;
   final Duration pressDuration;
 
@@ -11,6 +12,7 @@ class BouncyGameButton extends StatefulWidget {
     super.key,
     required this.child,
     required this.onTap,
+    this.onLongPress,
     this.targetScale = 0.92,
     this.pressDuration = const Duration(milliseconds: 100),
   });
@@ -61,6 +63,12 @@ class _BouncyGameButtonState extends State<BouncyGameButton>
         widget.onTap();
       },
       onTapCancel: () => _controller.reverse(),
+      onLongPress: widget.onLongPress != null
+          ? () {
+              _controller.reverse();
+              widget.onLongPress!();
+            }
+          : null,
       child: ScaleTransition(
         scale: _scaleAnimation,
         child: widget.child,

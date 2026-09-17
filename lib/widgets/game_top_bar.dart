@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:guess_up/models/team_match_state.dart';
 import 'package:guess_up/theme/app_theme.dart';
@@ -29,14 +30,16 @@ class GameTopBar extends StatelessWidget {
 
     final isDark = theme.brightness == Brightness.dark;
     final topBarTextColor = isDark ? Colors.white : const Color(0xFF0F0C1C);
-    final topBarSubtextColor = isDark ? Colors.white70 : const Color(0xFF5A6072);
+    final topBarSubtextColor =
+        isDark ? Colors.white70 : const Color(0xFF5A6072);
 
     final bool isLowTime = remainingTime <= 10;
     final bool isCriticalTime = remainingTime <= 5;
 
-    Color timerColor = isLowTime
-        ? Colors.redAccent
-        : (isDark ? theme.colorScheme.primary : const Color(0xFFD97700));
+    Color timerColor =
+        isLowTime
+            ? Colors.redAccent
+            : (isDark ? theme.colorScheme.primary : const Color(0xFFD97700));
 
     final isTeamMode = teamMatchState?.isTeamMode == true;
     final teamColor = teamMatchState?.currentTeamColor ?? AppTheme.teamAColor;
@@ -75,7 +78,10 @@ class GameTopBar extends StatelessWidget {
                       strokeWidth:
                           isCriticalTime ? (timerSize / 8) : (timerSize / 10),
                       valueColor: AlwaysStoppedAnimation<Color>(timerColor),
-                      backgroundColor: isDark ? Colors.grey.withAlpha(77) : Colors.black.withAlpha(30),
+                      backgroundColor:
+                          isDark
+                              ? Colors.grey.withAlpha(77)
+                              : Colors.black.withAlpha(30),
                       strokeCap: StrokeCap.round,
                     ),
                   ),
@@ -155,8 +161,8 @@ class GameTopBar extends StatelessWidget {
                       children: [
                         Icon(
                           teamMatchState!.isTiebreaker
-                              ? Icons.bolt_rounded
-                              : Icons.shield_outlined,
+                              ? CupertinoIcons.bolt_fill
+                              : CupertinoIcons.shield_fill,
                           size: 14,
                           color:
                               teamMatchState!.isTiebreaker
@@ -188,8 +194,10 @@ class GameTopBar extends StatelessWidget {
             alignment: Alignment.centerRight,
             child: IconButton(
               icon: Icon(
-                isGamePaused ? Icons.play_arrow_rounded : Icons.pause_rounded,
-                size: 44,
+                isGamePaused
+                    ? CupertinoIcons.play_fill
+                    : CupertinoIcons.pause_fill,
+                size: 38,
                 color: topBarTextColor,
               ),
               padding: const EdgeInsets.all(12),

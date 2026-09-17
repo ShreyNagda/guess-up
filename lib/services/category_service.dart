@@ -1,12 +1,13 @@
 import 'dart:convert';
+import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/foundation.dart' show debugPrint;
 import 'package:flutter/services.dart' show rootBundle;
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
 import '../models/category.dart';
 import 'storage_service.dart';
-import 'dart:math';
 
 class CategoryService {
   // Singleton Pattern
@@ -22,73 +23,91 @@ class CategoryService {
     }
   }
 
-  // Client Device Storage Keys (Permanent storage, not expiring cache)
+  // Client Device Storage Keys (Hive Box Storage)
+  static const String _categoriesCacheBoxName = 'categories_cache_box';
   static const String _deviceStorageKey = 'categories_device_storage';
   static const String _deviceStorageTimestampKey =
       'categories_device_storage_timestamp';
 
-  // Legacy keys for seamless migration
+  // Legacy SharedPreferences keys for seamless one-time migration
   static const String _legacyCacheKey = 'categories_cache';
   static const String _legacyCacheTimestampKey = 'categories_cache_timestamp';
 
-  // In-memory reference
-  List<Category>? _cachedCategories;
-  DateTime? _lastFirestoreFetch; // Track last successful fetch
+  Box? _cacheBox;
 
-  // Helper to get SharedPreferences instance
-  Future<SharedPreferences> get _prefs async =>
-      await SharedPreferences.getInstance();
+  Future<Box> get _box async {
+    if (_cacheBox != null && _cacheBox!.isOpen) {
+      return _cacheBox!;
+    }
+    _cacheBox = await Hive.openBox(_categoriesCacheBoxName);
+    await _migrateSharedPreferencesIfNeeded(_cacheBox!);
+    return _cacheBox!;
+  }
 
-  /// Migrates legacy cache keys to permanent device storage if present
-  Future<void> _migrateLegacyCacheIfNeeded(SharedPreferences prefs) async {
-    if (prefs.containsKey(_legacyCacheKey)) {
-      final oldData = prefs.getString(_legacyCacheKey);
-      if (oldData != null && !prefs.containsKey(_deviceStorageKey)) {
-        await prefs.setString(_deviceStorageKey, oldData);
-        final oldTimestamp = prefs.getInt(_legacyCacheTimestampKey);
-        if (oldTimestamp != null) {
-          await prefs.setInt(_deviceStorageTimestampKey, oldTimestamp);
+  Future<void> _migrateSharedPreferencesIfNeeded(Box box) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (prefs.containsKey(_deviceStorageKey) ||
+          prefs.containsKey(_legacyCacheKey)) {
+        final oldData =
+            prefs.getString(_deviceStorageKey) ??
+            prefs.getString(_legacyCacheKey);
+        final oldTimestamp =
+            prefs.getInt(_deviceStorageTimestampKey) ??
+            prefs.getInt(_legacyCacheTimestampKey);
+        if (oldData != null) {
+          await box.put(_deviceStorageKey, oldData);
+          if (oldTimestamp != null) {
+            await box.put(_deviceStorageTimestampKey, oldTimestamp);
+          }
+          debugPrint(
+            "📦 [MIGRATION] Migrated SharedPreferences category cache to Hive box '$_categoriesCacheBoxName'.",
+          );
         }
-        debugPrint(
-          "📦 [MIGRATION] Migrated legacy category cache to permanent client device storage.",
-        );
+        await prefs.remove(_deviceStorageKey);
+        await prefs.remove(_deviceStorageTimestampKey);
+        await prefs.remove(_legacyCacheKey);
+        await prefs.remove(_legacyCacheTimestampKey);
       }
-      await prefs.remove(_legacyCacheKey);
-      await prefs.remove(_legacyCacheTimestampKey);
+    } catch (e) {
+      debugPrint("⚠️ Migration check error: $e");
     }
   }
 
-  /// Persists categories permanently to client device storage
+  // In-memory reference
+  List<Category>? _cachedCategories;
+  List<Category> get cachedCategories => _cachedCategories ?? [];
+  DateTime? _lastFirestoreFetch; // Track last successful fetch
+
+  /// Persists categories permanently to Hive client device storage
   Future<void> _saveToDeviceStorage(List<Category> categories) async {
     try {
       _cachedCategories = List<Category>.from(categories);
-      final prefs = await _prefs;
+      final box = await _box;
       final List<Map<String, dynamic>> jsonList =
           categories.map((c) => c.toJson()).toList();
-      await prefs.setString(_deviceStorageKey, jsonEncode(jsonList));
-      await prefs.setInt(
+      await box.put(_deviceStorageKey, jsonEncode(jsonList));
+      await box.put(
         _deviceStorageTimestampKey,
         DateTime.now().millisecondsSinceEpoch,
       );
       _lastFirestoreFetch = DateTime.now();
       debugPrint(
-        "✅ [DEVICE-STORAGE] Saved ${categories.length} categories permanently to client device storage.",
+        "✅ [HIVE-STORAGE] Saved ${categories.length} categories permanently to Hive box.",
       );
     } catch (e) {
-      debugPrint("⚠️ Error saving categories to device storage: $e");
+      debugPrint("⚠️ Error saving categories to Hive storage: $e");
     }
   }
 
-  /// Clears in-memory and permanent client device storage
+  /// Clears in-memory and Hive client device storage
   Future<void> clearDeviceStorage() async {
     _cachedCategories = null;
     _lastFirestoreFetch = null;
-    final prefs = await _prefs;
-    await prefs.remove(_deviceStorageKey);
-    await prefs.remove(_deviceStorageTimestampKey);
-    await prefs.remove(_legacyCacheKey);
-    await prefs.remove(_legacyCacheTimestampKey);
-    debugPrint("🧹 Permanent client device storage cleared.");
+    final box = await _box;
+    await box.delete(_deviceStorageKey);
+    await box.delete(_deviceStorageTimestampKey);
+    debugPrint("🧹 Permanent Hive client device storage cleared.");
   }
 
   /// Alias for backward compatibility
@@ -153,49 +172,49 @@ class CategoryService {
     }
   }
 
-  /// Gets all categories using client device storage first
+  /// Invalidates in-memory category caches
+  Future<void> invalidateCache() async {
+    _cachedCategories = null;
+    _lastFirestoreFetch = null;
+  }
+
+  /// Gets all categories using Hive client device storage first
   Future<List<Category>> getAllCategories({bool forceRefresh = false}) async {
     // 1. Check in-memory cache (if not forcing refresh)
     if (_cachedCategories != null && !forceRefresh) {
-      debugPrint(
-        "✅ [DEVICE-STORAGE] Returning categories from IN-MEMORY list.",
-      );
+      debugPrint("✅ [HIVE-STORAGE] Returning categories from IN-MEMORY list.");
       return List<Category>.from(_cachedCategories!);
     }
 
-    final prefs = await _prefs;
-    await _migrateLegacyCacheIfNeeded(prefs);
+    final box = await _box;
 
     if (forceRefresh) {
       debugPrint(
-        "ℹ️ [DEVICE-STORAGE] Force refresh requested. Querying Firestore to update device storage...",
+        "ℹ️ [HIVE-STORAGE] Force refresh requested. Querying Firestore to update Hive storage...",
       );
       _cachedCategories = null;
     }
 
-    // 2. Read from permanent local device storage if available (and not forcing refresh)
-    if (!forceRefresh) {
-      final storedJsonString = prefs.getString(_deviceStorageKey);
-      if (storedJsonString != null) {
-        try {
-          final List<dynamic> jsonList = jsonDecode(storedJsonString);
-          _cachedCategories =
-              jsonList.map((json) => Category.fromJson(json)).toList();
-          final storedTimestamp = prefs.getInt(_deviceStorageTimestampKey);
-          if (storedTimestamp != null) {
-            _lastFirestoreFetch = DateTime.fromMillisecondsSinceEpoch(
-              storedTimestamp,
-            );
-          }
-          debugPrint(
-            "✅ [DEVICE-STORAGE] Returning ${_cachedCategories!.length} categories from PERMANENT LOCAL DEVICE STORAGE.",
-          );
-          return List<Category>.from(_cachedCategories!);
-        } catch (e) {
-          debugPrint(
-            "⚠️ [DEVICE-STORAGE] Error decoding stored categories: $e",
+    final storedJsonString = box.get(_deviceStorageKey) as String?;
+
+    // 2. Read from permanent local Hive storage if available (and not forcing refresh)
+    if (!forceRefresh && storedJsonString != null) {
+      try {
+        final List<dynamic> jsonList = jsonDecode(storedJsonString);
+        _cachedCategories =
+            jsonList.map((json) => Category.fromJson(json)).toList();
+        final storedTimestamp = box.get(_deviceStorageTimestampKey) as int?;
+        if (storedTimestamp != null) {
+          _lastFirestoreFetch = DateTime.fromMillisecondsSinceEpoch(
+            storedTimestamp,
           );
         }
+        debugPrint(
+          "✅ [HIVE-STORAGE] Returning ${_cachedCategories!.length} categories from PERMANENT HIVE DEVICE STORAGE.",
+        );
+        return List<Category>.from(_cachedCategories!);
+      } catch (e) {
+        debugPrint("⚠️ [HIVE-STORAGE] Error decoding stored categories: $e");
       }
     }
 
@@ -213,7 +232,7 @@ class CategoryService {
     // 4. Fetch from Firestore if internet is available
     if (hasInternet) {
       debugPrint(
-        "ℹ️ [NETWORK] Fetching game data from Firestore to save/update device storage...",
+        "ℹ️ [NETWORK] Fetching game data from Firestore to save/update Hive storage...",
       );
       try {
         final snapshot = await _categoryRef?.get();
@@ -243,8 +262,7 @@ class CategoryService {
       });
     }
 
-    // 5. Fallback Level 1: Device storage if network check/fetch failed
-    final storedJsonString = prefs.getString(_deviceStorageKey);
+    // 5. Fallback Level 1: Hive storage if network check/fetch failed
     if (storedJsonString != null) {
       try {
         final List<dynamic> jsonList = jsonDecode(storedJsonString);
@@ -253,31 +271,31 @@ class CategoryService {
         if (fallbackCategories.isNotEmpty) {
           _cachedCategories = List<Category>.from(fallbackCategories);
           debugPrint(
-            "✅ [DEVICE-STORAGE] Loaded ${fallbackCategories.length} categories from PERMANENT DEVICE STORAGE (Offline/Network fallback).",
+            "✅ [HIVE-STORAGE] Loaded ${fallbackCategories.length} categories from HIVE STORAGE (Offline/Network fallback).",
           );
           return List<Category>.from(_cachedCategories!);
         }
       } catch (e) {
-        debugPrint("⚠️ [DEVICE-STORAGE] Error decoding stored categories: $e");
+        debugPrint("⚠️ [HIVE-STORAGE] Error decoding stored categories: $e");
       }
     }
 
-    // 6. Fallback Level 2: Seed local device storage from bundled assets/data.json
+    // 6. Fallback Level 2: Seed Hive storage from bundled assets/data.json
     try {
       final offlineCategories = await loadCategoriesFromDataJson();
       if (offlineCategories.isNotEmpty) {
         await _saveToDeviceStorage(offlineCategories);
         debugPrint(
-          "✅ [DEVICE-STORAGE] Seeded PERMANENT DEVICE STORAGE with ${offlineCategories.length} categories from bundled assets/data.json.",
+          "✅ [HIVE-STORAGE] Seeded HIVE DEVICE STORAGE with ${offlineCategories.length} categories from bundled assets/data.json.",
         );
         return List<Category>.from(_cachedCategories!);
       }
     } catch (e) {
-      debugPrint("⚠️ [DEVICE-STORAGE] Error reading local data.json: $e");
+      debugPrint("⚠️ [HIVE-STORAGE] Error reading local data.json: $e");
     }
 
     debugPrint(
-      "ℹ️ [DEVICE-STORAGE] No categories found on device storage or network.",
+      "ℹ️ [HIVE-STORAGE] No categories found on Hive storage or network.",
     );
     return [];
   }
@@ -334,6 +352,7 @@ class CategoryService {
   List<String> getWordsFromSelectedCategories(
     List<Category> selectedCategories,
   ) {
+    if (selectedCategories.isEmpty) return [];
     final random = Random();
     List<String> allWords = [];
 
@@ -420,11 +439,10 @@ class CategoryService {
     await getAllCategories(forceRefresh: true);
   }
 
-  /// Retrieve stored categories directly from client device storage
+  /// Retrieve stored categories directly from Hive client device storage
   Future<List<Category>> getStoredCategories() async {
-    final prefs = await _prefs;
-    await _migrateLegacyCacheIfNeeded(prefs);
-    final storedJsonString = prefs.getString(_deviceStorageKey);
+    final box = await _box;
+    final storedJsonString = box.get(_deviceStorageKey) as String?;
     if (storedJsonString != null) {
       try {
         final List<dynamic> jsonList = jsonDecode(storedJsonString);
@@ -432,7 +450,7 @@ class CategoryService {
         _cachedCategories = List<Category>.from(stored);
         return stored;
       } catch (e) {
-        debugPrint("⚠️ [DEVICE-STORAGE] Error decoding stored categories: $e");
+        debugPrint("⚠️ [HIVE-STORAGE] Error decoding stored categories: $e");
       }
     }
     return [];
@@ -450,14 +468,13 @@ class CategoryService {
     debugPrint('🔍 [DEBUG] [$timestamp] $message\n$formattedDetails');
   }
 
-  /// Helper method to get detailed debug info on client device storage status
+  /// Helper method to get detailed debug info on Hive client device storage status
   Future<Map<String, dynamic>> getDebugInfo() async {
-    final prefs = await _prefs;
-    await _migrateLegacyCacheIfNeeded(prefs);
+    final box = await _box;
     final connectivityResult = await Connectivity().checkConnectivity();
     final hasInternet = !connectivityResult.contains(ConnectivityResult.none);
-    final deviceStorageTimestamp = prefs.getInt(_deviceStorageTimestampKey);
-    final storageExists = prefs.containsKey(_deviceStorageKey);
+    final deviceStorageTimestamp = box.get(_deviceStorageTimestampKey) as int?;
+    final storageExists = box.containsKey(_deviceStorageKey);
 
     return {
       'timestamp': DateTime.now().toIso8601String(),

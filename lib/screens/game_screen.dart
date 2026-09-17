@@ -1,13 +1,16 @@
 import 'dart:async';
+import 'package:confetti/confetti.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:guess_up/constants/game_constants.dart';
 import 'package:guess_up/models/category.dart';
 import 'package:guess_up/models/team_match_state.dart';
 import 'package:guess_up/screens/result_screen.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/category_service.dart';
 import 'package:guess_up/services/deck_randomizer.dart';
+import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/game_pause_overlay.dart';
 import 'package:guess_up/widgets/game_top_bar.dart';
@@ -35,6 +38,8 @@ class GameScreen extends StatefulWidget {
 
 class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   // --- Game State ---
+  late bool _isTapControl;
+  late bool _isInvertedControls;
   bool isGamePaused = false;
   bool isGameFinished = false;
   bool isPlacedOnForehead = false;
@@ -60,6 +65,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   final CategoryService service = CategoryService();
   StreamSubscription<AccelerometerEvent>? _subscription;
   late TimerController gameTimerController;
+  late ConfettiController _streakConfettiController;
   Timer? countdownTimer;
   double lastZ = 0;
   int? _lastSecondBeeped;
@@ -68,22 +74,41 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
-    _setPortraitOrientation();
+    _isTapControl = GameStorageService().isTapControl;
+    _isInvertedControls = GameStorageService().isInvertedControls;
     WidgetsBinding.instance.addObserver(this);
     WakelockPlus.enable();
     gameTimerController = TimerController.seconds(widget.time);
+    _streakConfettiController = ConfettiController(
+      duration: const Duration(seconds: 2),
+    );
     _subscription = accelerometerEventStream().listen(_handleAccelerometer);
+    _startAccelerometerListener();
     _fetchInitialWords();
     _initOrientationFlow();
     GameAudioEngine().setGameActive(true);
   }
 
+  void _startAccelerometerListener() {
+    _subscription?.cancel();
+    _subscription = accelerometerEventStream().listen(_handleAccelerometer);
+  }
+
+  void _stopAccelerometerListener() {
+    _subscription?.cancel();
+    _subscription = null;
+  }
+
   Future<void> _initOrientationFlow() async {
+    _setLandscapeOrientation();
     setState(() {
       _isOrientationLoading = true;
     });
-    await Future.delayed(const Duration(milliseconds: 750));
-    _setLandscapeOrientation();
+
+    // Give the OS just enough time to perform the rotation animation
+    // while the loader is on screen.
+    await Future.delayed(const Duration(milliseconds: 600));
+
     if (mounted) {
       setState(() {
         _isOrientationLoading = false;
@@ -142,7 +167,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         gameTimerController.value.status == TimerStatus.running) {
       return;
     }
-    final isFlat = lastZ.abs() < 2.5;
+    final isFlat = lastZ.abs() < GameConstants.tiltFlatThreshold;
     if (isFlat &&
         !isPlacedOnForehead &&
         !isCountdownRunning &&
@@ -151,7 +176,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
         setState(() {
           isPlacedOnForehead = true;
           isCountdownRunning = true;
-          getReadyCountdown = 3;
+          getReadyCountdown = GameConstants.preGameCountdownSeconds;
         });
         _startGetReadyCountdown();
       }
@@ -160,6 +185,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
   void _startGetReadyCountdown() {
     GameAudioEngine().pauseBgm();
+    _stopAccelerometerListener(); // Stop redundant 60Hz sensor listening once forehead detected
     if (_isStartingCountdown) return;
     _isStartingCountdown = true;
     GameAudioEngine().playStartBeep();
@@ -195,6 +221,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       canDetectTilt = false;
     });
     await Future.delayed(const Duration(milliseconds: 600));
+    await Future.delayed(GameConstants.tiltCooldownDuration);
     if (mounted) {
       setState(() {
         canDetectTilt = true;
@@ -228,12 +255,14 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
     if (mounted) {
       setState(() {
+        isGamePaused = false;
         _isOrientationLoading = true;
       });
     }
 
     _setPortraitOrientation();
-    await Future.delayed(const Duration(milliseconds: 750));
+    // Wait for the rotation to physically finish before moving to the result screen
+    await Future.delayed(const Duration(milliseconds: 400));
 
     if (!mounted) return;
 
@@ -284,7 +313,10 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                 onPressed: () => Navigator.of(dialogContext).pop(true),
                 child: const Text(
                   "END ROUND",
-                  style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -305,49 +337,39 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     }
   }
 
-  void _triggerFeedback(String status) {
-    final isCorrect =
-        status == "Correct" ||
-        status.contains("STREAK") ||
-        status.contains("FIRE") ||
-        status.contains("+");
-    setState(() {
-      _feedbackMessage = status;
-      _feedbackColor =
-          isCorrect
-              ? const Color(0xFF1B5E20)
-              : const Color(0xFFB71C1C); // Solid Green vs Red
-      _feedbackIcon =
-          isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded;
-    });
-  }
-
   Future<void> _processAnswer(String status) async {
     if (currentIndex >= wordsList.length || isGameFinished || !mounted) return;
     final currentWord = wordsList[currentIndex];
     scoreMap[currentWord] = status;
 
-    if (status == "Correct") {
+    int pointsDelta = 0;
+    String feedback = "";
+    final isCorrect = status == "Correct";
+
+    if (isCorrect) {
       _currentStreak++;
       _consecutivePasses = 0;
-      int pointsAdded = 1;
+      pointsDelta = GameConstants.pointsForCorrect;
 
-      if (_currentStreak >= 5) {
-        pointsAdded = 3;
+      if (_currentStreak % 5 == 0 && _currentStreak > 0) {
+        pointsDelta = GameConstants.pointsForStreak5;
+        _streakConfettiController.play();
         GameAudioEngine().playStreakSfx();
-        _triggerFeedback("ON FIRE! +3");
-      } else if (_currentStreak >= 3) {
-        pointsAdded = 2;
+        feedback = "🔥 5 STREAK! +5s BONUS! 🔥";
+        try {
+          final currentRem = gameTimerController.value.remaining;
+          gameTimerController.dispose();
+          gameTimerController = TimerController.seconds(currentRem + 5);
+          gameTimerController.start();
+        } catch (_) {}
+      } else if (_currentStreak >= GameConstants.streakThresholdHot) {
+        pointsDelta = GameConstants.pointsForStreak3;
         GameAudioEngine().playStreakSfx();
-        _triggerFeedback("HOT STREAK! +2");
+        feedback = "HOT STREAK! +${GameConstants.pointsForStreak3}";
       } else {
         GameAudioEngine().mediumImpact();
         GameAudioEngine().playCorrectSfx();
-        _triggerFeedback("CORRECT! +1");
-      }
-
-      if (mounted) {
-        setState(() => score += pointsAdded);
+        feedback = "CORRECT! +${GameConstants.pointsForCorrect}";
       }
     } else {
       _currentStreak = 0;
@@ -355,30 +377,36 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       GameAudioEngine().heavyImpact();
       GameAudioEngine().playPassSfx();
 
-      if (_consecutivePasses >= 5) {
+      if (_consecutivePasses >= GameConstants.consecutivePassesForPenalty) {
         _consecutivePasses = 0;
-        if (mounted) {
-          setState(() {
-            score = (score - 1).clamp(0, 9999);
-          });
-        }
-        _triggerFeedback("5 PASSES! -1");
+        pointsDelta = -GameConstants.penaltyForPassLimit;
+        feedback =
+            "${GameConstants.consecutivePassesForPenalty} PASSES! -${GameConstants.penaltyForPassLimit}";
       } else {
-        _triggerFeedback("PASS");
+        feedback = "PASS";
       }
     }
 
-    // Solid curtain is active — hold next word reveal for 450ms
-    await Future.delayed(const Duration(milliseconds: 450));
+    // Unified single setState for feedback & score update
+    if (mounted) {
+      setState(() {
+        score = (score + pointsDelta).clamp(0, 9999);
+        _feedbackMessage = feedback;
+        _feedbackColor =
+            isCorrect ? const Color(0xFF1B5E20) : const Color(0xFFB71C1C);
+        _feedbackIcon =
+            isCorrect ? Icons.check_circle_rounded : Icons.cancel_rounded;
+      });
+    }
+
+    // Solid curtain is active — hold next word reveal for feedback duration
+    await Future.delayed(GameConstants.feedbackDisplayDuration);
 
     if (mounted) {
       setState(() {
         currentIndex++;
         _feedbackMessage = null; // Uncover curtain after word changes
       });
-      if (currentIndex < wordsList.length) {
-        scoreMap[wordsList[currentIndex]] = "Pass";
-      }
     }
     if (currentIndex >= wordsList.length - 3) {
       _fetchMoreWords();
@@ -404,6 +432,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.removeObserver(this);
     WakelockPlus.disable();
     _subscription?.cancel();
+    _streakConfettiController.dispose();
     countdownTimer?.cancel();
     gameTimerController.dispose();
     GameAudioEngine().setGameActive(false);
@@ -414,7 +443,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     if (_isOrientationLoading) {
-      return const ThreeDotLoader();
+      return const ThreeDotLoader(label: 'Loading Results...');
     }
 
     final theme = Theme.of(context);
@@ -490,20 +519,153 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                       Positioned.fill(
                         child: Row(
                           children: [
+                            // Left Side (Pass by default, Correct if inverted)
                             Expanded(
                               child: GestureDetector(
                                 behavior: HitTestBehavior.translucent,
                                 onTap: () {
-                                  if (canDetectTilt) _processAnswer("Pass");
+                                  if (canDetectTilt) {
+                                    _processAnswer(
+                                      _isInvertedControls ? "Correct" : "Pass",
+                                    );
+                                  }
                                 },
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    color:
+                                        _isTapControl
+                                            ? (_isInvertedControls
+                                                    ? Colors.green
+                                                    : Colors.red)
+                                                .withAlpha(24)
+                                            : Colors.transparent,
+                                    border:
+                                        _isTapControl
+                                            ? Border(
+                                              right: BorderSide(
+                                                color: Colors.white.withAlpha(
+                                                  15,
+                                                ),
+                                                width: 1,
+                                              ),
+                                            )
+                                            : null,
+                                  ),
+                                  child:
+                                      _isTapControl
+                                          ? Align(
+                                            alignment: Alignment.bottomLeft,
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                left: 20.0,
+                                                bottom: 20.0,
+                                              ),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 4,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black.withAlpha(
+                                                    120,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: (_isInvertedControls
+                                                            ? Colors.greenAccent
+                                                            : Colors.redAccent)
+                                                        .withAlpha(140),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  _isInvertedControls
+                                                      ? "👈 TAP LEFT FOR CORRECT"
+                                                      : "👈 TAP LEFT TO PASS",
+                                                  style: TextStyle(
+                                                    color:
+                                                        _isInvertedControls
+                                                            ? Colors.greenAccent
+                                                            : Colors.redAccent,
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: 11,
+                                                    letterSpacing: 1.0,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                          : null,
+                                ),
                               ),
                             ),
+                            // Right Side (Correct by default, Pass if inverted)
                             Expanded(
                               child: GestureDetector(
                                 behavior: HitTestBehavior.translucent,
                                 onTap: () {
-                                  if (canDetectTilt) _processAnswer("Correct");
+                                  if (canDetectTilt) {
+                                    _processAnswer(
+                                      _isInvertedControls ? "Pass" : "Correct",
+                                    );
+                                  }
                                 },
+                                child: Container(
+                                  color:
+                                      _isTapControl
+                                          ? (_isInvertedControls
+                                                  ? Colors.red
+                                                  : Colors.green)
+                                              .withAlpha(24)
+                                          : Colors.transparent,
+                                  child:
+                                      _isTapControl
+                                          ? Align(
+                                            alignment: Alignment.bottomRight,
+                                            child: Padding(
+                                              padding: const EdgeInsets.only(
+                                                right: 20.0,
+                                                bottom: 20.0,
+                                              ),
+                                              child: Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 10,
+                                                      vertical: 4,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.black.withAlpha(
+                                                    120,
+                                                  ),
+                                                  borderRadius:
+                                                      BorderRadius.circular(12),
+                                                  border: Border.all(
+                                                    color: (_isInvertedControls
+                                                            ? Colors.redAccent
+                                                            : Colors.greenAccent)
+                                                        .withAlpha(140),
+                                                  ),
+                                                ),
+                                                child: Text(
+                                                  _isInvertedControls
+                                                      ? "TAP RIGHT TO PASS 👉"
+                                                      : "TAP RIGHT FOR CORRECT 👉",
+                                                  style: TextStyle(
+                                                    color:
+                                                        _isInvertedControls
+                                                            ? Colors.redAccent
+                                                            : Colors.greenAccent,
+                                                    fontWeight: FontWeight.w900,
+                                                    fontSize: 11,
+                                                    letterSpacing: 1.0,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          )
+                                          : null,
+                                ),
                               ),
                             ),
                           ],
@@ -559,6 +721,18 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
 
                     // 5. Feedback Overlay (Correct / Pass / Streak Hype)
                     if (_feedbackMessage != null) _buildFeedbackOverlay(),
+
+                    // 6. Confetti Burst for Combo 5 Streaks
+                    Align(
+                      alignment: Alignment.topCenter,
+                      child: ConfettiWidget(
+                        confettiController: _streakConfettiController,
+                        blastDirectionality: BlastDirectionality.explosive,
+                        shouldLoop: false,
+                        numberOfParticles: 25,
+                        gravity: 0.2,
+                      ),
+                    ),
                   ],
                 ),
               ),
@@ -700,21 +874,10 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                   ),
                   child: Column(
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(
-                            Icons.phone_android_rounded,
-                            size: 48,
-                            color: isTeamMode ? Colors.white : Colors.amber,
-                          ),
-                          const SizedBox(width: 16),
-                          Icon(
-                            Icons.face_rounded,
-                            size: 48,
-                            color: isTeamMode ? Colors.white : Colors.amber,
-                          ),
-                        ],
+                      Icon(
+                        Icons.phone_android_rounded,
+                        size: 48,
+                        color: isTeamMode ? Colors.white : Colors.amber,
                       ),
                       const SizedBox(height: 20),
                       Text(
@@ -847,6 +1010,7 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
       alignment: Alignment.center,
       child: TiltDetector(
         isActive:
+            !_isTapControl &&
             canDetectTilt &&
             !isGamePaused &&
             !isCountdownRunning &&

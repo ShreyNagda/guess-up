@@ -11,7 +11,6 @@ import 'package:guess_up/models/team_match_state.dart';
 import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/screens/home_screen.dart';
 import 'package:guess_up/screens/settings_screen.dart';
-import 'package:guess_up/screens/team_pass_screen.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
@@ -93,7 +92,7 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
           final tempDir = await getTemporaryDirectory();
           final file =
               await File(
-                '${tempDir.path}/guessup_scorecard_${DateTime.now().millisecondsSinceEpoch}.png',
+                '${tempDir.path}/bujho_scorecard_${DateTime.now().millisecondsSinceEpoch}.png',
               ).create();
           await file.writeAsBytes(pngBytes);
           final xFile = XFile(file.path);
@@ -102,8 +101,8 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
               files: [xFile],
               text:
                   widget.teamState.isTeamMode
-                      ? '🏆 ${widget.teamState.winningTeamOnlyName} won in Guess Up! Final Score: ${widget.teamState.teamCyanScore} - ${widget.teamState.teamMagentaScore}'
-                      : '🎉 Scored ${widget.lastRoundScore ?? 0} pts in Guess Up!',
+                      ? '🏆 ${widget.teamState.winningTeamOnlyName} won in Bujho! Final Score: ${widget.teamState.teamCyanScore} - ${widget.teamState.teamMagentaScore}'
+                      : '🎉 Scored ${widget.lastRoundScore ?? 0} pts in Bujho!',
             ),
           );
         }
@@ -118,14 +117,17 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
   void _handleStartTiebreaker() {
     GameAudioEngine().extraLightImpact();
     widget.teamState.startTiebreaker();
+    SystemChrome.setPreferredOrientations([
+      DeviceOrientation.landscapeLeft,
+      DeviceOrientation.landscapeRight,
+    ]);
     Navigator.of(context).pushReplacement(
       CupertinoPageRoute(
         builder:
-            (_) => TeamPassScreen(
-              teamState: widget.teamState,
-              lastRoundScore: widget.lastRoundScore ?? 0,
+            (_) => GameScreen(
               time: 30, // 30-second rapid sudden death showdown!
               selectedCategories: widget.selectedCategories,
+              teamMatchState: widget.teamState,
             ),
       ),
     );
@@ -204,7 +206,7 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.close_rounded),
+                      icon: const Icon(CupertinoIcons.xmark),
                       onPressed: () => Navigator.of(modalCtx).pop(),
                     ),
                   ],
@@ -264,8 +266,8 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
                                   children: [
                                     Icon(
                                       isCorrect
-                                          ? Icons.check_circle_rounded
-                                          : Icons.cancel_rounded,
+                                          ? CupertinoIcons.checkmark_circle_fill
+                                          : CupertinoIcons.xmark_circle_fill,
                                       size: 16,
                                       color:
                                           isCorrect
@@ -344,6 +346,7 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
                     winnerColor: winnerAccentColor,
                     soloScore: widget.lastRoundScore ?? 0,
                     totalRounds: state.currentRound,
+                    scoreMap: widget.lastRoundScoreMap,
                   ),
                 ),
               ),
@@ -385,8 +388,8 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
                         child: Center(
                           child: Icon(
                             isTie
-                                ? Icons.groups_rounded
-                                : Icons.emoji_events_rounded,
+                                ? CupertinoIcons.person_3_fill
+                                : CupertinoIcons.tropicalstorm,
                             size: 46,
                             color: winnerAccentColor,
                           ),
@@ -549,7 +552,7 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Icon(
-                                  Icons.sports_score_rounded,
+                                  CupertinoIcons.chart_bar_fill,
                                   size: 18,
                                   color: theme.hintColor,
                                 ),
@@ -578,7 +581,7 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
                         widget.lastRoundScoreMap!.isNotEmpty)
                       TextButton.icon(
                         onPressed: () => _showWordBreakdownModal(context),
-                        icon: const Icon(Icons.list_alt_rounded, size: 20),
+                        icon: const Icon(CupertinoIcons.list_bullet, size: 20),
                         label: const Text(
                           "Review Final Round Words",
                           style: TextStyle(
@@ -612,7 +615,7 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
                               borderRadius: BorderRadius.circular(18),
                             ),
                           ),
-                          icon: const Icon(Icons.bolt_rounded, size: 26),
+                          icon: const Icon(CupertinoIcons.bolt_fill, size: 24),
                           label: const Text(
                             "SUDDEN DEATH TIEBREAKER (30s)",
                             style: TextStyle(
@@ -650,11 +653,9 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
                                     color: Colors.white,
                                   ),
                                 )
-                                : const Icon(Icons.share_rounded, size: 22),
+                                : const Icon(CupertinoIcons.share, size: 20),
                         label: Text(
-                          _isSharing
-                              ? "GENERATING CARD..."
-                              : "SHARE SCORECARD 📸",
+                          _isSharing ? "GENERATING CARD..." : "SHARE SCORECARD",
                           style: const TextStyle(
                             fontWeight: FontWeight.w900,
                             fontSize: 15,
@@ -682,7 +683,7 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
                             borderRadius: BorderRadius.circular(18),
                           ),
                         ),
-                        icon: const Icon(Icons.replay_rounded, size: 24),
+                        icon: const Icon(CupertinoIcons.repeat, size: 22),
                         label: const Text(
                           "PLAY AGAIN (REMATCH)",
                           style: TextStyle(
@@ -713,7 +714,10 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              icon: const Icon(Icons.tune_rounded, size: 20),
+                              icon: const Icon(
+                                CupertinoIcons.slider_horizontal_3,
+                                size: 18,
+                              ),
                               label: const Text(
                                 "SETTINGS",
                                 style: TextStyle(
@@ -740,7 +744,10 @@ class _TeamWinnerScreenState extends State<TeamWinnerScreen>
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              icon: const Icon(Icons.home_rounded, size: 20),
+                              icon: const Icon(
+                                CupertinoIcons.house_fill,
+                                size: 18,
+                              ),
                               label: const Text(
                                 "MAIN MENU",
                                 style: TextStyle(

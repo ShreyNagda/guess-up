@@ -9,7 +9,6 @@ import 'package:guess_up/models/category.dart';
 import 'package:guess_up/models/team_match_state.dart';
 import 'package:guess_up/screens/game_screen.dart';
 import 'package:guess_up/screens/home_screen.dart';
-import 'package:guess_up/screens/team_pass_screen.dart';
 import 'package:guess_up/screens/team_winner_screen.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
@@ -43,8 +42,6 @@ class _ResultScreenState extends State<ResultScreen> {
   late ConfettiController _confettiController;
   late Map<String, String> _editableScoreMap;
   late int _currentScore;
-  int _correctCount = 0;
-  int _passCount = 0;
   bool _hasRecordedTeamTurn = false;
   final GlobalKey _scorecardKey = GlobalKey();
   bool _isSharing = false;
@@ -80,20 +77,11 @@ class _ResultScreenState extends State<ResultScreen> {
   }
 
   void _calculateStatsAndSaveHistory() {
-    int correct = 0;
-    int passed = 0;
     final List<String> shownWords = [];
 
     _editableScoreMap.forEach((key, value) {
       shownWords.add(key);
-      if (value == "Correct") {
-        correct++;
-      } else if (value == "Pass") {
-        passed++;
-      }
     });
-    _correctCount = correct;
-    _passCount = passed;
 
     if (widget.selectedCategories != null && shownWords.isNotEmpty) {
       for (final cat in widget.selectedCategories!) {
@@ -119,6 +107,28 @@ class _ResultScreenState extends State<ResultScreen> {
       widget.teamMatchState!.recordRoundScore(_currentScore);
       widget.teamMatchState!.advanceTurn();
     }
+
+    final teamState = widget.teamMatchState;
+    final teamName =
+        teamState != null ? teamState.currentTeamOnlyName : "Solo Player";
+    final emoji = teamState != null ? teamState.currentTeamOnlyEmoji : "🏆";
+    String tagline = "NEEDS PRACTICE 🦥";
+    if (_currentScore >= 40) {
+      tagline = "LEGEND STATUS 👑";
+    } else if (_currentScore >= 25) {
+      tagline = "PARTY STARTERS 🔥";
+    } else if (_currentScore >= 15) {
+      tagline = "CHARADES PROS ⚡";
+    } else if (_currentScore >= 5) {
+      tagline = "WARMUP MODE ☕";
+    }
+
+    GameStorageService().saveHallOfFameScore(
+      score: _currentScore,
+      teamName: teamName,
+      emoji: emoji,
+      tagline: tagline,
+    );
   }
 
   void _toggleWordStatus(String word) {
@@ -131,13 +141,6 @@ class _ResultScreenState extends State<ResultScreen> {
     setState(() {
       _editableScoreMap[word] = newVal;
       _currentScore = (_currentScore + scoreDiff).clamp(0, 9999);
-      if (newVal == "Correct") {
-        _correctCount++;
-        _passCount = (_passCount - 1).clamp(0, 9999);
-      } else {
-        _passCount++;
-        _correctCount = (_correctCount - 1).clamp(0, 9999);
-      }
     });
 
     if (widget.teamMatchState != null) {
@@ -163,6 +166,7 @@ class _ResultScreenState extends State<ResultScreen> {
         return;
       }
 
+      // Capture screenshot at 3.0x resolution for native 1080x1920 Instagram Story export
       final image = await boundary.toImage(pixelRatio: 3.0);
       final byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       if (byteData != null) {
@@ -170,14 +174,14 @@ class _ResultScreenState extends State<ResultScreen> {
         final tempDir = await getTemporaryDirectory();
         final file =
             await File(
-              '${tempDir.path}/guessup_scorecard_${DateTime.now().millisecondsSinceEpoch}.png',
+              '${tempDir.path}/bujho_scorecard_${DateTime.now().millisecondsSinceEpoch}.png',
             ).create();
         await file.writeAsBytes(pngBytes);
         final xFile = XFile(file.path);
         await SharePlus.instance.share(
           ShareParams(
             files: [xFile],
-            text: '🎉 Scored $_currentScore pts in Guess Up!',
+            text: '🎉 Scored $_currentScore pts in Bujho!',
           ),
         );
       }
@@ -232,15 +236,14 @@ class _ResultScreenState extends State<ResultScreen> {
       if (teamState.isMatchFinished) {
         _handleShowWinnerScreen();
       } else {
-        _setPortraitOrientation();
+        _setLandscapeOrientation();
         Navigator.of(context).pushReplacement(
           CupertinoPageRoute(
             builder:
-                (_) => TeamPassScreen(
-                  teamState: teamState,
-                  lastRoundScore: _currentScore,
+                (_) => GameScreen(
                   time: widget.time,
                   selectedCategories: widget.selectedCategories ?? [],
+                  teamMatchState: teamState,
                 ),
           ),
         );
@@ -255,8 +258,8 @@ class _ResultScreenState extends State<ResultScreen> {
                 selectedCategories: widget.selectedCategories ?? [],
                 teamMatchState: null,
               ),
-        ),
-      );
+          ),
+        );
     }
   }
 
@@ -272,13 +275,33 @@ class _ResultScreenState extends State<ResultScreen> {
             .where((e) => e.value == "Correct" || e.value == "Pass")
             .toList();
 
-    String titleText = "GREAT JOB!";
-    if (isTeamMatchComplete && teamState != null) {
-      titleText = "FINAL ROUND COMPLETE!";
-    } else if (teamState != null) {
-      titleText = "ROUND ${teamState.currentRound} COMPLETE!";
-    } else if (_currentScore <= 3) {
-      titleText = "GAME OVER";
+    final String lastPlayingTeamName =
+        teamState?.lastPlayingTeam == TeamColor.cyan
+            ? (teamState?.teamCyanName ?? 'Team A')
+            : (teamState?.teamMagentaName ?? 'Team B');
+
+    String titleText = "GAME OVER";
+    if (teamState != null) {
+      if (isTeamMatchComplete) {
+        titleText = "MATCH COMPLETE!";
+      } else {
+        titleText = "${lastPlayingTeamName.toUpperCase()}'S TURN!";
+      }
+    }
+
+    String scorePillText = "SCORE: $_currentScore";
+    if (teamState != null) {
+      if (isTeamMatchComplete) {
+        scorePillText =
+            "MATCH: ${teamState.teamCyanScore} - ${teamState.teamMagentaScore}";
+      } else {
+        scorePillText = "TURN SCORE: +$_currentScore";
+      }
+    } else {
+      scorePillText =
+          answeredWords.isNotEmpty
+              ? "SCORE: $_currentScore / ${answeredWords.length}"
+              : "SCORE: $_currentScore";
     }
 
     return Scaffold(
@@ -286,7 +309,7 @@ class _ResultScreenState extends State<ResultScreen> {
         ambientColor: isDark ? Colors.amber : theme.colorScheme.primary,
         child: Stack(
           children: [
-            // Hidden RepaintBoundary for solo scorecard export
+            // Hidden RepaintBoundary for solo scorecard export (9:16 Instagram Story format)
             // Positioned off-screen (not Offstage) so it still gets painted
             // and toImage() can capture the rendered layer.
             Positioned(
@@ -310,6 +333,7 @@ class _ResultScreenState extends State<ResultScreen> {
                     teamMagentaScore:
                         widget.teamMatchState?.teamMagentaScore ?? 0,
                     soloScore: _currentScore,
+                    scoreMap: _editableScoreMap,
                   ),
                 ),
               ),
@@ -322,9 +346,6 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
                 child: Column(
                   children: [
-                    // ==========================================
-                    // 1. TOP PART: Title, Score & Stat Badges
-                    // ==========================================
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -370,7 +391,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                       return Transform.scale(
                                         scale: scale,
                                         child: Icon(
-                                          Icons.star_rounded,
+                                          CupertinoIcons.star_fill,
                                           size: 22,
                                           color:
                                               isEarned
@@ -387,11 +408,11 @@ class _ResultScreenState extends State<ResultScreen> {
                         ),
                         const SizedBox(width: 14),
 
-                        // Score & Stat Pill Badge
+                        // Score Pill Badge
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
+                            horizontal: 18,
+                            vertical: 10,
                           ),
                           decoration: BoxDecoration(
                             color: theme.cardColor,
@@ -404,72 +425,102 @@ class _ResultScreenState extends State<ResultScreen> {
                               width: 2,
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(
-                                isTeamMatchComplete && teamState != null
-                                    ? "MATCH: ${teamState.teamCyanScore} - ${teamState.teamMagentaScore}"
-                                    : "SCORE: $_currentScore",
-                                style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  fontSize: 19,
-                                  letterSpacing: 0.5,
-                                ),
-                              ),
-                              const SizedBox(width: 14),
-
-                              // Green ✓ Stat Pill
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.green.withAlpha(45),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  "✓ $_correctCount",
-                                  style: const TextStyle(
-                                    color: Colors.greenAccent,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-
-                              // Red ✗ Stat Pill
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: Colors.red.withAlpha(45),
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                                child: Text(
-                                  "✗ $_passCount",
-                                  style: const TextStyle(
-                                    color: Colors.redAccent,
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 14,
-                                  ),
-                                ),
-                              ),
-                            ],
+                          child: Text(
+                            scorePillText,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w900,
+                              fontSize: 18,
+                              letterSpacing: 0.5,
+                            ),
                           ),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 12),
+                    if (teamState != null) ...[
+                      const SizedBox(height: 10),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.cardColor.withAlpha(isDark ? 140 : 220),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: (isDark
+                                    ? Colors.amber
+                                    : theme.colorScheme.primary)
+                                .withAlpha(60),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                          children: [
+                            Row(
+                              children: [
+                                Text(
+                                  teamState.teamCyanEmoji,
+                                  style: const TextStyle(fontSize: 18),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  "${teamState.teamCyanName}: ",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color:
+                                        isDark ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                                Text(
+                                  "${teamState.teamCyanScore}",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 18,
+                                    color: AppTheme.teamAColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              width: 1,
+                              height: 20,
+                              color: theme.dividerColor.withAlpha(80),
+                            ),
+                            Row(
+                              children: [
+                                Text(
+                                  teamState.teamMagentaEmoji,
+                                  style: const TextStyle(fontSize: 18),
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  "${teamState.teamMagentaName}: ",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 14,
+                                    color:
+                                        isDark ? Colors.white : Colors.black87,
+                                  ),
+                                ),
+                                Text(
+                                  "${teamState.teamMagentaScore}",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w900,
+                                    fontSize: 18,
+                                    color: AppTheme.teamBColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
 
-                    // ==========================================
-                    // 2. MIDDLE PART: Answered Words (Tap to Toggle Status)
-                    // ==========================================
+                    const SizedBox(height: 12),
                     Expanded(
                       child: Container(
                         width: double.infinity,
@@ -509,7 +560,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                     bottom: 10.0,
                                   ),
                                   child: Text(
-                                    "Tap chip to adjust",
+                                    "Tap chip to correct",
                                     style: TextStyle(
                                       fontWeight: FontWeight.w700,
                                       fontSize: 11,
@@ -534,108 +585,90 @@ class _ResultScreenState extends State<ResultScreen> {
                                           ),
                                         ),
                                       )
-                                      : SingleChildScrollView(
+                                      : ListView.separated(
                                         physics: const BouncingScrollPhysics(),
-                                        child: Wrap(
-                                          spacing: 10,
-                                          runSpacing: 10,
-                                          children:
-                                              answeredWords.map((entry) {
-                                                final word = entry.key;
-                                                final isCorrect =
-                                                    entry.value == "Correct";
-                                                return GestureDetector(
-                                                  onTap:
-                                                      () => _toggleWordStatus(
-                                                        word,
+                                        itemCount: answeredWords.length,
+                                        separatorBuilder:
+                                            (context, index) =>
+                                                const SizedBox(height: 10),
+                                        itemBuilder: (context, index) {
+                                          final entry = answeredWords[index];
+                                          final word = entry.key;
+                                          final isCorrect =
+                                              entry.value == "Correct";
+
+                                          return GestureDetector(
+                                            onTap:
+                                                () => _toggleWordStatus(word),
+                                            child: AnimatedContainer(
+                                              duration: const Duration(
+                                                milliseconds: 200,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 16,
+                                                    vertical: 12,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: isCorrect
+                                                    ? (isDark
+                                                        ? Colors.green.withAlpha(50)
+                                                        : Colors.green.shade50)
+                                                    : (isDark
+                                                        ? Colors.red.withAlpha(50)
+                                                        : Colors.red.shade50),
+                                                borderRadius: BorderRadius.circular(14),
+                                                border: Border.all(
+                                                  color: isCorrect
+                                                      ? (isDark
+                                                          ? Colors.greenAccent
+                                                          : Colors.green.shade600)
+                                                      : (isDark
+                                                          ? Colors.redAccent
+                                                          : Colors.red.shade600),
+                                                  width: 1.5,
+                                                ),
+                                              ),
+                                              child: Row(
+                                                children: [
+                                                  Icon(
+                                                    isCorrect
+                                                        ? CupertinoIcons
+                                                            .checkmark_circle_fill
+                                                        : CupertinoIcons
+                                                            .xmark_circle_fill,
+                                                    size: 22,
+                                                    color: isCorrect
+                                                        ? (isDark
+                                                            ? Colors.greenAccent
+                                                            : Colors.green.shade700)
+                                                        : (isDark
+                                                            ? Colors.redAccent
+                                                            : Colors.red.shade700),
+                                                  ),
+                                                  const SizedBox(width: 12),
+                                                  Expanded(
+                                                    child: Text(
+                                                      word,
+                                                      maxLines: 1,
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                      style: TextStyle(
+                                                        fontWeight:
+                                                            FontWeight.w800,
+                                                        fontSize: 16,
+                                                        letterSpacing: 0.3,
+                                                        color: isDark
+                                                            ? Colors.white
+                                                            : Colors.black87,
                                                       ),
-                                                  child: AnimatedContainer(
-                                                    duration: const Duration(
-                                                      milliseconds: 200,
-                                                    ),
-                                                    padding:
-                                                        const EdgeInsets.symmetric(
-                                                          horizontal: 14,
-                                                          vertical: 9,
-                                                        ),
-                                                    decoration: BoxDecoration(
-                                                      color:
-                                                          isCorrect
-                                                              ? Colors.green
-                                                                  .withAlpha(45)
-                                                              : Colors.red
-                                                                  .withAlpha(
-                                                                    45,
-                                                                  ),
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            14,
-                                                          ),
-                                                      border: Border.all(
-                                                        color:
-                                                            isCorrect
-                                                                ? Colors
-                                                                    .greenAccent
-                                                                    .withAlpha(
-                                                                      140,
-                                                                    )
-                                                                : Colors
-                                                                    .redAccent
-                                                                    .withAlpha(
-                                                                      140,
-                                                                    ),
-                                                        width: 1.5,
-                                                      ),
-                                                    ),
-                                                    child: Row(
-                                                      mainAxisSize:
-                                                          MainAxisSize.min,
-                                                      children: [
-                                                        Icon(
-                                                          isCorrect
-                                                              ? Icons
-                                                                  .check_circle_rounded
-                                                              : Icons
-                                                                  .cancel_rounded,
-                                                          size: 20,
-                                                          color:
-                                                              isCorrect
-                                                                  ? Colors
-                                                                      .greenAccent
-                                                                  : Colors
-                                                                      .redAccent,
-                                                        ),
-                                                        const SizedBox(
-                                                          width: 8,
-                                                        ),
-                                                        Flexible(
-                                                          child: Text(
-                                                            word,
-                                                            maxLines: 1,
-                                                            overflow:
-                                                                TextOverflow
-                                                                    .ellipsis,
-                                                            style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .w800,
-                                                              fontSize: 17,
-                                                              letterSpacing:
-                                                                  0.3,
-                                                              color:
-                                                                  theme
-                                                                      .textTheme
-                                                                      .bodyMedium
-                                                                      ?.color,
-                                                            ),
-                                                          ),
-                                                        ),
-                                                      ],
                                                     ),
                                                   ),
-                                                );
-                                              }).toList(),
-                                        ),
+                                                ],
+                                              ),
+                                            ),
+                                          );
+                                        },
                                       ),
                             ),
                           ],
@@ -674,11 +707,11 @@ class _ResultScreenState extends State<ResultScreen> {
                                       color: Colors.white,
                                     ),
                                   )
-                                  : const Icon(Icons.share_rounded, size: 22),
+                                  : const Icon(CupertinoIcons.share, size: 20),
                           label: Text(
                             _isSharing
                                 ? "GENERATING CARD..."
-                                : "SHARE SCORECARD 📸",
+                                : "SHARE SCORECARD",
                             style: const TextStyle(
                               fontWeight: FontWeight.w900,
                               fontSize: 15,
@@ -725,11 +758,11 @@ class _ResultScreenState extends State<ResultScreen> {
                               ),
                               icon: Icon(
                                 isTeamMatchComplete
-                                    ? Icons.emoji_events_rounded
+                                    ? CupertinoIcons.star_fill
                                     : (teamState != null &&
                                             !teamState.isMatchFinished
-                                        ? Icons.phone_forwarded_rounded
-                                        : Icons.replay_rounded),
+                                        ? CupertinoIcons.device_phone_portrait
+                                        : CupertinoIcons.repeat),
                                 size: 22,
                               ),
                               label: Text(
@@ -774,7 +807,7 @@ class _ResultScreenState extends State<ResultScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              child: const Icon(Icons.home_rounded, size: 22),
+                              child: const Icon(CupertinoIcons.house_fill, size: 22),
                             ),
                           ),
                         ),

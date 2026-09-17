@@ -1,9 +1,11 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:guess_up/models/category.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
+import 'package:guess_up/utils/deck_validation.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
 import 'package:guess_up/widgets/bouncy_game_button.dart';
 
@@ -27,6 +29,7 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
   String _startColorHex = '#FFC107';
   String _endColorHex = '#FF8F00';
   List<String> _words = [];
+  bool _isModified = false;
 
   final List<Map<String, String>> _gradientPresets = [
     {'name': 'Gold Arcade', 'start': '#FFEA00', 'end': '#FF9100'},
@@ -77,19 +80,40 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
     if (widget.existingDeck != null) {
       _titleController.text = widget.existingDeck!.name;
       _selectedIcon = widget.existingDeck!.icon;
-      _startColorHex = widget.existingDeck!.colorHex ?? '#FFC107';
-      _endColorHex =
-          widget.existingDeck!.gradientEnd != null
-              ? widget.existingDeck!.gradientEnd!
-              : _toHex(widget.existingDeck!.gradientEndColor);
+      final gradientList = widget.existingDeck!.gradient;
+      if (gradientList.isNotEmpty) {
+        _startColorHex = gradientList.first;
+        _endColorHex =
+            gradientList.length > 1 ? gradientList[1] : gradientList.first;
+      } else {
+        _startColorHex = widget.existingDeck!.mainColorHex;
+        _endColorHex = widget.existingDeck!.gradientEndColorHex;
+      }
       _words = List.from(widget.existingDeck!.words);
       _wordsInputController.text = _words.join('\n');
     }
     _customEmojiController.text = _selectedIcon;
+    _markInitialState();
+  }
+
+  void _markInitialState() {
+    _isModified = false;
+    _titleController.addListener(_onChange);
+    _wordsInputController.addListener(_onChange);
+    _customEmojiController.addListener(_onChange);
+  }
+
+  void _onChange() {
+    if (!_isModified) {
+      setState(() => _isModified = true);
+    }
   }
 
   @override
   void dispose() {
+    _titleController.removeListener(_onChange);
+    _wordsInputController.removeListener(_onChange);
+    _customEmojiController.removeListener(_onChange);
     _titleController.dispose();
     _wordsInputController.dispose();
     _customEmojiController.dispose();
@@ -125,32 +149,35 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
 
   Future<void> _saveDeck() async {
     final title = _titleController.text.trim();
-    if (title.isEmpty) {
+    final validation = DeckValidation.validateDeck(
+      name: title,
+      description: "",
+      words: _words,
+    );
+    if (!validation.isValid) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Please enter a deck title.")),
-      );
-      return;
-    }
-
-    if (_words.length < 3) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please add at least 3 words to your deck."),
+        SnackBar(
+          content: Text(validation.errors.first),
+          duration: const Duration(milliseconds: 300),
         ),
       );
       return;
     }
 
+    final slug = title
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
+    final deckId =
+        widget.existingDeck?.id ??
+        'custom_${slug.isNotEmpty ? slug : DateTime.now().millisecondsSinceEpoch}';
+
     final deck = Category(
-      id:
-          widget.existingDeck?.id ??
-          'custom_${DateTime.now().millisecondsSinceEpoch}',
+      id: deckId,
       name: title,
       icon: _selectedIcon.trim().isNotEmpty ? _selectedIcon.trim() : "🎴",
-      color: _startColorHex,
-      gradientEnd: _endColorHex,
       words: _words,
-      isCustom: true,
+      gradient: [_startColorHex, _endColorHex],
     );
 
     await _storageService.saveCustomDeck(deck);
@@ -160,85 +187,197 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
 
   void _openColorPickerDialog(bool isStartColor) {
     _audioEngine.lightImpact();
+    final initialHex = isStartColor ? _startColorHex : _endColorHex;
+    final hexController = TextEditingController(text: initialHex);
 
     showDialog(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          backgroundColor: const Color(0xFF1E1938),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
-          ),
-          title: Text(
-            isStartColor
-                ? "Select Gradient Start Color"
-                : "Select Gradient End Color",
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.w900,
-              fontSize: 16,
-            ),
-          ),
-          content: SizedBox(
-            width: double.maxFinite,
-            child: GridView.builder(
-              shrinkWrap: true,
-              itemCount: _swatchColors.length,
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 5,
-                crossAxisSpacing: 10,
-                mainAxisSpacing: 10,
-              ),
-              itemBuilder: (context, index) {
-                final color = _swatchColors[index];
-                final hex = _toHex(color);
-                final isSelected =
-                    isStartColor
-                        ? _startColorHex.toUpperCase() == hex.toUpperCase()
-                        : _endColorHex.toUpperCase() == hex.toUpperCase();
+        return StatefulBuilder(
+          builder: (dialogContext, setDialogState) {
+            final currentHex = hexController.text.trim();
+            final previewColor = _parseColor(
+              currentHex,
+              isStartColor ? const Color(0xFFFFC107) : const Color(0xFFFF8F00),
+            );
 
-                return GestureDetector(
-                  onTap: () {
-                    _audioEngine.extraLightImpact();
+            return AlertDialog(
+              backgroundColor: const Color(0xFF1E1938),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              title: Text(
+                isStartColor
+                    ? "Custom Start Color (#HEX)"
+                    : "Custom End Color (#HEX)",
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 16,
+                ),
+              ),
+              content: SizedBox(
+                width: double.maxFinite,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Custom Hex Input Box + Preview Circle
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF261F47),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: Colors.white24),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: previewColor,
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white, width: 2),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: previewColor.withAlpha(140),
+                                  blurRadius: 8,
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: TextField(
+                              controller: hexController,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                fontFamily: 'monospace',
+                              ),
+                              decoration: const InputDecoration(
+                                hintText: "#FFC107",
+                                hintStyle: TextStyle(color: Colors.white38),
+                                border: InputBorder.none,
+                                isDense: true,
+                              ),
+                              onChanged: (_) {
+                                setDialogState(() {});
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        "OR CHOOSE FROM PALETTE",
+                        style: TextStyle(
+                          color: Colors.white54,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+
+                    // Color Swatch Grid
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 180),
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        itemCount: _swatchColors.length,
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                              crossAxisCount: 5,
+                              crossAxisSpacing: 10,
+                              mainAxisSpacing: 10,
+                            ),
+                        itemBuilder: (context, index) {
+                          final color = _swatchColors[index];
+                          final hex = _toHex(color);
+                          final isSelected =
+                              currentHex.replaceAll('#', '').toUpperCase() ==
+                              hex.replaceAll('#', '').toUpperCase();
+
+                          return GestureDetector(
+                            onTap: () {
+                              _audioEngine.extraLightImpact();
+                              hexController.text = hex;
+                              setDialogState(() {});
+                            },
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: color,
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color:
+                                      isSelected
+                                          ? Colors.white
+                                          : Colors.black26,
+                                  width: isSelected ? 3 : 1,
+                                ),
+                                boxShadow: [
+                                  if (isSelected)
+                                    BoxShadow(
+                                      color: color.withAlpha(180),
+                                      blurRadius: 10,
+                                    ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text(
+                    "CANCEL",
+                    style: TextStyle(color: Colors.white54),
+                  ),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    String cleanHex = hexController.text.trim();
+                    if (cleanHex.isNotEmpty && !cleanHex.startsWith('#')) {
+                      cleanHex = '#$cleanHex';
+                    }
                     setState(() {
                       if (isStartColor) {
-                        _startColorHex = hex;
+                        _startColorHex =
+                            cleanHex.isNotEmpty ? cleanHex : _startColorHex;
                       } else {
-                        _endColorHex = hex;
+                        _endColorHex =
+                            cleanHex.isNotEmpty ? cleanHex : _endColorHex;
                       }
                     });
                     Navigator.of(ctx).pop();
                   },
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: isSelected ? Colors.white : Colors.black26,
-                        width: isSelected ? 3 : 1,
-                      ),
-                      boxShadow: [
-                        if (isSelected)
-                          BoxShadow(
-                            color: color.withAlpha(180),
-                            blurRadius: 10,
-                          ),
-                      ],
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: previewColor,
+                    foregroundColor: Colors.white,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(),
-              child: const Text(
-                "CANCEL",
-                style: TextStyle(color: Colors.white70),
-              ),
-            ),
-          ],
+                  child: const Text(
+                    "APPLY COLOR",
+                    style: TextStyle(fontWeight: FontWeight.w900),
+                  ),
+                ),
+              ],
+            );
+          },
         );
       },
     );
@@ -271,7 +410,7 @@ class _CreateCustomDeckScreenState extends State<CreateCustomDeckScreen> {
               ),
             ),
             child: Icon(
-              Icons.arrow_back_ios_new_rounded,
+              CupertinoIcons.chevron_back,
               size: 18,
               color: textColor,
             ),

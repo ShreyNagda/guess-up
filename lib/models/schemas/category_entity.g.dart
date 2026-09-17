@@ -28,13 +28,14 @@ class CategoryEntityAdapter extends TypeAdapter<CategoryEntity> {
       sortOrder: fields[8] as int,
       isAvailable: fields[9] as bool,
       isCustom: fields[10] as bool,
+      gradient: (fields[11] as List?)?.cast<String>(),
     );
   }
 
   @override
   void write(BinaryWriter writer, CategoryEntity obj) {
     writer
-      ..writeByte(11)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.id)
       ..writeByte(1)
@@ -56,7 +57,9 @@ class CategoryEntityAdapter extends TypeAdapter<CategoryEntity> {
       ..writeByte(9)
       ..write(obj.isAvailable)
       ..writeByte(10)
-      ..write(obj.isCustom);
+      ..write(obj.isCustom)
+      ..writeByte(11)
+      ..write(obj.gradient);
   }
 
   @override

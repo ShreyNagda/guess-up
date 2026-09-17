@@ -1,0 +1,156 @@
+@import "tailwindcss";
+
+@theme {
+  --font-manrope: var(--font-manrope), sans-serif;
+  --font-sans: var(--font-manrope), sans-serif;
+
+  --color-brand-primary: var(--primary-accent);
+  --color-brand-primary-hover: var(--primary-hover);
+
+  --color-brand-surface: var(--bg-surface);
+  --color-brand-card: var(--bg-card);
+  --color-brand-bg: var(--bg-primary);
+
+  --color-brand-text: var(--text-main);
+  --color-brand-muted: var(--text-muted);
+  --color-brand-border: var(--border-color);
+
+  --color-brand-accent: oklch(81.8% 0.224 152);
+  --color-brand-pass: oklch(63.2% 0.245 31);
+
+  --spacing-125: 31.25rem;
+
+  --shadow-phone-3d:
+    0 25px 50px -12px oklch(0% 0 0 / 0.35),
+    0 0 35px oklch(88.2% 0.191 95 / 0.25);
+  --shadow-card-light:
+    0 10px 30px -5px oklch(0% 0 0 / 0.08), 0 4px 6px -2px oklch(0% 0 0 / 0.04);
+  --shadow-arcade-glow: 0 0 25px oklch(88.2% 0.191 95 / 0.3);
+  --shadow-accent-glow: 0 0 25px oklch(81.8% 0.224 152 / 0.35);
+  --shadow-pass-glow: 0 0 25px oklch(63.2% 0.245 31 / 0.35);
+}
+
+:root {
+  color-scheme: light;
+  --bg-primary: oklch(96.8% 0.008 264);
+  --bg-surface: oklch(100% 0 0);
+  --bg-card: oklch(100% 0 0);
+  --text-main: oklch(16.5% 0.032 284);
+  --text-muted: oklch(45.8% 0.026 260);
+  --border-color: oklch(16.5% 0.032 284 / 0.12);
+  --primary-accent: oklch(88.2% 0.191 95);
+  --primary-hover: oklch(81.5% 0.182 95);
+  --primary-shadow: oklch(62% 0.16 95);
+  --primary-text: oklch(16.5% 0.032 284);
+  --btn-secondary-bg: oklch(100% 0 0);
+  --btn-secondary-hover: oklch(96.8% 0.008 264);
+  --btn-3d-shadow: oklch(16.5% 0.032 284 / 0.15);
+}
+
+.dark,
+[data-theme="dark"] {
+  color-scheme: dark;
+  --bg-primary: oklch(16.5% 0.032 284);
+  --bg-surface: oklch(18.2% 0.042 284);
+  --bg-card: oklch(22.4% 0.051 284);
+  --text-main: oklch(96.8% 0.004 260);
+  --text-muted: oklch(70.2% 0.016 260);
+  --border-color: oklch(100% 0 0 / 0.12);
+  --primary-accent: oklch(88.2% 0.191 95);
+  --primary-hover: oklch(81.5% 0.182 95);
+  --primary-shadow: oklch(62% 0.16 95);
+  --primary-text: oklch(16.5% 0.032 284);
+  --btn-secondary-bg: oklch(22.4% 0.051 284);
+  --btn-secondary-hover: oklch(26% 0.055 284);
+  --btn-3d-shadow: oklch(0% 0 0 / 0.5);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-main);
+  font-family: var(--font-manrope), sans-serif;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* CSS 3D Transform Utilities for 60fps Mobile Performance */
+.perspective-1000 {
+  perspective: 1000px;
+  -webkit-perspective: 1000px;
+}
+
+.transform-style-3d {
+  transform-style: preserve-3d;
+  -webkit-transform-style: preserve-3d;
+}
+
+.backface-hidden {
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.will-change-transform {
+  will-change: transform;
+}
+
+/* Theme-respecting Glassmorphism utility for light/dark mode */
+.glass-panel {
+  background: var(--bg-surface);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border-color);
+  box-shadow: var(--shadow-card-light);
+}
+
+/* Theme-respecting Button Utility Classes */
+.btn-theme-primary {
+  background-color: var(--primary-accent);
+  color: var(--primary-text);
+  border: 1px solid oklch(16.5% 0.032 284 / 0.2);
+  box-shadow: 0 6px 0 0 var(--primary-shadow);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-theme-primary:hover {
+  background-color: var(--primary-hover);
+  box-shadow: 0 8px 0 0 var(--primary-shadow);
+}
+
+.btn-theme-secondary {
+  background-color: var(--btn-secondary-bg);
+  color: var(--text-main);
+  border: 1px solid var(--border-color);
+  box-shadow: 0 4px 0 0 var(--btn-3d-shadow);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-theme-secondary:hover {
+  background-color: var(--btn-secondary-hover);
+  box-shadow: 0 6px 0 0 var(--btn-3d-shadow);
+}
+
+.btn-theme-outline {
+  background-color: transparent;
+  color: var(--text-main);
+  border: 2px solid var(--border-color);
+  box-shadow: 0 4px 0 0 var(--btn-3d-shadow);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.btn-theme-outline:hover {
+  background-color: var(--bg-surface);
+  box-shadow: 0 6px 0 0 var(--btn-3d-shadow);
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: oklch(50% 0.01 260 / 0.25);
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: oklch(50% 0.01 260 / 0.45);
+}

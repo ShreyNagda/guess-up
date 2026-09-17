@@ -56,6 +56,24 @@ class GameStorageService {
   Future<void> setTiltSensitivity(String sensitivity) async =>
       await _settingsBox.put('tiltSensitivity', sensitivity);
 
+  bool isAccelerometerSupported = true;
+
+  String get controlMode {
+    if (!isAccelerometerSupported) return 'tap';
+    return _settingsBox.get('controlMode', defaultValue: 'tilt');
+  }
+
+  bool get isTapControl => controlMode == 'tap';
+  Future<void> setControlMode(String mode) async {
+    if (!isAccelerometerSupported && mode == 'tilt') return;
+    await _settingsBox.put('controlMode', mode);
+  }
+
+  bool get isInvertedControls =>
+      _settingsBox.get('isInvertedControls', defaultValue: false);
+  Future<void> setInvertedControls(bool val) async =>
+      await _settingsBox.put('isInvertedControls', val);
+
   bool get isTeamMode => _settingsBox.get('isTeamMode', defaultValue: false);
   Future<void> setTeamMode(bool val) async =>
       await _settingsBox.put('isTeamMode', val);
@@ -65,24 +83,60 @@ class GameStorageService {
       await _settingsBox.put('teamRounds', rounds);
 
   String get teamCyanName =>
-      _settingsBox.get('teamCyanName', defaultValue: 'Team Cyan');
+      _settingsBox.get('teamCyanName', defaultValue: 'The Drunk Uncles');
   Future<void> setTeamCyanName(String val) async =>
       await _settingsBox.put('teamCyanName', val);
 
   String get teamCyanEmoji =>
-      _settingsBox.get('teamCyanEmoji', defaultValue: '⚡');
+      _settingsBox.get('teamCyanEmoji', defaultValue: '🍻');
   Future<void> setTeamCyanEmoji(String val) async =>
       await _settingsBox.put('teamCyanEmoji', val);
 
   String get teamMagentaName =>
-      _settingsBox.get('teamMagentaName', defaultValue: 'Team Magenta');
+      _settingsBox.get('teamMagentaName', defaultValue: 'Bollywood Baddies');
   Future<void> setTeamMagentaName(String val) async =>
       await _settingsBox.put('teamMagentaName', val);
 
   String get teamMagentaEmoji =>
-      _settingsBox.get('teamMagentaEmoji', defaultValue: '🔥');
+      _settingsBox.get('teamMagentaEmoji', defaultValue: '💃');
   Future<void> setTeamMagentaEmoji(String val) async =>
       await _settingsBox.put('teamMagentaEmoji', val);
+
+  // --- Hall of Fame Storage (Top 3 Scores on Device) ---
+  List<Map<String, dynamic>> getHallOfFame() {
+    final raw = _settingsBox.get('hallOfFame');
+    if (raw is List) {
+      return raw
+          .map((e) {
+            if (e is Map) return Map<String, dynamic>.from(e);
+            return <String, dynamic>{};
+          })
+          .where((m) => m.containsKey('score'))
+          .toList();
+    }
+    return [];
+  }
+
+  Future<void> saveHallOfFameScore({
+    required int score,
+    required String teamName,
+    required String emoji,
+    required String tagline,
+  }) async {
+    final current = getHallOfFame();
+    current.add({
+      'score': score,
+      'teamName': teamName,
+      'emoji': emoji,
+      'tagline': tagline,
+      'timestamp': DateTime.now().millisecondsSinceEpoch,
+    });
+    current.sort((a, b) => (b['score'] as int).compareTo(a['score'] as int));
+    if (current.length > 3) {
+      current.removeRange(3, current.length);
+    }
+    await _settingsBox.put('hallOfFame', current);
+  }
 
   bool get hasSeenOnboarding =>
       _settingsBox.get('hasSeenOnboarding', defaultValue: false);
@@ -93,6 +147,16 @@ class GameStorageService {
       _settingsBox.get('dontShowHowToPlay', defaultValue: false);
   Future<void> setDontShowHowToPlay(bool val) async =>
       await _settingsBox.put('dontShowHowToPlay', val);
+
+  bool get hasSeenTrendingModal =>
+      _settingsBox.get('hasSeenTrendingModal', defaultValue: false);
+  Future<void> setHasSeenTrendingModal(bool val) async =>
+      await _settingsBox.put('hasSeenTrendingModal', val);
+
+  int get trendingRotationIndex =>
+      _settingsBox.get('trendingRotationIndex', defaultValue: 0);
+  Future<void> setTrendingRotationIndex(int val) async =>
+      await _settingsBox.put('trendingRotationIndex', val);
 
   ThemeMode get themeMode {
     final str = _settingsBox.get('themeMode', defaultValue: 'system');
@@ -125,21 +189,9 @@ class GameStorageService {
 
   // --- Category Accessors & Storage ---
   List<Category> getCustomDecks() {
-    return _customDecksBox.values.map((entity) {
-      return Category(
-        id: entity.id,
-        name: entity.name,
-        icon: entity.icon,
-        words: entity.words,
-        description: entity.description,
-        color: entity.color,
-        gradientEnd: entity.gradientEnd,
-        isTrending: entity.isTrending,
-        sortOrder: entity.sortOrder,
-        isAvailable: entity.isAvailable,
-        isCustom: entity.isCustom,
-      );
-    }).toList();
+    return _customDecksBox.values
+        .map<Category>((entity) => entity.toCategory())
+        .toList();
   }
 
   List<String> getLastCategoryIds() {
@@ -163,19 +215,7 @@ class GameStorageService {
   }
 
   Future<void> saveCustomDeck(Category deck) async {
-    final entity = CategoryEntity(
-      id: deck.id,
-      name: deck.name,
-      icon: deck.icon,
-      words: deck.words,
-      description: deck.description,
-      color: deck.color,
-      gradientEnd: deck.gradientEnd,
-      isTrending: deck.isTrending,
-      sortOrder: deck.sortOrder,
-      isAvailable: deck.isAvailable,
-      isCustom: true,
-    );
+    final entity = CategoryEntity.fromCategory(deck);
     await _customDecksBox.put(deck.id, entity);
   }
 

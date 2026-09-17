@@ -7,10 +7,9 @@ class GameAudioEngine with WidgetsBindingObserver {
   static final GameAudioEngine _instance = GameAudioEngine._internal();
   factory GameAudioEngine() => _instance;
 
-  GameAudioEngine._internal() {
-    WidgetsBinding.instance.addObserver(this);
-  }
+  GameAudioEngine._internal();
 
+  bool _isObserverRegistered = false;
   bool _isInitialized = false;
   bool _bgmInitialized = false;
   bool _shouldPlayMusic = true;
@@ -26,9 +25,33 @@ class GameAudioEngine with WidgetsBindingObserver {
     'assets/sounds/end_beep.ogg',
   ];
 
+  void initializeObserver() {
+    if (!_isObserverRegistered) {
+      WidgetsBinding.instance.addObserver(this);
+      _isObserverRegistered = true;
+    }
+  }
+
+  void removeObserver() {
+    if (_isObserverRegistered) {
+      WidgetsBinding.instance.removeObserver(this);
+      _isObserverRegistered = false;
+    }
+  }
+
+  void dispose() {
+    removeObserver();
+    try {
+      FlameAudio.bgm.dispose();
+    } catch (_) {}
+    _isInitialized = false;
+    _bgmInitialized = false;
+  }
+
   Future<void> init() async {
     if (_isInitialized) return;
     _isInitialized = true;
+    initializeObserver();
 
     // 1. Cache vibrator hardware capability in background
     try {
@@ -149,9 +172,6 @@ class GameAudioEngine with WidgetsBindingObserver {
     }
   }
 
-  /// Controls BGM active state according to gameplay lifecycle.
-  /// When active is true (active gameplay): BGM is paused.
-  /// When active is false (paused or non-game UI): BGM is resumed.
   void setGameActive(bool active) {
     _isGameActive = active;
     if (active) {
@@ -217,11 +237,4 @@ class GameAudioEngine with WidgetsBindingObserver {
   void mediumImpact() => vibrate(500);
   void lightImpact() => vibrate(300);
   void extraLightImpact() => vibrate(100);
-
-  void dispose() {
-    try {
-      WidgetsBinding.instance.removeObserver(this);
-      FlameAudio.bgm.dispose();
-    } catch (_) {}
-  }
 }

@@ -1,4 +1,4 @@
-import 'dart:async';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:guess_up/models/category.dart';
@@ -8,7 +8,6 @@ import 'package:guess_up/screens/home_screen.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
-import 'package:guess_up/widgets/arcade_page_route.dart';
 import 'package:guess_up/widgets/bouncy_game_button.dart';
 
 /// 5-Page Arcade Onboarding & Game Tutorial Slider
@@ -66,7 +65,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
     if (widget.isFirstAppLaunch) {
       Navigator.of(context).pushReplacement(
-        ArcadePageRoute(page: const HomeScreen()),
+        CupertinoPageRoute(builder: (_) => const HomeScreen()),
       );
       return;
     }
@@ -75,12 +74,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         widget.selectedCategories!.isNotEmpty) {
       final time = widget.gameTime ?? _storageService.gameDuration;
       Navigator.of(context).pushReplacement(
-        ArcadePageRoute(
-          page: GameScreen(
-            time: time,
-            selectedCategories: widget.selectedCategories!,
-            teamMatchState: widget.teamMatchState,
-          ),
+        CupertinoPageRoute(
+          builder:
+              (_) => GameScreen(
+                time: time,
+                selectedCategories: widget.selectedCategories!,
+                teamMatchState: widget.teamMatchState,
+              ),
         ),
       );
     } else {

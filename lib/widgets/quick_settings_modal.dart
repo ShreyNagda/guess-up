@@ -34,7 +34,6 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
   late bool _music;
   late bool _sfx;
   late bool _haptics;
-  late String _tiltSensitivity;
 
   @override
   void initState() {
@@ -43,19 +42,12 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
     _music = _storageService.isMusicEnabled;
     _sfx = _storageService.isSfxEnabled;
     _haptics = _storageService.isHapticsEnabled;
-    _tiltSensitivity = _storageService.tiltSensitivity;
   }
 
   void _updateTheme(ThemeMode newMode) {
     if (mounted) setState(() => _selectedThemeMode = newMode);
     context.read<ThemeCubit>().setThemeMode(newMode);
     _storageService.setThemeMode(newMode);
-  }
-
-  Future<void> _updateTiltSensitivity(String mode) async {
-    if (mounted) setState(() => _tiltSensitivity = mode);
-    await _storageService.setTiltSensitivity(mode);
-    _audioEngine.extraLightImpact();
   }
 
   @override
@@ -75,7 +67,10 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
         borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
         border: Border(
           top: BorderSide(
-            color: isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(20),
+            color:
+                isDark
+                    ? Colors.white.withAlpha(25)
+                    : Colors.black.withAlpha(20),
             width: 1.5,
           ),
         ),
@@ -113,7 +108,7 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
                 Row(
                   children: [
                     Icon(
-                      Icons.settings_suggest_rounded,
+                      CupertinoIcons.gear_alt_fill,
                       size: 22,
                       color: primaryColor,
                     ),
@@ -130,7 +125,10 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
                   ],
                 ),
                 IconButton(
-                  icon: Icon(Icons.close_rounded, color: textColor.withAlpha(180)),
+                  icon: Icon(
+                    CupertinoIcons.xmark_circle_fill,
+                    color: textColor.withAlpha(180),
+                  ),
                   onPressed: () => Navigator.of(context).pop(),
                 ),
               ],
@@ -145,7 +143,7 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
                   child: _buildThemeButton(
                     ThemeMode.light,
                     "Light",
-                    Icons.wb_sunny_rounded,
+                    CupertinoIcons.sun_max_fill,
                     isDark,
                     primaryColor,
                   ),
@@ -155,7 +153,7 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
                   child: _buildThemeButton(
                     ThemeMode.dark,
                     "Dark",
-                    Icons.nights_stay_rounded,
+                    CupertinoIcons.moon_stars_fill,
                     isDark,
                     primaryColor,
                   ),
@@ -165,7 +163,7 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
                   child: _buildThemeButton(
                     ThemeMode.system,
                     "System",
-                    Icons.settings_brightness_rounded,
+                    CupertinoIcons.device_desktop,
                     isDark,
                     primaryColor,
                   ),
@@ -182,7 +180,9 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
                 Expanded(
                   child: _buildToggleButton(
                     "Music",
-                    _music ? Icons.music_note_rounded : Icons.music_off_rounded,
+                    _music
+                        ? CupertinoIcons.music_note
+                        : CupertinoIcons.speaker_slash_fill,
                     _music,
                     () {
                       _audioEngine.extraLightImpact();
@@ -203,7 +203,7 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
                 Expanded(
                   child: _buildToggleButton(
                     "Sounds",
-                    _sfx ? Icons.volume_up_rounded : Icons.volume_off_rounded,
+                    _sfx ? CupertinoIcons.volume_up : CupertinoIcons.volume_off,
                     _sfx,
                     () {
                       _audioEngine.extraLightImpact();
@@ -220,7 +220,9 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
                 Expanded(
                   child: _buildToggleButton(
                     "Haptics",
-                    _haptics ? Icons.vibration_rounded : Icons.smartphone_rounded,
+                    _haptics
+                        ? CupertinoIcons.device_phone_portrait
+                        : CupertinoIcons.device_phone_portrait,
                     _haptics,
                     () {
                       _audioEngine.extraLightImpact();
@@ -231,44 +233,6 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
                     },
                     primaryColor,
                     isDark,
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 14),
-
-            // --- 3. Forehead Tilt Sensitivity Section ---
-            _buildSectionTitle("TILT SENSITIVITY", textColor),
-            Row(
-              children: [
-                Expanded(
-                  child: _buildSensitivityButton(
-                    'Low',
-                    'Low',
-                    Icons.screen_rotation_rounded,
-                    isDark,
-                    primaryColor,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildSensitivityButton(
-                    'Normal',
-                    'Normal',
-                    Icons.stay_current_portrait_rounded,
-                    isDark,
-                    primaryColor,
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: _buildSensitivityButton(
-                    'High',
-                    'High',
-                    Icons.bolt_rounded,
-                    isDark,
-                    primaryColor,
                   ),
                 ),
               ],
@@ -285,14 +249,18 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
                       Navigator.of(context).pop();
                       Navigator.of(context).push(
                         CupertinoPageRoute(
-                          builder: (_) => const OnboardingScreen(isRevisiting: true),
+                          builder:
+                              (_) => const OnboardingScreen(isRevisiting: true),
                         ),
                       );
                     },
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12),
                       decoration: BoxDecoration(
-                        color: isDark ? const Color(0xFF261F47) : Colors.grey.shade100,
+                        color:
+                            isDark
+                                ? const Color(0xFF261F47)
+                                : Colors.grey.shade100,
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(
                           color: isDark ? Colors.white24 : Colors.black12,
@@ -301,7 +269,11 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.help_outline_rounded, size: 18, color: textColor),
+                          Icon(
+                            CupertinoIcons.question_circle_fill,
+                            size: 18,
+                            color: textColor,
+                          ),
                           const SizedBox(width: 6),
                           Text(
                             "HOW TO PLAY",
@@ -337,13 +309,20 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: Colors.white, width: 2),
                         boxShadow: const [
-                          BoxShadow(color: Color(0xFF8E4800), offset: Offset(0, 3)),
+                          BoxShadow(
+                            color: Color(0xFF8E4800),
+                            offset: Offset(0, 3),
+                          ),
                         ],
                       ),
                       child: const Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.tune_rounded, size: 18, color: Colors.black),
+                          Icon(
+                            CupertinoIcons.slider_horizontal_3,
+                            size: 18,
+                            color: Colors.black,
+                          ),
                           SizedBox(width: 6),
                           Text(
                             "ALL SETTINGS",
@@ -396,9 +375,12 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isSelected
-              ? primaryColor
-              : (isDark ? Colors.black.withAlpha(60) : Colors.grey.shade100),
+          color:
+              isSelected
+                  ? primaryColor
+                  : (isDark
+                      ? Colors.black.withAlpha(60)
+                      : Colors.grey.shade100),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isSelected ? Colors.white : Colors.transparent,
@@ -409,7 +391,10 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
           children: [
             Icon(
               icon,
-              color: isSelected ? Colors.black : (isDark ? Colors.white70 : Colors.black54),
+              color:
+                  isSelected
+                      ? Colors.black
+                      : (isDark ? Colors.white70 : Colors.black54),
               size: 20,
             ),
             const SizedBox(height: 2),
@@ -418,7 +403,10 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
               style: TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 10,
-                color: isSelected ? Colors.black : (isDark ? Colors.white70 : Colors.black54),
+                color:
+                    isSelected
+                        ? Colors.black
+                        : (isDark ? Colors.white70 : Colors.black54),
               ),
             ),
           ],
@@ -443,9 +431,12 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
-          color: isActive
-              ? primaryColor
-              : (isDark ? Colors.black.withAlpha(60) : Colors.grey.shade100),
+          color:
+              isActive
+                  ? primaryColor
+                  : (isDark
+                      ? Colors.black.withAlpha(60)
+                      : Colors.grey.shade100),
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
             color: isActive ? Colors.white : Colors.transparent,
@@ -457,60 +448,22 @@ class _QuickSettingsModalState extends State<QuickSettingsModal> {
             Icon(
               icon,
               size: 22,
-              color: isActive ? Colors.black : (isDark ? Colors.white38 : Colors.black38),
+              color:
+                  isActive
+                      ? Colors.black
+                      : (isDark ? Colors.white38 : Colors.black38),
             ),
             const SizedBox(height: 4),
             Text(
               label.toUpperCase(),
               style: TextStyle(
-                color: isActive ? Colors.black : (isDark ? Colors.white60 : Colors.black54),
+                color:
+                    isActive
+                        ? Colors.black
+                        : (isDark ? Colors.white60 : Colors.black54),
                 fontWeight: FontWeight.w900,
                 fontSize: 10,
                 letterSpacing: 0.5,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSensitivityButton(
-    String mode,
-    String label,
-    IconData icon,
-    bool isDark,
-    Color primaryColor,
-  ) {
-    final isSelected = _tiltSensitivity == mode;
-    return BouncyGameButton(
-      onTap: () => _updateTiltSensitivity(mode),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? primaryColor
-              : (isDark ? Colors.black.withAlpha(60) : Colors.grey.shade100),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: isSelected ? Colors.white : Colors.transparent,
-            width: isSelected ? 1.5 : 0,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              icon,
-              color: isSelected ? Colors.black : (isDark ? Colors.white70 : Colors.black54),
-              size: 18,
-            ),
-            const SizedBox(height: 2),
-            Text(
-              label,
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 10,
-                color: isSelected ? Colors.black : (isDark ? Colors.white70 : Colors.black54),
               ),
             ),
           ],

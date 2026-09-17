@@ -1,4 +1,5 @@
 import 'dart:ui'; // For ImageFilter
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 class GamePauseOverlay extends StatelessWidget {
@@ -44,7 +45,7 @@ class GamePauseOverlay extends StatelessWidget {
                 const SizedBox(height: 32),
                 ElevatedButton.icon(
                   onPressed: onResumePressed, // Use the callback
-                  icon: const Icon(Icons.play_arrow_rounded, size: 28),
+                  icon: const Icon(CupertinoIcons.play_fill, size: 24),
                   label: const Text("Resume", style: TextStyle(fontSize: 18)),
                   style: ElevatedButton.styleFrom(
                     padding: const EdgeInsets.symmetric(
@@ -61,7 +62,7 @@ class GamePauseOverlay extends StatelessWidget {
                 const SizedBox(height: 16),
                 TextButton.icon(
                   onPressed: onExitPressed, // Use the callback
-                  icon: const Icon(Icons.exit_to_app, size: 24),
+                  icon: const Icon(CupertinoIcons.xmark_circle, size: 22),
                   label: const Text("Exit", style: TextStyle(fontSize: 16)),
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.white.withAlpha(

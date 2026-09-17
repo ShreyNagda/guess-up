@@ -10,8 +10,9 @@ import 'package:guess_up/screens/onboarding_screen.dart';
 import 'package:guess_up/services/category_service.dart';
 import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
+import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
-import 'package:guess_up/widgets/arcade_page_route.dart';
+import 'package:guess_up/widgets/custom_page_route.dart';
 
 class AnimatedSplashScreen extends StatefulWidget {
   const AnimatedSplashScreen({super.key});
@@ -29,6 +30,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
   double _loadingProgress = 0.0;
   String _statusText = "INITIALIZING GAME ENGINE...";
   bool _isInitializationComplete = false;
+  bool _showHindiTitle = false;
 
   @override
   void initState() {
@@ -70,7 +72,14 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
   Future<void> _startLoadingSequence() async {
     // Step 1: Initialize Firebase & Storage (0% -> 40%)
     _updateProgress(0.15, "INITIALIZING GAME ENGINE...");
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 750));
+
+    // Transition title from English (BUJHO) to Hindi (बुझो)
+    if (mounted) {
+      setState(() {
+        _showHindiTitle = true;
+      });
+    }
 
     try {
       await Firebase.initializeApp();
@@ -95,7 +104,7 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
       await Future.delayed(const Duration(milliseconds: 400));
 
       _updateProgress(1.0, "READY TO PLAY!");
-      await Future.delayed(const Duration(milliseconds: 300));
+      await Future.delayed(const Duration(milliseconds: 400));
 
       _navigateToHome(storageService);
     } catch (e) {
@@ -121,12 +130,14 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
 
     if (!storageService.hasSeenOnboarding) {
       Navigator.of(context).pushReplacement(
-        ArcadePageRoute(page: const OnboardingScreen(isFirstAppLaunch: true)),
+        CustomPageRoute(
+          builder: (_) => const OnboardingScreen(isFirstAppLaunch: true),
+        ),
       );
     } else {
       Navigator.of(
         context,
-      ).pushReplacement(ArcadePageRoute(page: const HomeScreen()));
+      ).pushReplacement(CustomPageRoute(builder: (_) => const HomeScreen()));
     }
   }
 
@@ -193,20 +204,38 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Text(
-                            "GUESS UP",
-                            style: TextStyle(
-                              fontFamily: 'Manrope',
-                              fontSize: 36,
-                              fontWeight: FontWeight.w900,
-                              letterSpacing: 4.0,
-                              color: Colors.black,
-                              shadows: [
-                                Shadow(
-                                  color: Colors.white70,
-                                  offset: Offset(0, 1.5),
+                          AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 550),
+                            switchInCurve: Curves.elasticOut,
+                            switchOutCurve: Curves.easeIn,
+                            transitionBuilder: (child, animation) {
+                              return ScaleTransition(
+                                scale: animation,
+                                child: FadeTransition(
+                                  opacity: animation,
+                                  child: child,
                                 ),
-                              ],
+                              );
+                            },
+                            child: Text(
+                              _showHindiTitle ? "बुझो" : "BUJHO",
+                              key: ValueKey<bool>(_showHindiTitle),
+                              style: TextStyle(
+                                fontFamily:
+                                    _showHindiTitle
+                                        ? null
+                                        : AppTheme.fontFamily,
+                                fontSize: 36,
+                                fontWeight: FontWeight.w900,
+                                letterSpacing: _showHindiTitle ? 2.0 : 4.0,
+                                color: Colors.black,
+                                shadows: const [
+                                  Shadow(
+                                    color: Colors.white70,
+                                    offset: Offset(0, 1.5),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           const SizedBox(height: 2),

@@ -97,7 +97,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    "Guess Up is designed to bring people together for fun party games without compromising your privacy or personal data.",
+                    "Bujho is designed to bring people together for fun party games without compromising your privacy or personal data.",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 13,
@@ -120,7 +120,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
               icon: Icons.no_accounts_rounded,
               title: "1. No Account or Personal Data Collection",
               content:
-                  "Guess Up does not require any registration, email address, phone number, or personal user account. We do not track, collect, sell, or rent your personal identifiable information to third parties.",
+                  "Bujho does not require any registration, email address, phone number, or personal user account. We do not track, collect, sell, or rent your personal identifiable information to third parties.",
             ),
 
             const SizedBox(height: 14),
@@ -180,7 +180,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             // Bottom Brand Footer
             Center(
               child: Text(
-                "Guess Up • Party Charades",
+                "Bujho • Party Charades",
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 12,

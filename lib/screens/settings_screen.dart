@@ -11,7 +11,6 @@ import 'package:guess_up/services/audio_service.dart';
 import 'package:guess_up/services/storage_service.dart';
 import 'package:guess_up/theme/app_theme.dart';
 import 'package:guess_up/widgets/ambient_background.dart';
-import 'package:guess_up/widgets/bouncy_game_button.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -26,8 +25,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool isMusicOn = true;
   bool isSfxOn = true;
   bool isHapticsOn = true;
-  int selectedDuration = 60;
   String _tiltSensitivity = 'Normal';
+  String _controlMode = 'tilt';
+  bool _isInvertedControls = false;
 
   @override
   void initState() {
@@ -41,7 +41,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
   }
 
-  Future<void> _loadSettings() async {
+  void _loadSettings() {
     final storage = GameStorageService();
     final currentThemeMode = context.read<ThemeCubit>().state.themeMode;
 
@@ -51,10 +51,26 @@ class _SettingsScreenState extends State<SettingsScreen> {
         isMusicOn = storage.isMusicEnabled;
         isSfxOn = storage.isSfxEnabled;
         isHapticsOn = storage.isHapticsEnabled;
-        selectedDuration = storage.gameDuration;
         _tiltSensitivity = storage.tiltSensitivity;
+        _controlMode = storage.controlMode;
+        _isInvertedControls = storage.isInvertedControls;
       });
     }
+  }
+
+  Future<void> _updateInvertedControls(bool val) async {
+    if (mounted) setState(() => _isInvertedControls = val);
+    await GameStorageService().setInvertedControls(val);
+    GameAudioEngine().extraLightImpact();
+  }
+
+  Future<void> _updateControlMode(String mode) async {
+    if (mode == 'tilt' && !GameStorageService().isAccelerometerSupported) {
+      return;
+    }
+    if (mounted) setState(() => _controlMode = mode);
+    await GameStorageService().setControlMode(mode);
+    GameAudioEngine().extraLightImpact();
   }
 
   Future<void> _updateTiltSensitivity(String mode) async {
@@ -72,15 +88,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  Future<void> _updateDuration(int seconds) async {
-    if (mounted) setState(() => selectedDuration = seconds);
-    await GameStorageService().setGameDuration(seconds);
-  }
-
   void _updateTheme(ThemeMode newMode) {
     if (mounted) setState(() => _selectedThemeMode = newMode);
     context.read<ThemeCubit>().setThemeMode(newMode);
     GameStorageService().setThemeMode(newMode);
+    GameAudioEngine().extraLightImpact();
   }
 
   Future<void> _toggleMusic() async {
@@ -89,9 +101,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final storage = GameStorageService();
     await storage.setMusicEnabled(newValue);
     if (newValue) {
-      GameAudioEngine().startBgm();
+      await GameAudioEngine().startBgm();
     } else {
-      GameAudioEngine().stopBgm();
+      await GameAudioEngine().stopBgm();
     }
   }
 
@@ -118,8 +130,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     final primaryColor =
         isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
+    final accentColor =
+        isDark ? AppTheme.darkAccentColor : AppTheme.lightAccentColor;
     final textColor =
         isDark ? AppTheme.darkTextColor : AppTheme.lightAccentColor;
+    final borderColor =
+        isDark ? primaryColor.withAlpha(77) : accentColor.withAlpha(26);
 
     const String alexMorganUrl =
         "https://pixabay.com/users/alex-morgan-54692529/?utm_source=link-attribution&utm_medium=referral&utm_campaign=music&utm_content=573931";
@@ -129,115 +145,87 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Scaffold(
       backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: BouncyGameButton(
-          onTap: () => Navigator.of(context).pop(),
-          child: Container(
-            margin: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF261F47) : Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDark ? Colors.white24 : Colors.black12,
-              ),
-            ),
-            child: Icon(
-              Icons.arrow_back_ios_new_rounded,
-              size: 18,
-              color: textColor,
-            ),
-          ),
+        leading: IconButton(
+          icon: const Icon(CupertinoIcons.chevron_back),
+          onPressed: () {
+            GameAudioEngine().lightImpact();
+            Navigator.of(context).pop();
+          },
         ),
         title: Text(
           "SETTINGS",
-          style: theme.textTheme.headlineSmall?.copyWith(
+          style: TextStyle(
             fontWeight: FontWeight.w900,
-            letterSpacing: 2.5,
+            letterSpacing: 1.5,
+            fontSize: 20,
             color: textColor,
           ),
         ),
         centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0,
       ),
       body: AmbientBackground(
         ambientColor: primaryColor,
-        child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          physics: const BouncingScrollPhysics(),
-          children: [
-            // --- 1. Appearance Section ---
-            _buildSectionTitle("APPEARANCE", textColor),
-            _build3DCardContainer(
-              isDark: isDark,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildThemeButton(
-                      ThemeMode.light,
-                      "Light",
-                      Icons.wb_sunny_rounded,
-                      isDark,
+        child: SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            children: [
+              // --- 1. Theme Section ---
+              _buildSectionTitle("THEME", textColor),
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: isDark ? AppTheme.darkSurfaceColor : Colors.white,
+                  border: Border.all(color: borderColor, width: 1.5),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: _buildThemeButton(
+                        ThemeMode.light,
+                        "Light",
+                        CupertinoIcons.sun_max_fill,
+                        isDark,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildThemeButton(
-                      ThemeMode.dark,
-                      "Dark",
-                      Icons.nights_stay_rounded,
-                      isDark,
+                    Expanded(
+                      child: _buildThemeButton(
+                        ThemeMode.dark,
+                        "Dark",
+                        CupertinoIcons.moon_stars_fill,
+                        isDark,
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildThemeButton(
-                      ThemeMode.system,
-                      "System",
-                      Icons.settings_brightness_rounded,
-                      isDark,
+                    Expanded(
+                      child: _buildThemeButton(
+                        ThemeMode.system,
+                        "System",
+                        CupertinoIcons.device_desktop,
+                        isDark,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 28),
 
-            // --- 2. Game Duration Section ---
-            _buildSectionTitle("ROUND DURATION", textColor),
-            _build3DCardContainer(
-              isDark: isDark,
-              child: Row(
-                children:
-                    [45, 60, 90, 120].map((time) {
-                      return Expanded(
-                        child: _buildDurationButton(
-                          time,
-                          isSelected: selectedDuration == time,
-                          isDark: isDark,
-                        ),
-                      );
-                    }).toList(),
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // --- 3. Audio & Haptics Section ---
-            _buildSectionTitle("AUDIO & HAPTICS", textColor),
-            _build3DCardContainer(
-              isDark: isDark,
-              child: Row(
+              // --- 2. Controls Section ---
+              _buildSectionTitle("CONTROLS", textColor),
+              Row(
                 children: [
                   Expanded(
                     child: _buildToggleButton(
                       "Music",
                       isMusicOn
-                          ? Icons.music_note_rounded
-                          : Icons.music_off_rounded,
+                          ? CupertinoIcons.music_note
+                          : CupertinoIcons.speaker_slash_fill,
                       isMusicOn,
                       _toggleMusic,
                       primaryColor,
+                      accentColor,
                       isDark,
                     ),
                   ),
@@ -246,11 +234,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: _buildToggleButton(
                       "Sounds",
                       isSfxOn
-                          ? Icons.volume_up_rounded
-                          : Icons.volume_off_rounded,
+                          ? CupertinoIcons.volume_up
+                          : CupertinoIcons.volume_off,
                       isSfxOn,
                       _toggleSfx,
                       primaryColor,
+                      accentColor,
                       isDark,
                     ),
                   ),
@@ -259,388 +248,451 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     child: _buildToggleButton(
                       "Haptics",
                       isHapticsOn
-                          ? Icons.vibration_rounded
-                          : Icons.smartphone_rounded,
+                          ? CupertinoIcons.device_phone_portrait
+                          : CupertinoIcons.device_phone_portrait,
                       isHapticsOn,
                       _toggleHaptics,
                       primaryColor,
+                      accentColor,
                       isDark,
                     ),
                   ),
                 ],
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 28),
 
-            // --- 4. Forehead Tilt Sensitivity Section ---
-            _buildSectionTitle("FOREHEAD TILT SENSITIVITY", textColor),
-            _build3DCardContainer(
-              isDark: isDark,
-              child: Row(
-                children: [
-                  Expanded(
-                    child: _buildSensitivityButton(
-                      'Low',
-                      'Low',
-                      Icons.screen_rotation_rounded,
-                      isDark,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildSensitivityButton(
-                      'Normal',
-                      'Normal',
-                      Icons.stay_current_portrait_rounded,
-                      isDark,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _buildSensitivityButton(
-                      'High',
-                      'High',
-                      Icons.bolt_rounded,
-                      isDark,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 20),
-
-            // --- 5. Tutorial & Help Section ---
-            _buildSectionTitle("TUTORIAL & HELP", textColor),
-            _build3DCardContainer(
-              isDark: isDark,
-              child: InkWell(
-                onTap: () {
-                  GameAudioEngine().lightImpact();
-                  Navigator.of(context).push(
-                    CupertinoPageRoute(
-                      builder:
-                          (_) => const OnboardingScreen(isRevisiting: true),
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(16),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 4,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withAlpha(40),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: primaryColor.withAlpha(100),
-                          ),
-                        ),
-                        child: Icon(
-                          Icons.help_outline_rounded,
+              // --- 3. Gameplay & Motion Section ---
+              _buildSectionTitle("GAMEPLAY & MOTION", textColor),
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: isDark ? AppTheme.darkSurfaceColor : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: borderColor, width: 1.5),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Control Mode Row
+                    Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.hand_point_right_fill,
                           color: primaryColor,
                           size: 22,
                         ),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              "How to Play",
-                              style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 16,
-                                color: textColor,
-                                letterSpacing: 0.3,
+                        const SizedBox(width: 8),
+                        Text(
+                          "Control Mode",
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: textColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children:
+                          [
+                            {'id': 'tilt', 'label': 'Tilt (Motion)'},
+                            {'id': 'tap', 'label': 'Tap (Touch)'},
+                          ].map((item) {
+                            final isSelected = _controlMode == item['id'];
+                            final isSupported =
+                                item['id'] != 'tilt' ||
+                                GameStorageService().isAccelerometerSupported;
+                            return Expanded(
+                              child: Padding(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 4.0,
+                                ),
+                                child: InkWell(
+                                  onTap:
+                                      isSupported
+                                          ? () =>
+                                              _updateControlMode(item['id']!)
+                                          : null,
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 150),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 10,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color:
+                                          isSelected
+                                              ? primaryColor
+                                              : (isDark
+                                                  ? Colors.white.withAlpha(15)
+                                                  : Colors.black.withAlpha(10)),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: Center(
+                                      child: Text(
+                                        isSupported
+                                            ? item['label']!
+                                            : "${item['label']} (N/A)",
+                                        style: TextStyle(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w900,
+                                          color:
+                                              !isSupported
+                                                  ? textColor.withAlpha(70)
+                                                  : (isSelected
+                                                      ? Colors.black
+                                                      : textColor.withAlpha(
+                                                        180,
+                                                      )),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ),
+                            );
+                          }).toList(),
+                    ),
+                    if (_controlMode == 'tilt') ...[
+                      const SizedBox(height: 16),
+                      const Divider(height: 1),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Icon(
+                            CupertinoIcons.device_phone_landscape,
+                            color: primaryColor,
+                            size: 22,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Tilt Sensitivity",
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                              color: textColor,
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              "View game rules and tilt controls tutorial",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: textColor.withAlpha(160),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children:
+                            ['Low', 'Normal', 'High'].map((mode) {
+                              final isSelected =
+                                  _tiltSensitivity.toLowerCase() ==
+                                  mode.toLowerCase();
+                              return Expanded(
+                                child: Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 4.0,
+                                  ),
+                                  child: InkWell(
+                                    onTap: () => _updateTiltSensitivity(mode),
+                                    borderRadius: BorderRadius.circular(10),
+                                    child: AnimatedContainer(
+                                      duration: const Duration(
+                                        milliseconds: 150,
+                                      ),
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color:
+                                            isSelected
+                                                ? primaryColor
+                                                : (isDark
+                                                    ? Colors.white.withAlpha(15)
+                                                    : Colors.black.withAlpha(
+                                                      10,
+                                                    )),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          mode,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w900,
+                                            color:
+                                                isSelected
+                                                    ? Colors.black
+                                                    : textColor.withAlpha(180),
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    // Invert Controls Switch
+                    Row(
+                      children: [
+                        Icon(
+                          CupertinoIcons.arrow_2_squarepath,
+                          color: primaryColor,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Invert Controls",
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w800,
+                                  color: textColor,
+                                ),
                               ),
+                              const SizedBox(height: 2),
+                              Text(
+                                _controlMode == 'tap'
+                                    ? (_isInvertedControls
+                                        ? "Left = Correct 🟢, Right = Pass 🔴"
+                                        : "Right = Correct 🟢, Left = Pass 🔴")
+                                    : (_isInvertedControls
+                                        ? "Tilt Up = Correct 🟢, Tilt Down = Pass 🔴"
+                                        : "Tilt Down = Correct 🟢, Tilt Up = Pass 🔴"),
+                                style: TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w600,
+                                  color: textColor.withAlpha(160),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        CupertinoSwitch(
+                          value: _isInvertedControls,
+                          activeTrackColor: primaryColor,
+                          onChanged: (val) {
+                            _updateInvertedControls(val);
+                          },
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(height: 1),
+                    const SizedBox(height: 12),
+                    InkWell(
+                      onTap: () {
+                        GameAudioEngine().lightImpact();
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder:
+                                (_) =>
+                                    const OnboardingScreen(isRevisiting: true),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(10),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 6.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  CupertinoIcons.question_circle,
+                                  color: primaryColor,
+                                  size: 22,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  "How to Play Tutorial",
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: textColor,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Icon(
+                              CupertinoIcons.chevron_forward,
+                              size: 16,
+                              color: textColor.withAlpha(140),
                             ),
                           ],
                         ),
                       ),
-                      Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        color: textColor.withAlpha(140),
-                        size: 16,
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ),
 
-            const SizedBox(height: 20),
+              const SizedBox(height: 28),
 
-            // --- 6. Legal & Privacy Section ---
-            _buildSectionTitle("LEGAL & PRIVACY", textColor),
-            _build3DCardContainer(
-              isDark: isDark,
-              child: InkWell(
-                onTap: () {
-                  GameAudioEngine().lightImpact();
-                  Navigator.of(context).push(
-                    CupertinoPageRoute(
-                      builder: (_) => const PrivacyPolicyScreen(),
-                    ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(16),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 4,
-                    vertical: 4,
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: primaryColor.withAlpha(40),
-                          borderRadius: BorderRadius.circular(16),
-                          border: Border.all(
-                            color: primaryColor.withAlpha(100),
+              // --- 4. About & Credits Section ---
+              _buildSectionTitle("ABOUT & CREDITS", textColor),
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: isDark ? AppTheme.darkSurfaceColor : Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: borderColor, width: 1.5),
+                ),
+                child: Column(
+                  children: [
+                    // App Logo
+                    Container(
+                      width: 68,
+                      height: 68,
+                      clipBehavior: Clip.hardEdge,
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF000000) : Colors.white,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withAlpha(isDark ? 80 : 20),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
                           ),
-                        ),
-                        child: Icon(
-                          Icons.shield_outlined,
-                          color: primaryColor,
-                          size: 22,
-                        ),
+                        ],
                       ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
+                      child: Image.asset(
+                        'assets/images/bujho-icon.png',
+                        width: 120,
+                        height: 120,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+
+                    Text(
+                      AppInfo.name.toUpperCase(),
+                      style: theme.textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: 2.0,
+                        color: textColor,
+                      ),
+                    ),
+                    Text(
+                      "Version ${AppInfo.displayVersion}",
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: textColor.withAlpha(140),
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      "Made with ❤️ for charades lovers",
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: textColor.withAlpha(160),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const Divider(),
+                    const SizedBox(height: 8),
+
+                    // Privacy Policy
+                    InkWell(
+                      onTap: () {
+                        GameAudioEngine().lightImpact();
+                        Navigator.of(context).push(
+                          CupertinoPageRoute(
+                            builder: (_) => const PrivacyPolicyScreen(),
+                          ),
+                        );
+                      },
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12.0,
+                          vertical: 8.0,
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Text(
                               "Privacy Policy",
                               style: TextStyle(
-                                fontWeight: FontWeight.w900,
-                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
                                 color: textColor,
-                                letterSpacing: 0.3,
                               ),
                             ),
-                            const SizedBox(height: 2),
-                            Text(
-                              "Read how your privacy is protected",
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: textColor.withAlpha(160),
-                              ),
+                            Icon(
+                              CupertinoIcons.chevron_forward,
+                              size: 16,
+                              color: textColor.withAlpha(140),
                             ),
                           ],
                         ),
                       ),
-                      Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        color: textColor.withAlpha(140),
-                        size: 16,
+                    ),
+
+                    const SizedBox(height: 8),
+
+                    // Audio Attribution Credits
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                      child: RichText(
+                        textAlign: TextAlign.center,
+                        text: TextSpan(
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: textColor.withAlpha(130),
+                            fontSize: 11,
+                          ),
+                          children: [
+                            const TextSpan(text: "Music: Game Loop by "),
+                            TextSpan(
+                              text: "Alex_MakeMusic",
+                              style: TextStyle(
+                                color: primaryColor,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                              ),
+                              recognizer:
+                                  TapGestureRecognizer()
+                                    ..onTap = () => _launchURL(alexMorganUrl),
+                            ),
+                            const TextSpan(text: " via "),
+                            TextSpan(
+                              text: "Pixabay",
+                              style: TextStyle(
+                                color: primaryColor,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                              ),
+                              recognizer:
+                                  TapGestureRecognizer()
+                                    ..onTap = () => _launchURL(pixabayUrl),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
               ),
-            ),
 
-            const SizedBox(height: 20),
-
-            // --- 7. About & Credits Section ---
-            _buildSectionTitle("ABOUT & CREDITS", textColor),
-            _build3DCardContainer(
-              isDark: isDark,
-              child: Column(
-                children: [
-                  // App Logo Emblem
-                  Container(
-                    height: 80,
-                    width: 80,
-                    clipBehavior: Clip.hardEdge,
-                    decoration: BoxDecoration(
-                      color: isDark ? const Color(0xFF141026) : Colors.white,
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(
-                          color: primaryColor.withAlpha(60),
-                          blurRadius: 16,
-                          offset: const Offset(0, 4),
-                        ),
-                      ],
-                    ),
-                    child: Image.asset('assets/images/guessup-icon.png'),
-                  ),
-                  const SizedBox(height: 14),
-
-                  Text(
-                    AppInfo.name.toUpperCase(),
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 2.5,
-                      color: textColor,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-
-                  // Version Pill Badge
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: primaryColor.withAlpha(35),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: primaryColor.withAlpha(100)),
-                    ),
-                    child: Text(
-                      "v${AppInfo.displayVersion} • PARTY CHARADES",
-                      style: TextStyle(
-                        color: primaryColor,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 11,
-                        letterSpacing: 0.8,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-
-                  Text(
-                    AppInfo.description,
-                    softWrap: true,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      color: textColor.withAlpha(200),
-                      height: 1.4,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                  const SizedBox(height: 16),
-                  Divider(color: textColor.withAlpha(20)),
-                  const SizedBox(height: 12),
-
-                  // Audio & Music Credits
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.music_note_rounded,
-                        color: primaryColor,
-                        size: 18,
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        "Audio & Music Credits",
-                        style: theme.textTheme.titleSmall?.copyWith(
-                          fontWeight: FontWeight.w900,
-                          color: textColor,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: textColor.withAlpha(180),
-                      ),
-                      children: [
-                        const TextSpan(text: "Music by "),
-                        TextSpan(
-                          text: "Alex Morgan",
-                          style: TextStyle(
-                            color: primaryColor,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                          ),
-                          recognizer:
-                              TapGestureRecognizer()
-                                ..onTap = () => _launchURL(alexMorganUrl),
-                        ),
-                        const TextSpan(text: " from "),
-                        TextSpan(
-                          text: "Pixabay",
-                          style: TextStyle(
-                            color: primaryColor,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                          ),
-                          recognizer:
-                              TapGestureRecognizer()
-                                ..onTap = () => _launchURL(pixabayUrl),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Copyright Footer
-            Text(
-              "© ${DateTime.now().year} Guess Up / Shrey Nagda\nAll rights reserved.",
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: textColor.withAlpha(120),
-                height: 1.3,
-              ),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _build3DCardContainer({required bool isDark, required Widget child}) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E1938) : Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(
-          color:
-              isDark ? Colors.white.withAlpha(25) : Colors.black.withAlpha(15),
-          width: 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color:
-                isDark ? const Color(0xFF0C091A) : Colors.black.withAlpha(20),
-            offset: const Offset(0, 5),
-            blurRadius: 0,
+              const SizedBox(height: 30),
+            ],
           ),
-        ],
+        ),
       ),
-      child: child,
     );
   }
 
   Widget _buildSectionTitle(String title, Color color) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0, left: 6.0),
+      padding: const EdgeInsets.only(bottom: 10.0, left: 4.0),
       child: Text(
         title,
         style: TextStyle(
           color: color.withAlpha(160),
           fontWeight: FontWeight.w900,
-          fontSize: 11,
+          fontSize: 12,
           letterSpacing: 1.5,
         ),
       ),
@@ -654,99 +706,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
     bool isDark,
   ) {
     final isSelected = _selectedThemeMode == mode;
-    final primaryColor =
-        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
+    final inactiveColor =
+        isDark
+            ? AppTheme.darkTextColor.withAlpha(125)
+            : AppTheme.lightAccentColor.withAlpha(100);
 
-    return BouncyGameButton(
+    return InkWell(
       onTap: () => _updateTheme(mode),
+      borderRadius: BorderRadius.circular(12),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: 10),
         decoration: BoxDecoration(
           color:
               isSelected
-                  ? primaryColor
-                  : (isDark
-                      ? Colors.black.withAlpha(60)
-                      : Colors.grey.shade100),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? Colors.white : Colors.transparent,
-            width: isSelected ? 1.5 : 0,
-          ),
+                  ? (isDark
+                      ? AppTheme.darkPrimaryColor
+                      : AppTheme.lightPrimaryColor)
+                  : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
         ),
         child: Column(
           children: [
             Icon(
               icon,
-              color:
-                  isSelected
-                      ? Colors.black
-                      : (isDark ? Colors.white70 : Colors.black54),
+              color: isSelected ? Colors.black : inactiveColor,
               size: 22,
             ),
             const SizedBox(height: 4),
             Text(
               label,
               style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 11,
-                color:
-                    isSelected
-                        ? Colors.black
-                        : (isDark ? Colors.white70 : Colors.black54),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildDurationButton(
-    int time, {
-    required bool isSelected,
-    required bool isDark,
-  }) {
-    final primaryColor =
-        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
-
-    return BouncyGameButton(
-      onTap: () => _updateDuration(time),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color:
-              isSelected
-                  ? primaryColor
-                  : (isDark
-                      ? Colors.black.withAlpha(60)
-                      : Colors.grey.shade100),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? Colors.white : Colors.transparent,
-            width: isSelected ? 1.5 : 0,
-          ),
-        ),
-        child: Column(
-          children: [
-            Icon(
-              Icons.timer_rounded,
-              color:
-                  isSelected
-                      ? Colors.black
-                      : (isDark ? Colors.white70 : Colors.black54),
-              size: 20,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              "${time}s",
-              style: TextStyle(
-                fontWeight: FontWeight.w900,
-                fontSize: 11,
-                color:
-                    isSelected
-                        ? Colors.black
-                        : (isDark ? Colors.white70 : Colors.black54),
+                fontWeight: FontWeight.bold,
+                fontSize: 12,
+                color: isSelected ? Colors.black : inactiveColor,
               ),
             ),
           ],
@@ -761,116 +753,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
     bool isActive,
     VoidCallback onTap,
     Color primaryColor,
+    Color accentColor,
     bool isDark,
   ) {
-    return BouncyGameButton(
+    final bgColor =
+        isActive
+            ? primaryColor
+            : (isDark ? AppTheme.darkSurfaceColor : Colors.white);
+    final iconColor =
+        isActive
+            ? Colors.black
+            : (isDark
+                ? AppTheme.darkTextColor.withAlpha(100)
+                : AppTheme.lightAccentColor.withAlpha(100));
+    final textColor =
+        isActive
+            ? Colors.black
+            : (isDark ? AppTheme.darkTextColor : AppTheme.lightAccentColor);
+
+    return InkWell(
       onTap: () {
-        HapticFeedback.lightImpact();
+        GameAudioEngine().lightImpact();
         onTap();
       },
-      child: Container(
+      borderRadius: BorderRadius.circular(16),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color:
-              isActive
-                  ? primaryColor
-                  : (isDark
-                      ? Colors.black.withAlpha(60)
-                      : Colors.grey.shade100),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: isActive ? Colors.white : Colors.transparent,
-            width: isActive ? 1.5 : 0,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              size: 26,
-              color:
-                  isActive
-                      ? Colors.black
-                      : (isDark ? Colors.white38 : Colors.black38),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label.toUpperCase(),
-              style: TextStyle(
-                color:
-                    isActive
-                        ? Colors.black
-                        : (isDark ? Colors.white60 : Colors.black54),
-                fontWeight: FontWeight.w900,
-                fontSize: 11,
-                letterSpacing: 0.8,
-              ),
-            ),
-            Text(
-              isActive ? "ON" : "OFF",
-              style: TextStyle(
-                color:
-                    isActive
-                        ? Colors.black54
-                        : (isDark ? Colors.white38 : Colors.black38),
-                fontWeight: FontWeight.w900,
-                fontSize: 9,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSensitivityButton(
-    String mode,
-    String label,
-    IconData icon,
-    bool isDark,
-  ) {
-    final isSelected = _tiltSensitivity == mode;
-    final primaryColor =
-        isDark ? AppTheme.darkPrimaryColor : AppTheme.lightPrimaryColor;
-
-    return BouncyGameButton(
-      onTap: () => _updateTiltSensitivity(mode),
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color:
-              isSelected
-                  ? primaryColor
-                  : (isDark
-                      ? Colors.black.withAlpha(60)
-                      : Colors.grey.shade100),
+          color: bgColor,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? Colors.white : Colors.transparent,
-            width: isSelected ? 1.5 : 0,
+            color:
+                isActive
+                    ? primaryColor
+                    : (isDark ? primaryColor.withAlpha(50) : Colors.black12),
+            width: 1.5,
           ),
+          boxShadow:
+              isActive
+                  ? [
+                    BoxShadow(
+                      color: primaryColor.withAlpha(isDark ? 90 : 60),
+                      blurRadius: 10,
+                      offset: const Offset(0, 4),
+                    ),
+                  ]
+                  : [],
         ),
         child: Column(
           children: [
-            Icon(
-              icon,
-              color:
-                  isSelected
-                      ? Colors.black
-                      : (isDark ? Colors.white70 : Colors.black54),
-              size: 20,
-            ),
-            const SizedBox(height: 4),
+            Icon(icon, color: iconColor, size: 26),
+            const SizedBox(height: 6),
             Text(
               label,
               style: TextStyle(
                 fontWeight: FontWeight.w900,
-                fontSize: 11,
-                color:
-                    isSelected
-                        ? Colors.black
-                        : (isDark ? Colors.white70 : Colors.black54),
+                fontSize: 12,
+                color: textColor,
               ),
             ),
           ],
