@@ -37,7 +37,6 @@ class AppTheme {
   static const String teamBEmoji = "";
 
   static const String fontFamily = 'LilitaOne';
-  static const String emojiFontFamily = 'NotoEmoji';
 
   static TextStyle emojiStyle({
     required BuildContext context,
@@ -48,7 +47,6 @@ class AppTheme {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final defaultColor = isDark ? Colors.white : Colors.black;
     return TextStyle(
-      fontFamily: emojiFontFamily,
       fontSize: fontSize,
       fontWeight: fontWeight,
       color: color ?? defaultColor,
@@ -56,7 +54,7 @@ class AppTheme {
   }
 
   static final TextTheme _baseTextTheme = const TextTheme(
-    // Massive text for the Game Word
+    // Massive text for the Game Word (LilitaOne)
     displayLarge: TextStyle(
       fontFamily: fontFamily,
       fontSize: 56,
@@ -75,7 +73,7 @@ class AppTheme {
       fontWeight: FontWeight.w700,
     ),
 
-    // Headlines
+    // High Impact Arcade Headlines (LilitaOne)
     headlineLarge: TextStyle(
       fontFamily: fontFamily,
       fontSize: 30,
@@ -92,7 +90,7 @@ class AppTheme {
       fontWeight: FontWeight.w700,
     ),
 
-    // Standard UI text
+    // Section Titles (LilitaOne)
     titleLarge: TextStyle(
       fontFamily: fontFamily,
       fontSize: 20,
@@ -109,24 +107,21 @@ class AppTheme {
       fontWeight: FontWeight.w600,
     ),
 
-    // Body text
+    // Body text (Clean System Font)
     bodyLarge: TextStyle(
-      fontFamily: fontFamily,
       fontSize: 16,
       fontWeight: FontWeight.w600,
     ),
     bodyMedium: TextStyle(
-      fontFamily: fontFamily,
       fontSize: 14,
       fontWeight: FontWeight.w500,
     ),
     bodySmall: TextStyle(
-      fontFamily: fontFamily,
       fontSize: 12,
       fontWeight: FontWeight.w500,
     ),
 
-    // Buttons & Labels
+    // Buttons & Labels (LilitaOne)
     labelLarge: TextStyle(
       fontFamily: fontFamily,
       fontSize: 16,

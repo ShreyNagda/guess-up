@@ -19,8 +19,8 @@ import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
 import { Tester, getTestersFromFirestore } from "../../lib/firestore";
 import {
-  getWelcomeEmailText,
   getReleaseEmailText,
+  getFeedbackEmailText,
 } from "../../lib/email_templates";
 
 export function TestersManager() {
@@ -29,13 +29,18 @@ export function TestersManager() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
-  // Email Template State
+  // Email Template State (Admin panel supports Release Update, Feedback Request, or Custom message)
   const [templateType, setTemplateType] = useState<
-    "welcome" | "release" | "custom"
-  >("welcome");
+    "release" | "feedback" | "custom"
+  >("release");
   const [emailSubject, setEmailSubject] = useState("");
   const [emailBody, setEmailBody] = useState("");
   const [copied, setCopied] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sendResult, setSendResult] = useState<{
+    success: boolean;
+    message: string;
+  } | null>(null);
 
   const fetchTesters = async () => {
     setLoading(true);
@@ -50,12 +55,15 @@ export function TestersManager() {
 
   // Update default subject and body based on template choice
   useEffect(() => {
-    if (templateType === "welcome") {
-      setEmailSubject("Welcome to Bujho Early Access Beta! 🎮");
-      setEmailBody(getWelcomeEmailText("Playtester"));
-    } else if (templateType === "release") {
+    if (templateType === "release") {
       setEmailSubject("New Bujho Beta Release Available! 🚀");
       setEmailBody(getReleaseEmailText());
+    } else if (templateType === "feedback") {
+      setEmailSubject("We'd love your feedback on Bujho! ⭐");
+      setEmailBody(getFeedbackEmailText());
+    } else if (templateType === "custom") {
+      setEmailSubject("Update from Bujho Team 📢");
+      setEmailBody("");
     }
   }, [templateType]);
 
@@ -83,24 +91,61 @@ export function TestersManager() {
     document.body.removeChild(link);
   };
 
-  // Launch default mail client with BCC list
+  // Launch default mail client with list of emails
   const handleLaunchMailClient = () => {
-    const bccList = testers.map((t) => t.email).join(",");
-    const mailtoUrl = `mailto:?bcc=${encodeURIComponent(bccList)}&subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
+    const emailList = testers.map((t) => t.email).join(",");
+    const mailtoUrl = `mailto:${encodeURIComponent(emailList)}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
     window.location.href = mailtoUrl;
   };
 
   // Copy template & recipient emails to clipboard
   const handleCopyEmailDetails = () => {
-    const bccList = testers.map((t) => t.email).join(", ");
+    const emailList = testers.map((t) => t.email).join(", ");
     const textToCopy =
-      `RECIPIENTS (BCC):\n${bccList}\n\n` +
+      `RECIPIENTS (Individual Separate Delivery):\n${emailList}\n\n` +
       `SUBJECT:\n${emailSubject}\n\n` +
       `BODY:\n${emailBody}`;
 
     navigator.clipboard.writeText(textToCopy);
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
+  };
+
+  // Send email via Server API (Nodemailer)
+  const handleSendViaServer = async () => {
+    setSending(true);
+    setSendResult(null);
+    try {
+      const res = await fetch("/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          sendToAll: true,
+          subject: emailSubject,
+          messageBody: emailBody,
+          templateType,
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSendResult({
+          success: true,
+          message: `Successfully dispatched email to ${data.messageSentCount} playtester(s) via Nodemailer!`,
+        });
+      } else {
+        setSendResult({
+          success: false,
+          message: data.error || "Failed to send email via Nodemailer.",
+        });
+      }
+    } catch (err: any) {
+      setSendResult({
+        success: false,
+        message: err?.message || "Network error. Failed to send email.",
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   const filteredTesters = testers.filter(
@@ -285,19 +330,6 @@ export function TestersManager() {
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     type="button"
-                    onClick={() => setTemplateType("welcome")}
-                    className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
-                      templateType === "welcome"
-                        ? "bg-brand-primary/15 border-brand-primary text-brand-text font-extrabold shadow-sm"
-                        : "bg-brand-bg border-brand-border text-brand-muted hover:text-brand-text"
-                    }`}
-                  >
-                    <Sparkles className="w-4 h-4 text-brand-primary mb-1" />
-                    <span>Welcome Tester</span>
-                  </button>
-
-                  <button
-                    type="button"
                     onClick={() => setTemplateType("release")}
                     className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
                       templateType === "release"
@@ -307,6 +339,19 @@ export function TestersManager() {
                   >
                     <Send className="w-4 h-4 text-brand-primary mb-1" />
                     <span>New Release Build</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setTemplateType("feedback")}
+                    className={`p-3 rounded-2xl border text-left flex flex-col justify-between transition-all cursor-pointer ${
+                      templateType === "feedback"
+                        ? "bg-brand-primary/15 border-brand-primary text-brand-text font-extrabold shadow-sm"
+                        : "bg-brand-bg border-brand-border text-brand-muted hover:text-brand-text"
+                    }`}
+                  >
+                    <Sparkles className="w-4 h-4 text-brand-primary mb-1" />
+                    <span>Request Feedback</span>
                   </button>
 
                   <button
@@ -356,9 +401,28 @@ export function TestersManager() {
               <div className="p-3 rounded-xl bg-brand-bg border border-brand-border flex items-center justify-between text-brand-muted font-medium">
                 <span>Total targeted playtesters:</span>
                 <span className="font-mono font-bold text-brand-primary">
-                  {testers.length} emails (BCC)
+                  {testers.length} separate emails (Strictly Private)
                 </span>
               </div>
+
+              {/* Send Status Result Banner */}
+              {sendResult && (
+                <div
+                  className={`p-3.5 rounded-xl border text-xs font-bold flex items-center justify-between gap-2 ${
+                    sendResult.success
+                      ? "bg-emerald-500/15 text-emerald-400 border-emerald-500/30"
+                      : "bg-rose-500/15 text-rose-400 border-rose-500/30"
+                  }`}
+                >
+                  <span>{sendResult.message}</span>
+                  <button
+                    onClick={() => setSendResult(null)}
+                    className="text-xs underline cursor-pointer"
+                  >
+                    Dismiss
+                  </button>
+                </div>
+              )}
 
               {/* Action Buttons */}
               <div className="flex flex-col sm:flex-row items-center justify-end gap-2.5 pt-4 border-t border-brand-border">
@@ -375,21 +439,34 @@ export function TestersManager() {
                   )}
                   <span>
                     {copied
-                      ? "Copied to Clipboard!"
-                      : "Copy Template & BCC List"}
+                      ? "Copied!"
+                      : "Copy Details"}
                   </span>
                 </Button>
 
                 <Button
-                  variant="primary"
+                  variant="secondary"
                   size="sm"
                   onClick={handleLaunchMailClient}
                   className="w-full sm:w-auto"
                 >
                   <Send className="w-4 h-4 mr-1.5" />
-                  <span>Launch Mail Client (BCC All)</span>
+                  <span>Launch Mail App</span>
+                </Button>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={handleSendViaServer}
+                  isLoading={sending}
+                  disabled={sending || testers.length === 0}
+                  className="w-full sm:w-auto font-black shadow-lg"
+                >
+                  <Mail className="w-4 h-4 mr-1.5" />
+                  <span>Send via Nodemailer Server</span>
                 </Button>
               </div>
+
             </div>
           </div>
         </div>

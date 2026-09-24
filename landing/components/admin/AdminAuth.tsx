@@ -45,6 +45,7 @@ export function AdminAuth({ onAuthenticated }: AdminAuthProps) {
         msg = "Too many failed attempts. Please wait a moment and try again.";
       } else if (err?.message) {
         msg = err.message;
+        console.log(msg);
       }
       setError(msg);
     } finally {

@@ -175,6 +175,30 @@ class _AnimatedSplashScreenState extends State<AnimatedSplashScreen>
                 },
                 child: Column(
                   children: [
+                    // Official Bujho App Emblem
+                    Container(
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: const BoxDecoration(
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.amberAccent,
+                            blurRadius: 24,
+                            spreadRadius: 2,
+                          ),
+                        ],
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(22),
+                        child: Image.asset(
+                          'assets/images/bujho-splash-icon.png',
+                          width: 80,
+                          height: 80,
+                          fit: BoxFit.contain,
+                        ),
+                      ),
+                    ),
+
                     // Main Title Card
                     Container(
                       padding: const EdgeInsets.symmetric(
