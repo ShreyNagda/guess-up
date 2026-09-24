@@ -12,7 +12,7 @@ export const getWhatsAppUrl = (): string =>
   "https://wa.me/919405321984?text=Hi%20Shrey%2C%20I%20am%20currently%20testing%20Bujho%20and%20would%20like%20to%20give%20a%20feedback";
 
 /**
- * Standardized Common Email Header Styles (Dark & Light theme responsive)
+ * Shared modular email styles — light & dark theme responsive card components
  */
 export function getEmailStyles(): string {
   return `
@@ -27,86 +27,65 @@ export function getEmailStyles(): string {
         margin: 0;
         padding: 0;
         font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
       }
-      .email-bg {
-        background-color: #0E0C1C;
-        color: #F4F6FC;
-        padding: 32px 16px;
-      }
-      .email-card {
-        background-color: #18152B;
-        border: 1px solid rgba(255, 255, 255, 0.12);
-        color: #F4F6FC;
-      }
-      .email-text {
-        color: #CBD5E1;
-      }
-      .email-muted {
-        color: #94A3B8;
-      }
-      .email-footer-border {
-        border-top: 1px solid rgba(255, 255, 255, 0.12);
-      }
-      .step-box {
-        background-color: #0E0C1C;
-        border: 1px solid rgba(255, 255, 255, 0.08);
-      }
+
+      /* Base Light Theme Defaults */
+      .email-bg       { background-color: #F8FAFC; color: #0F172A; }
+      .email-card     { background-color: #FFFFFF; border: 1px solid #E2E8F0; color: #0F172A; box-shadow: 0 4px 16px rgba(0,0,0,0.04); }
+      .email-step-box { background-color: #F1F5F9; border: 1px solid #CBD5E1; color: #0F172A; }
+      .email-heading  { color: #0F172A; }
+      .email-text     { color: #334155; }
+      .email-muted    { color: #64748B; }
+      .email-brand    { color: #D97706; }
+      .email-accent   { color: #D97706; }
+      .email-link     { color: #D97706; text-decoration: none; font-weight: 700; }
 
       /* Light Theme Overrides */
       @media (prefers-color-scheme: light) {
-        .email-bg {
-          background-color: #F8FAFC !important;
-          color: #0F172A !important;
-        }
-        .email-card {
-          background-color: #FFFFFF !important;
-          border: 1px solid #E2E8F0 !important;
-          color: #0F172A !important;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
-        }
-        .email-text {
-          color: #334155 !important;
-        }
-        .email-muted {
-          color: #64748B !important;
-        }
-        .email-footer-border {
-          border-top: 1px solid #E2E8F0 !important;
-        }
-        .step-box {
-          background-color: #F1F5F9 !important;
-          border: 1px solid #CBD5E1 !important;
-        }
+        .email-bg       { background-color: #F8FAFC !important; color: #0F172A !important; }
+        .email-card     { background-color: #FFFFFF !important; border: 1px solid #E2E8F0 !important; color: #0F172A !important; box-shadow: 0 4px 16px rgba(0,0,0,0.04) !important; }
+        .email-step-box { background-color: #F1F5F9 !important; border: 1px solid #CBD5E1 !important; color: #0F172A !important; }
+        .email-heading  { color: #0F172A !important; }
+        .email-text     { color: #334155 !important; }
+        .email-muted    { color: #64748B !important; }
+        .email-brand    { color: #D97706 !important; }
+        .email-accent   { color: #D97706 !important; }
+        .email-link     { color: #D97706 !important; }
       }
 
-      /* Dark Theme Specifics */
+      /* Dark Theme Overrides */
       @media (prefers-color-scheme: dark) {
-        .email-bg {
-          background-color: #0E0C1C !important;
-          color: #F4F6FC !important;
-        }
-        .email-card {
-          background-color: #18152B !important;
-          border: 1px solid rgba(255, 255, 255, 0.12) !important;
-          color: #F4F6FC !important;
-        }
-        .email-text {
-          color: #CBD5E1 !important;
-        }
-        .email-muted {
-          color: #94A3B8 !important;
-        }
-        .step-box {
-          background-color: #0E0C1C !important;
-          border: 1px solid rgba(255, 255, 255, 0.08) !important;
-        }
+        .email-bg       { background-color: #0E0C1C !important; color: #F4F6FC !important; }
+        .email-card     { background-color: #18152B !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; color: #F4F6FC !important; box-shadow: 0 8px 24px rgba(0,0,0,0.3) !important; }
+        .email-step-box { background-color: #0E0C1C !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; color: #F4F6FC !important; }
+        .email-heading  { color: #F4F6FC !important; }
+        .email-text     { color: #CBD5E1 !important; }
+        .email-muted    { color: #94A3B8 !important; }
+        .email-brand    { color: #FFD600 !important; }
+        .email-accent   { color: #FFD600 !important; }
+        .email-link     { color: #FFD600 !important; }
       }
     </style>
   `;
 }
 
 /**
- * Standardized Email Footer (with WhatsApp reach out option)
+ * Shared Brand Header
+ */
+function getBrandHeader(): string {
+  return `
+    <div style="text-align: center; margin-bottom: 28px;">
+      <div class="email-brand" style="font-size: 32px; font-weight: 900; letter-spacing: 4px; text-transform: uppercase; line-height: 1;">BUJHO</div>
+      <div class="email-muted" style="margin-top: 6px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700;">
+        100% Ad-Free Desi Party Charades
+      </div>
+    </div>
+  `;
+}
+
+/**
+ * Standardized Email Footer with WhatsApp CTA & Modular Quick Links
  */
 export function getEmailFooterHtml(): string {
   const siteUrl = getSiteUrl();
@@ -115,25 +94,28 @@ export function getEmailFooterHtml(): string {
   const year = new Date().getFullYear();
 
   return `
-    <div class="email-footer-border" style="margin-top: 32px; padding-top: 24px; text-align: center; font-size: 13px;">
+    <div style="margin-top: 36px; text-align: center;">
 
-      <!-- WhatsApp Reach Out Button -->
-      <div style="margin-bottom: 20px;">
-        <a href="${whatsappUrl}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-weight: 800; font-size: 14px; text-transform: uppercase; padding: 12px 22px; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);">
-          💬 Reach out on WhatsApp for Feedback
+      <!-- WhatsApp Reach-out Button -->
+      <div style="margin-bottom: 22px;">
+        <a href="${whatsappUrl}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-weight: 800; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; padding: 12px 24px; border-radius: 999px; text-decoration: none; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);">
+          💬 Reach out on WhatsApp
         </a>
       </div>
 
-      <div style="margin-bottom: 16px;">
-        <a href="${siteUrl}" style="color: #FFD600; text-decoration: none; font-weight: bold; margin: 0 8px;">🌐 Website</a> •
-        <a href="${feedbackUrl}" style="color: #FFD600; text-decoration: none; font-weight: bold; margin: 0 8px;">⭐ Submit Feedback</a> •
-        <a href="${PLAY_STORE_TESTING_URL}" style="color: #FFD600; text-decoration: none; font-weight: bold; margin: 0 8px;">📱 Google Play Beta</a>
+      <!-- Modular Footer Links -->
+      <div style="margin-bottom: 16px; font-size: 13px; letter-spacing: 0.3px;">
+        <a href="${siteUrl}" class="email-link">Website</a>
+        <span class="email-muted" style="padding: 0 10px;">·</span>
+        <a href="${feedbackUrl}" class="email-link">Submit Feedback</a>
+        <span class="email-muted" style="padding: 0 10px;">·</span>
+        <a href="${PLAY_STORE_TESTING_URL}" class="email-link">Google Play Beta</a>
       </div>
 
-      <p class="email-text" style="margin: 6px 0; font-weight: 500;">
-        Bujho • Handcrafted for house parties, hostel hangouts & game nights.
+      <p class="email-text" style="margin: 0 0 6px 0; font-size: 13px; font-weight: 500; line-height: 1.6;">
+        Bujho · Handcrafted for house parties, hostel hangouts & game nights.
       </p>
-      <p class="email-muted" style="margin: 4px 0 0 0; font-size: 11px;">
+      <p class="email-muted" style="margin: 0; font-size: 11px; line-height: 1.6;">
         © ${year} Bujho. All rights reserved. 100% Ad-Free Party Charades.
       </p>
     </div>
@@ -141,7 +123,7 @@ export function getEmailFooterHtml(): string {
 }
 
 /**
- * Standardized Common Email Footer for Plain Text Emails
+ * Standardized Plain Text Footer
  */
 export function getEmailFooterText(): string {
   const siteUrl = getSiteUrl();
@@ -163,78 +145,72 @@ Handcrafted for house parties & game nights.
 }
 
 /**
- * Generate Welcome Email HTML for new Playtester (Dark & Light Theme)
- * Sent automatically when a new tester joins the list!
+ * Welcome Email HTML — Modular Card Design (Light & Dark Theme adaptive)
  */
 export function getWelcomeEmailHtml(name: string): string {
-  const cleanName = name.trim();
+  const cleanName = name.trim() || "Playtester";
 
   return `
     <!DOCTYPE html>
     <html>
-      <head>
-        ${getEmailStyles()}
-      </head>
+      <head>${getEmailStyles()}</head>
       <body class="email-bg">
-        <div style="max-width: 600px; margin: 0 auto; padding: 24px;">
+        <div style="max-width: 580px; margin: 0 auto; padding: 32px 16px;">
 
-          <!-- Brand Header -->
-          <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #FFD600; font-size: 32px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin: 0;">BUJHO</h1>
-            <p class="email-muted" style="font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px;">100% Ad-Free Desi Party Charades</p>
-          </div>
+          ${getBrandHeader()}
 
-          <!-- Welcome Card -->
-          <div class="email-card" style="padding: 24px; border-radius: 20px; margin-bottom: 24px;">
-            <h2 style="font-size: 22px; font-weight: 800; margin-top: 0; margin-bottom: 12px;">Welcome Aboard, ${cleanName}! 🎉</h2>
-            <p class="email-text" style="font-size: 15px; line-height: 1.6; margin-bottom: 12px;">
-              You're officially on the priority list for <strong>Bujho Android Beta Access</strong>!
+          <!-- Hero Welcome Card -->
+          <div class="email-card" style="padding: 28px; border-radius: 20px; margin-bottom: 20px;">
+            <h1 class="email-heading" style="font-size: 24px; font-weight: 800; line-height: 1.3; margin: 0 0 12px 0;">
+              Welcome Aboard, ${cleanName}! 🎉
+            </h1>
+            <p class="email-text" style="font-size: 15px; line-height: 1.65; margin: 0 0 12px 0;">
+              You're officially on the priority list for <strong class="email-heading">Bujho Android Beta Access</strong>!
             </p>
-            <p class="email-text" style="font-size: 15px; line-height: 1.6; margin: 0;">
-              Get ready for 100% ad-free charades, 60 FPS tilt motion detection, curated Desi pop-culture decks, and custom deck creation with your squad.
+            <p class="email-text" style="font-size: 15px; line-height: 1.65; margin: 0;">
+              Get ready for 100% ad-free charades, buttery 60 FPS tilt motion detection, curated Desi pop-culture decks, and custom deck creation with your squad.
             </p>
           </div>
 
-          <!-- Installation Steps Box -->
-          <div style="background: linear-gradient(135deg, rgba(255, 214, 0, 0.12), rgba(255, 214, 0, 0.05)); padding: 24px; border-radius: 20px; border: 1.5px solid rgba(255, 214, 0, 0.3); margin-bottom: 24px;">
-            <h3 style="color: #FFD600; font-size: 16px; font-weight: 900; letter-spacing: 0.5px; text-transform: uppercase; margin-top: 0; margin-bottom: 16px; text-align: center;">
-              📱 2 Simple Steps to Install Bujho on Your Phone:
-            </h3>
+          <!-- Installation Steps Card -->
+          <div class="email-card" style="padding: 28px; border-radius: 20px; margin-bottom: 20px;">
+            <div class="email-brand" style="font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 800; margin-bottom: 20px; text-align: center;">
+              📱 2 Simple Steps to Install Bujho:
+            </div>
 
-            <!-- STEP 1 -->
-            <div class="step-box" style="margin-bottom: 16px; padding: 16px; border-radius: 16px;">
-              <div style="margin-bottom: 8px;">
-                <span style="background-color: #FFD600; color: #0E0C1C; font-weight: 900; font-size: 11px; padding: 3px 8px; border-radius: 10px; margin-right: 8px;">STEP 1</span>
-                <strong style="font-size: 14px;">Accept Google Play Tester Invite</strong>
+            <!-- STEP 1 CARD -->
+            <div class="email-step-box" style="padding: 18px; border-radius: 16px; margin-bottom: 14px;">
+              <div style="margin-bottom: 6px;">
+                <span style="background-color: #FFD600; color: #0E0C1C; font-weight: 900; font-size: 11px; padding: 3px 8px; border-radius: 8px; margin-right: 8px; text-transform: uppercase;">STEP 1</span>
+                <strong class="email-heading" style="font-size: 15px;">Accept Google Play Beta Invite</strong>
               </div>
-              <p class="email-muted" style="font-size: 13px; line-height: 1.5; margin-top: 4px; margin-bottom: 12px;">
+              <p class="email-muted" style="font-size: 13px; line-height: 1.5; margin: 4px 0 12px 0;">
                 Open this link in your phone browser and tap <strong>"Become a Tester"</strong>:
               </p>
               <div style="text-align: center;">
-                <a href="${PLAY_STORE_TESTING_URL}" style="display: inline-block; background-color: #FFD600; color: #0E0C1C; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 10px 18px; border-radius: 12px; text-decoration: none;">
+                <a href="${PLAY_STORE_TESTING_URL}" style="display: inline-block; background-color: #FFD600; color: #0E0C1C; font-weight: 900; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; padding: 10px 20px; border-radius: 12px; text-decoration: none;">
                   👉 Step 1: Accept Invite (Web Link)
                 </a>
               </div>
             </div>
 
-            <!-- STEP 2 -->
-            <div class="step-box" style="padding: 16px; border-radius: 16px;">
-              <div style="margin-bottom: 8px;">
-                <span style="background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 11px; padding: 3px 8px; border-radius: 10px; margin-right: 8px;">STEP 2</span>
-                <strong style="font-size: 14px;">Download Normally from Play Store</strong>
+            <!-- STEP 2 CARD -->
+            <div class="email-step-box" style="padding: 18px; border-radius: 16px;">
+              <div style="margin-bottom: 6px;">
+                <span style="background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 11px; padding: 3px 8px; border-radius: 8px; margin-right: 8px; text-transform: uppercase;">STEP 2</span>
+                <strong class="email-heading" style="font-size: 15px;">Download Normally from Play Store</strong>
               </div>
-              <p class="email-muted" style="font-size: 13px; line-height: 1.5; margin-top: 4px; margin-bottom: 12px;">
-                Once accepted, open the Google Play Store app link on your phone to download:
+              <p class="email-muted" style="font-size: 13px; line-height: 1.5; margin: 4px 0 12px 0;">
+                Once accepted, open the Play Store app listing on your phone to install:
               </p>
               <div style="text-align: center;">
-                <a href="${PLAY_STORE_APP_URL}" style="display: inline-block; background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 12px; text-transform: uppercase; padding: 10px 18px; border-radius: 12px; text-decoration: none;">
+                <a href="${PLAY_STORE_APP_URL}" style="display: inline-block; background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; padding: 10px 20px; border-radius: 12px; text-decoration: none;">
                   📲 Step 2: Download on Play Store
                 </a>
               </div>
             </div>
           </div>
 
-          <!-- FOOTER -->
           ${getEmailFooterHtml()}
         </div>
       </body>
@@ -243,7 +219,7 @@ export function getWelcomeEmailHtml(name: string): string {
 }
 
 /**
- * Generate Welcome Email Plain Text
+ * Welcome Email Plain Text
  */
 export function getWelcomeEmailText(name: string = "Playtester"): string {
   return (
@@ -264,48 +240,48 @@ export function getWelcomeEmailText(name: string = "Playtester"): string {
 }
 
 /**
- * Generate New Release Update Email HTML (Dark & Light Theme)
+ * Release Update Email HTML — Modular Card Design
  */
 export function getReleaseEmailHtml(customNotes?: string): string {
   const notesContent =
     customNotes?.trim() ||
-    `• Added 30+ new secret cards across Bollywood & Cricket Decks\n• Improved 60 FPS motion tilt detection & spring animations\n• Instant 9:16 Instagram Story victory scorecard sharing\n• Performance & battery usage optimizations`;
+    `• Added 30+ new secret cards across Bollywood & Cricket Decks
+• Improved 60 FPS motion tilt detection & spring animations
+• Instant 9:16 Instagram Story victory scorecard sharing
+• Performance & battery usage optimizations`;
 
   return `
     <!DOCTYPE html>
     <html>
-      <head>
-        ${getEmailStyles()}
-      </head>
+      <head>${getEmailStyles()}</head>
       <body class="email-bg">
-        <div style="max-width: 600px; margin: 0 auto; padding: 24px;">
+        <div style="max-width: 580px; margin: 0 auto; padding: 32px 16px;">
 
-          <!-- Brand Header -->
-          <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #FFD600; font-size: 32px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin: 0;">BUJHO</h1>
-            <p class="email-muted" style="font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px;">100% Ad-Free Desi Party Charades</p>
-          </div>
+          ${getBrandHeader()}
 
           <!-- Main Release Card -->
-          <div class="email-card" style="padding: 24px; border-radius: 20px; margin-bottom: 24px;">
-            <h2 style="font-size: 22px; font-weight: 800; margin-top: 0; margin-bottom: 12px; color: #FFD600;">🚀 New Beta Update Available!</h2>
-            <p class="email-text" style="font-size: 15px; line-height: 1.6; margin-bottom: 16px;">
+          <div class="email-card" style="padding: 28px; border-radius: 20px; margin-bottom: 20px;">
+            <h1 class="email-brand" style="font-size: 22px; font-weight: 800; line-height: 1.3; margin: 0 0 12px 0;">
+              🚀 New Beta Update Available!
+            </h1>
+            <p class="email-text" style="font-size: 15px; line-height: 1.65; margin: 0 0 18px 0;">
               A brand new update for Bujho is now live on Google Play Beta! Check out what's new and update your app to get the latest features.
             </p>
 
-            <div class="step-box" style="padding: 16px; border-radius: 16px; margin-bottom: 16px;">
-              <h4 style="margin: 0 0 8px 0; font-size: 14px; text-transform: uppercase; letter-spacing: 1px; color: #FFD600;">✨ What's New:</h4>
-              <div class="email-text" style="font-size: 14px; line-height: 1.6; white-space: pre-wrap;">${notesContent}</div>
+            <div class="email-step-box" style="padding: 18px; border-radius: 16px; margin-bottom: 20px;">
+              <div class="email-brand" style="font-size: 13px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 8px;">
+                ✨ What's New in this Build:
+              </div>
+              <div class="email-text" style="font-size: 14px; line-height: 1.65; white-space: pre-wrap;">${notesContent}</div>
             </div>
 
-            <div style="text-align: center; margin-top: 20px;">
-              <a href="${PLAY_STORE_APP_URL}" style="display: inline-block; background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 13px; text-transform: uppercase; padding: 12px 22px; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);">
+            <div style="text-align: center;">
+              <a href="${PLAY_STORE_APP_URL}" style="display: inline-block; background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; padding: 12px 24px; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);">
                 📲 Update / Install on Play Store
               </a>
             </div>
           </div>
 
-          <!-- FOOTER -->
           ${getEmailFooterHtml()}
         </div>
       </body>
@@ -314,7 +290,7 @@ export function getReleaseEmailHtml(customNotes?: string): string {
 }
 
 /**
- * Generate New Release Update Email Plain Text
+ * Release Update Email Plain Text
  */
 export function getReleaseEmailText(): string {
   return (
@@ -336,48 +312,44 @@ export function getReleaseEmailText(): string {
 }
 
 /**
- * Generate Feedback Email HTML (Dark & Light Theme)
+ * Feedback Request Email HTML — Modular Card Design
  */
 export function getFeedbackEmailHtml(customMessage?: string): string {
   const siteUrl = getSiteUrl();
   const whatsappUrl = getWhatsAppUrl();
   const messageContent =
     customMessage?.trim() ||
-    `We hope you're having fun playing Bujho with your squad! 🎮\n\nAs an early beta tester, your feedback is crucial in shaping the future of the game. Tell us about your favorite deck, tilt sensitivity, or any feature/deck you'd love to see added next!`;
+    `We hope you're having fun playing Bujho with your squad! 🎮\n\nAs an early beta tester, your feedback shapes the future of the game. Tell us about your favourite deck, tilt sensitivity, or any feature you'd love to see next.`;
 
   return `
     <!DOCTYPE html>
     <html>
-      <head>
-        ${getEmailStyles()}
-      </head>
+      <head>${getEmailStyles()}</head>
       <body class="email-bg">
-        <div style="max-width: 600px; margin: 0 auto; padding: 24px;">
+        <div style="max-width: 580px; margin: 0 auto; padding: 32px 16px;">
 
-          <!-- Brand Header -->
-          <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #FFD600; font-size: 32px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin: 0;">BUJHO</h1>
-            <p class="email-muted" style="font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px;">100% Ad-Free Desi Party Charades</p>
-          </div>
+          ${getBrandHeader()}
 
-          <!-- Main Feedback Card -->
-          <div class="email-card" style="padding: 24px; border-radius: 20px; margin-bottom: 24px;">
-            <h2 style="font-size: 22px; font-weight: 800; margin-top: 0; margin-bottom: 12px; color: #FFD600;">⭐ We'd Love Your Feedback!</h2>
-            <div class="email-text" style="font-size: 15px; line-height: 1.6; margin-bottom: 20px; white-space: pre-wrap;">${messageContent}</div>
+          <!-- Feedback Card -->
+          <div class="email-card" style="padding: 28px; border-radius: 20px; margin-bottom: 20px;">
+            <h1 class="email-brand" style="font-size: 22px; font-weight: 800; line-height: 1.3; margin: 0 0 14px 0;">
+              ⭐ We'd Love Your Feedback!
+            </h1>
+            <div class="email-text" style="font-size: 15px; line-height: 1.65; white-space: pre-wrap; margin-bottom: 22px;">${messageContent}</div>
 
+            <!-- Action Buttons inside Card -->
             <div style="text-align: center; margin-bottom: 12px;">
-              <a href="${whatsappUrl}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-weight: 800; font-size: 14px; text-transform: uppercase; padding: 12px 22px; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);">
+              <a href="${whatsappUrl}" target="_blank" style="display: inline-block; background-color: #25D366; color: #FFFFFF; font-weight: 800; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; padding: 12px 24px; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 12px rgba(37, 211, 102, 0.25);">
                 💬 Chat directly on WhatsApp
               </a>
             </div>
             <div style="text-align: center;">
-              <a href="${siteUrl}/feedback" target="_blank" style="display: inline-block; background-color: #FFD600; color: #0E0C1C; font-weight: 800; font-size: 13px; text-transform: uppercase; padding: 10px 18px; border-radius: 12px; text-decoration: none;">
+              <a href="${siteUrl}/feedback" target="_blank" style="display: inline-block; background-color: #FFD600; color: #0E0C1C; font-weight: 800; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; padding: 10px 20px; border-radius: 12px; text-decoration: none;">
                 ⭐ Fill Web Feedback Form
               </a>
             </div>
           </div>
 
-          <!-- FOOTER -->
           ${getEmailFooterHtml()}
         </div>
       </body>
@@ -386,7 +358,7 @@ export function getFeedbackEmailHtml(customMessage?: string): string {
 }
 
 /**
- * Generate Feedback Request Email Plain Text
+ * Feedback Request Email Plain Text
  */
 export function getFeedbackEmailText(): string {
   const siteUrl = getSiteUrl();
@@ -405,7 +377,7 @@ export function getFeedbackEmailText(): string {
 }
 
 /**
- * Generate Custom Announcement Email HTML (Dark & Light Theme)
+ * Custom Announcement Email HTML — Modular Card Design
  */
 export function getCustomEmailHtml(
   subject: string,
@@ -414,25 +386,20 @@ export function getCustomEmailHtml(
   return `
     <!DOCTYPE html>
     <html>
-      <head>
-        ${getEmailStyles()}
-      </head>
+      <head>${getEmailStyles()}</head>
       <body class="email-bg">
-        <div style="max-width: 600px; margin: 0 auto; padding: 24px;">
+        <div style="max-width: 580px; margin: 0 auto; padding: 32px 16px;">
 
-          <!-- Brand Header -->
-          <div style="text-align: center; margin-bottom: 24px;">
-            <h1 style="color: #FFD600; font-size: 32px; font-weight: 900; letter-spacing: 2px; text-transform: uppercase; margin: 0;">BUJHO</h1>
-            <p class="email-muted" style="font-size: 13px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; margin-top: 4px;">100% Ad-Free Desi Party Charades</p>
+          ${getBrandHeader()}
+
+          <!-- Custom Message Card -->
+          <div class="email-card" style="padding: 28px; border-radius: 20px; margin-bottom: 20px;">
+            <h1 class="email-brand" style="font-size: 22px; font-weight: 800; line-height: 1.3; margin: 0 0 16px 0;">
+              ${subject}
+            </h1>
+            <div class="email-text" style="font-size: 15px; line-height: 1.65; white-space: pre-wrap;">${messageBody}</div>
           </div>
 
-          <!-- Main Announcement Card -->
-          <div class="email-card" style="padding: 24px; border-radius: 20px; margin-bottom: 24px;">
-            <h2 style="font-size: 20px; font-weight: 800; margin-top: 0; margin-bottom: 16px; color: #FFD600;">${subject}</h2>
-            <div class="email-text" style="font-size: 15px; line-height: 1.6; white-space: pre-wrap;">${messageBody}</div>
-          </div>
-
-          <!-- FOOTER -->
           ${getEmailFooterHtml()}
         </div>
       </body>
