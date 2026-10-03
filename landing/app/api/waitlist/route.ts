@@ -1,10 +1,12 @@
 import { NextResponse } from "next/server";
-import nodemailer from "nodemailer";
+import { transporter } from "@/lib/mailer";
 import { addTesterToFirestore } from "@/lib/firestore";
 import {
   getWelcomeEmailHtml,
   getWelcomeEmailText,
 } from "@/lib/email_templates";
+
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
@@ -45,29 +47,18 @@ export async function POST(request: Request) {
       );
     }
 
-    // 2. Dispatch Server-Side Email via Nodemailer (if SMTP configured)
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
+    // 2. Dispatch Server-Side Email via Pooled Nodemailer Transporter
     const fromEmail =
       process.env.FROM_EMAIL || '"Bujho Team" <no-reply@bujho.app>';
     const notificationEmail =
       process.env.NOTIFICATION_EMAIL || "shreynagda2714@gmail.com";
 
     let emailSent = false;
+    let emailError: string | null = null;
 
-    if (smtpHost && smtpUser && smtpPass) {
+    if (transporter) {
       try {
-        const transporter = nodemailer.createTransport({
-          host: smtpHost,
-          port: smtpPort,
-          secure: smtpPort === 465,
-          auth: {
-            user: smtpUser,
-            pass: smtpPass,
-          },
-        });
+        console.log("[signup-email] Dispatching welcome email to:", cleanEmail);
 
         // Send Welcome Email to User using template generator
         const userMailOptions = {
@@ -93,17 +84,49 @@ export async function POST(request: Request) {
           `,
         };
 
-        await Promise.all([
+        const results = await Promise.allSettled([
           transporter.sendMail(userMailOptions),
           transporter.sendMail(adminMailOptions),
         ]);
-        emailSent = true;
-      } catch (mailError) {
-        console.error("Server email dispatch error:", mailError);
+
+        const userMailResult = results[0];
+        const adminMailResult = results[1];
+
+        if (userMailResult.status === "fulfilled") {
+          console.log(
+            "[signup-email] Welcome email sent successfully to",
+            cleanEmail,
+            "messageId:",
+            userMailResult.value.messageId
+          );
+          emailSent = true;
+        } else {
+          emailError = userMailResult.reason?.message || String(userMailResult.reason);
+          console.error("[signup-email] Welcome email failed for", cleanEmail, ":", emailError);
+        }
+
+        if (adminMailResult.status === "fulfilled") {
+          console.log(
+            "[signup-email] Admin notification sent successfully for",
+            cleanEmail,
+            "messageId:",
+            adminMailResult.value.messageId
+          );
+        } else {
+          console.error(
+            "[signup-email] Admin notification failed for",
+            cleanEmail,
+            ":",
+            adminMailResult.reason?.message || adminMailResult.reason
+          );
+        }
+      } catch (mailError: any) {
+        emailError = mailError?.message || String(mailError);
+        console.error("[signup-email] Exception sending signup email:", mailError);
       }
     } else {
-      console.log(
-        "SMTP environment variables (SMTP_HOST, SMTP_USER, SMTP_PASS) not set. Skipped direct email dispatch.",
+      console.warn(
+        "[signup-email] SMTP environment variables (SMTP_HOST, SMTP_USER, SMTP_PASS) not set. Skipping email dispatch."
       );
     }
 
@@ -111,6 +134,7 @@ export async function POST(request: Request) {
       success: true,
       firestoreSaved: firestoreResult.success,
       emailDispatched: emailSent,
+      emailError: emailError || undefined,
       message: "Successfully added to early access waitlist!",
     });
   } catch (error: any) {
@@ -124,3 +148,4 @@ export async function POST(request: Request) {
     );
   }
 }
+
