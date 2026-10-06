@@ -10,6 +10,7 @@ import {
   WifiOff,
   UserX,
   Share2,
+  Sparkles,
 } from "lucide-react";
 
 interface BentoCardProps {
@@ -23,28 +24,28 @@ interface BentoCardProps {
 function BentoCard({ icon, title, subtitle, badge, featured }: BentoCardProps) {
   return (
     <div
-      className={`h-full p-6 sm:p-7 rounded-3xl border transition-all duration-300 hover:-translate-y-1 flex flex-col justify-between ${
+      className={`h-full p-4 sm:p-7 rounded-2xl sm:rounded-3xl border transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between ${
         featured
-          ? "bg-brand-surface border-brand-border shadow-md"
-          : "bg-brand-surface/80 border-brand-border shadow-xs"
+          ? "bg-linear-to-br from-brand-surface to-party-pink/5 border-party-pink/30 shadow-xl shadow-party-pink/5"
+          : "bg-brand-surface/90 border-brand-border shadow-xs hover:border-party-cyan/40"
       }`}
     >
       <div>
-        <div className="flex items-center justify-between mb-4">
-          <div className="w-11 h-11 rounded-2xl bg-brand-primary/10 text-brand-text flex items-center justify-center">
+        <div className="flex items-center justify-between mb-3 sm:mb-4 gap-1">
+          <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-brand-primary/15 text-brand-text flex items-center justify-center border border-brand-primary/30 shrink-0">
             {icon}
           </div>
           {badge && (
-            <span className="text-xs font-bold px-3 py-1 rounded-full bg-brand-primary/10 text-brand-text border border-brand-border">
+            <span className="text-[9px] sm:text-xs font-extrabold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full bg-party-orange/15 text-party-orange border border-party-orange/30 uppercase tracking-wider truncate">
               {badge}
             </span>
           )}
         </div>
 
-        <h3 className="text-lg sm:text-xl font-black text-brand-text mb-2.5 tracking-tight">
+        <h3 className="text-sm sm:text-xl font-lilita font-black text-brand-text mb-1 sm:mb-2.5 tracking-tight uppercase">
           {title}
         </h3>
-        <p className="text-xs sm:text-sm text-brand-muted leading-relaxed font-medium">
+        <p className="text-[11px] sm:text-sm text-brand-muted leading-snug sm:leading-relaxed font-bold">
           {subtitle}
         </p>
       </div>
@@ -56,7 +57,7 @@ export function BentoFeatures() {
   const features = [
     {
       icon: (
-        <ShieldCheck className="w-6 h-6 text-brand-primary fill-brand-primary/20" />
+        <ShieldCheck className="w-6 h-6 text-party-pink fill-party-pink/20" />
       ),
       title: "100% Ad-Free Experience",
       subtitle:
@@ -65,9 +66,7 @@ export function BentoFeatures() {
       featured: true,
     },
     {
-      icon: (
-        <Share2 className="w-6 h-6 text-brand-primary fill-brand-primary/20" />
-      ),
+      icon: <Share2 className="w-6 h-6 text-party-cyan fill-party-cyan/20" />,
       title: "Story Scorecard Sharing",
       subtitle:
         "Instantly export HD victory scorecards with team standings and word breakdown chips directly to Instagram & TikTok stories!",
@@ -75,7 +74,7 @@ export function BentoFeatures() {
       featured: false,
     },
     {
-      icon: <Zap className="w-6 h-6 text-brand-primary fill-brand-primary" />,
+      icon: <Zap className="w-6 h-6 text-[#FFD600] fill-[#FFD600]/20" />,
       title: "Tilt & Tap Controls",
       subtitle:
         "Play with intuitive forehead tilt gestures or quick screen tap controls for max comfort.",
@@ -84,7 +83,7 @@ export function BentoFeatures() {
     },
     {
       icon: (
-        <Users className="w-6 h-6 text-brand-primary fill-brand-primary/20" />
+        <Users className="w-6 h-6 text-party-orange fill-party-orange/20" />
       ),
       title: "2-Team Battle Mode",
       subtitle:
@@ -93,7 +92,7 @@ export function BentoFeatures() {
       featured: false,
     },
     {
-      icon: <WifiOff className="w-6 h-6 text-brand-primary" />,
+      icon: <WifiOff className="w-6 h-6 text-party-cyan" />,
       title: "100% Offline Mode",
       subtitle:
         "No Wi-Fi or mobile data needed on road trips, camping, or remote hostels.",
@@ -101,9 +100,7 @@ export function BentoFeatures() {
       featured: false,
     },
     {
-      icon: (
-        <Edit3 className="w-6 h-6 text-brand-primary fill-brand-primary/20" />
-      ),
+      icon: <Edit3 className="w-6 h-6 text-party-pink fill-party-pink/20" />,
       title: "Custom Deck Studio",
       subtitle:
         "Create, save, and share inside jokes & custom secret word decks with your crew.",
@@ -111,9 +108,7 @@ export function BentoFeatures() {
       featured: false,
     },
     {
-      icon: (
-        <UserX className="w-6 h-6 text-brand-primary fill-brand-primary/20" />
-      ),
+      icon: <UserX className="w-6 h-6 text-[#FFD600] fill-[#FFD600]/20" />,
       title: "Zero Account Friction",
       subtitle:
         "No email verification or passwords required. Open app and start playing in 3 seconds.",
@@ -125,31 +120,31 @@ export function BentoFeatures() {
   return (
     <section
       id="features"
-      className="py-16 md:py-24 bg-brand-surface transition-colors duration-300"
+      className="py-16 md:py-24 bg-brand-surface/40 transition-colors duration-300 relative overflow-hidden"
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        {/* Section Header with subtle fade-in */}
+        {/* Section Header with exact recommended wording */}
         <motion.div
           initial={{ opacity: 0, y: 16 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center max-w-2xl mx-auto mb-12 sm:mb-16"
+          className="text-center max-w-3xl mx-auto mb-12 sm:mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-primary/10 text-brand-text text-xs font-bold uppercase tracking-wider mb-3 border border-brand-border">
-            <span>Built for Uninterrupted Hilarity</span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-party-orange/15 text-party-orange text-xs font-black uppercase tracking-wider mb-4 border border-party-orange/30 shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-party-orange" />
+            <span>UNFILTERED PARTY ENGINE</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-brand-text tracking-tight mb-4">
-            Everything You Need in a Party App
+          <h2 className="text-3xl sm:text-5xl font-lilita font-black text-brand-text tracking-tight uppercase mb-4">
+            Built for Uninterrupted Hilarity
           </h2>
-          <p className="text-base text-brand-muted font-medium">
-            Designed specifically to eliminate friction, ad interruptions, and
-            complex setup so your group stays locked in the game.
+          <p className="text-base sm:text-xl text-brand-muted font-bold leading-relaxed">
+            No ads. No setup. No buzzkills. Just pure, unfiltered party chaos.
           </p>
         </motion.div>
 
-        {/* Bento Grid with exact 3-column span patterns and equal height rows */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+        {/* Bento Grid with exact 3-column span patterns (2-column layout on mobile) */}
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 items-stretch">
           {features.map((feat, idx) => (
             <motion.div
               key={feat.title}

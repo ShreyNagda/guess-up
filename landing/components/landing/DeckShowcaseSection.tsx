@@ -161,22 +161,23 @@ export function DeckShowcaseSection() {
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5 }}
-          className="text-center max-w-2xl mx-auto mb-12 sm:mb-16"
+          className="text-center max-w-3xl mx-auto mb-12 sm:mb-16"
         >
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-primary/10 text-brand-text text-xs font-bold uppercase tracking-wider mb-3 border border-brand-border">
-            <span>50+ Playable Category Decks</span>
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-party-pink/15 text-party-pink text-xs font-black uppercase tracking-wider mb-4 border border-party-pink/30 shadow-xs">
+            <Sparkles className="w-3.5 h-3.5 text-party-pink" />
+            <span>50+ POP-CULTURE CATEGORY DECKS</span>
           </div>
-          <h2 className="text-3xl sm:text-4xl font-extrabold text-brand-text tracking-tight mb-4">
-            Curated Desi Pop-Culture Decks
+          <h2 className="text-3xl sm:text-5xl font-black text-brand-text tracking-tight uppercase mb-4">
+            Curated Desi Decks
           </h2>
-          <p className="text-base text-brand-muted font-medium">
-            From Bollywood blockbusters to 2 AM street food cravings, explore
-            decks hand-crafted for max laughter.
+          <p className="text-base sm:text-xl text-brand-muted font-bold leading-relaxed">
+            From Bollywood blockbusters to 2 AM street food cravings & Cricket
+            fever, explore decks built for pure party chaos.
           </p>
         </motion.div>
 
-        {/* Grid of Deck Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-10">
+        {/* Grid of Deck Cards - Show Top 3 Decks Only (2-column layout on mobile) */}
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6 mb-8">
           {decks.slice(0, 3).map((deck, idx) => {
             const isSelected = selectedDeck.id === deck.id;
             return (
@@ -187,63 +188,63 @@ export function DeckShowcaseSection() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: idx * 0.08 }}
                 onClick={() => setSelectedDeck(deck)}
-                whileHover={{ y: -3 }}
-                className={`cursor-pointer relative overflow-hidden p-6 rounded-3xl border transition-all duration-300 flex flex-col justify-between ${
+                whileHover={{ y: -5 }}
+                className={`cursor-pointer relative overflow-hidden p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 transition-all duration-300 flex flex-col justify-between ${
                   isSelected
-                    ? "bg-brand-surface border-brand-border shadow-lg"
-                    : "bg-brand-bg/60 border-brand-border hover:border-brand-border"
+                    ? "bg-brand-surface border-party-orange/40 shadow-xl shadow-party-orange/10 scale-[1.02]"
+                    : "bg-brand-bg/80 border-brand-border hover:border-party-cyan/40"
                 }`}
               >
                 {/* Card Header */}
                 <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-10 h-10 rounded-2xl bg-brand-primary/10 text-brand-text flex items-center justify-center">
+                  <div className="flex items-center justify-between mb-2 sm:mb-4 gap-1">
+                    <div className="w-8 h-8 sm:w-11 sm:h-11 rounded-xl sm:rounded-2xl bg-party-orange/15 text-party-orange flex items-center justify-center border border-party-orange/30 shadow-xs shrink-0">
                       {deck.icon}
                     </div>
-                    <span className="text-xs font-bold px-3 py-1 rounded-full bg-brand-bg text-brand-muted border border-brand-border">
+                    <span className="text-[9px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded-full bg-brand-surface text-brand-text border border-brand-border uppercase tracking-wider truncate">
                       {deck.category}
                     </span>
                   </div>
 
-                  <h3 className="text-xl font-extrabold text-brand-text mb-1">
+                  <h3 className="text-sm sm:text-xl font-lilita font-black text-brand-text mb-1 uppercase tracking-tight">
                     {deck.name}
                   </h3>
-                  <p className="text-xs text-brand-muted leading-relaxed mb-4 font-medium">
+                  <p className="text-[11px] sm:text-xs text-brand-muted leading-snug sm:leading-relaxed mb-3 sm:mb-4 font-bold line-clamp-2 sm:line-clamp-none">
                     {deck.description}
                   </p>
                 </div>
 
                 {/* Sample Card Chips */}
-                <div className="flex flex-wrap gap-1.5 pt-3 border-t border-brand-border">
-                  {deck.cards.slice(0, 4).map((card, cardIdx) => (
+                {/* <div className="flex flex-wrap gap-1 sm:gap-1.5 pt-2 sm:pt-3 border-t border-brand-border">
+                  {deck.cards.slice(0, 3).map((card, cardIdx) => (
                     <span
                       key={cardIdx}
-                      className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-brand-primary/10 text-brand-text"
+                      className="text-[10px] sm:text-xs font-black px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-lg sm:rounded-xl bg-linear-to-r from-party-pink/15 to-party-orange/15 text-brand-text border border-party-orange/20"
                     >
                       {card}
                     </span>
                   ))}
-                  {deck.cards.length > 4 && (
-                    <span className="text-xs font-bold px-2 py-1 text-brand-muted">
-                      +{deck.cards.length - 4} more
+                  {deck.cards.length > 3 && (
+                    <span className="text-[10px] sm:text-xs font-black px-1.5 py-0.5 text-brand-muted">
+                      +{deck.cards.length - 3} more
                     </span>
                   )}
-                </div>
+                </div> */}
               </motion.div>
             );
           })}
         </div>
 
-        {/* Footnote callout */}
+        {/* Small Footnote callout text */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
           transition={{ duration: 0.4, delay: 0.2 }}
-          className="flex items-center justify-center gap-2 text-sm sm:text-base font-extrabold text-brand-muted tracking-wide"
+          className="flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-brand-muted tracking-wide"
         >
-          <Sparkles className="w-4 h-4 text-brand-primary animate-pulse" />
-          <span className="text-brand-text">and many more in the app</span>
+          <Sparkles className="w-3.5 h-3.5 text-[#FFD600] animate-pulse" />
+          <span>and many more in the android app</span>
         </motion.div>
       </div>
     </section>

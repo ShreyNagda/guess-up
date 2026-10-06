@@ -170,7 +170,7 @@ export function Phone3DAnimation({ className = "" }: Phone3DAnimationProps) {
                   transition={{ duration: 0.25, ease: "easeOut" }}
                   className="flex flex-col items-center justify-center gap-1 sm:gap-2 px-4 sm:px-6 py-2.5 sm:py-4 rounded-2xl max-w-[88%]"
                 >
-                  <h2 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-black tracking-tight text-amber-300 drop-shadow-[0_2px_15px_rgba(255,214,0,0.45)] uppercase leading-tight sm:leading-snug">
+                  <h2 className="text-xl sm:text-2xl md:text-4xl lg:text-5xl xl:text-6xl font-lilita font-black tracking-tight text-amber-300 drop-shadow-[0_2px_15px_rgba(255,214,0,0.45)] uppercase leading-tight sm:leading-snug">
                     {cardItems[wordIndex].word}
                   </h2>
                 </motion.div>
@@ -187,10 +187,10 @@ export function Phone3DAnimation({ className = "" }: Phone3DAnimationProps) {
                   transition={{ duration: 0.2 }}
                   className="absolute inset-0 z-30 bg-emerald-600 flex flex-col items-center justify-center text-white p-4 text-center rounded-[18px] md:rounded-[28px]"
                 >
-                  <span className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-black tracking-wider uppercase drop-shadow-md">
+                  <span className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-lilita font-black tracking-wider uppercase drop-shadow-md">
                     CORRECT!
                   </span>
-                  <span className="text-xs sm:text-sm md:text-base font-extrabold mt-1 sm:mt-2 text-emerald-100 bg-emerald-700/60 px-3 sm:px-4 py-1 rounded-lg">
+                  <span className="text-xs sm:text-sm md:text-base font-lilita mt-1 sm:mt-2 text-emerald-100 bg-emerald-700/60 px-3 sm:px-4 py-1 rounded-lg">
                     +1 POINT
                   </span>
                 </motion.div>
@@ -207,7 +207,7 @@ export function Phone3DAnimation({ className = "" }: Phone3DAnimationProps) {
                   transition={{ duration: 0.2 }}
                   className="absolute inset-0 z-30 bg-rose-600 flex flex-col items-center justify-center text-white p-4 text-center rounded-[18px] md:rounded-[28px]"
                 >
-                  <span className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-black tracking-wider uppercase drop-shadow-md">
+                  <span className="text-2xl sm:text-3xl md:text-5xl lg:text-6xl font-lilita font-black tracking-wider uppercase drop-shadow-md">
                     PASS
                   </span>
                 </motion.div>

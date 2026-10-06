@@ -1,12 +1,11 @@
-"use client";
-
 import React from "react";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import Image from "next/image";
-import { Home, Sparkles, Layers, ArrowLeft, SearchX } from "lucide-react";
+import { Home, Sparkles, Layers, SearchX } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { ThemeToggle } from "@/components/ui/ThemeToggle";
+
+export const dynamic = "force-dynamic";
 
 export default function NotFound() {
   return (
@@ -22,7 +21,7 @@ export default function NotFound() {
               height={32}
               className="w-8 h-8 rounded-full object-contain shadow-xs border border-brand-border group-hover:scale-105 transition-transform"
             />
-            <span className="font-black text-lg text-brand-text tracking-tight uppercase">
+            <span className="font-lilita text-xl text-brand-text tracking-tight uppercase">
               Bujho
             </span>
           </Link>
@@ -33,12 +32,7 @@ export default function NotFound() {
 
       {/* Main 404 Hero Container */}
       <main className="flex-1 max-w-3xl w-full mx-auto px-4 py-16 flex flex-col items-center justify-center text-center">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9, y: 16 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 0.4, type: "spring" }}
-          className="p-8 sm:p-14 rounded-3xl bg-brand-surface border-2 border-brand-primary/30 shadow-2xl w-full flex flex-col items-center"
-        >
+        <div className="p-8 sm:p-14 rounded-3xl bg-brand-surface border-2 border-brand-primary/30 shadow-2xl w-full flex flex-col items-center">
           {/* Animated Glowing 404 Badge */}
           <div className="relative mb-6">
             <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-3xl bg-brand-primary/10 border-2 border-brand-primary/40 flex items-center justify-center shadow-xl shadow-brand-primary/10">
@@ -54,7 +48,7 @@ export default function NotFound() {
             <span>Card Not Found In Deck</span>
           </div>
 
-          <h1 className="text-4xl sm:text-5xl md:text-6xl font-black text-brand-text tracking-tight uppercase mb-4 leading-tight">
+          <h1 className="text-4xl sm:text-5xl md:text-6xl font-lilita font-black text-brand-text tracking-tight uppercase mb-4 leading-tight">
             OOPS! THIS PAGE WAS PASSED.
           </h1>
 
@@ -79,7 +73,7 @@ export default function NotFound() {
               </Button>
             </Link>
           </div>
-        </motion.div>
+        </div>
       </main>
 
       {/* Footer */}

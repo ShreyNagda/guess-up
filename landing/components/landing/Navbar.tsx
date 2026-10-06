@@ -20,24 +20,33 @@ export function Navbar() {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-brand-surface/90 backdrop-blur-md border-b border-brand-border transition-colors duration-300">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-2">
         {/* Brand Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
+        <Link href="/" className="flex items-center gap-2 shrink-0 group">
           <Image
             src="/images/bujho-icon.png"
             alt="Bujho Logo"
             width={36}
             height={36}
-            className="w-9 h-9 rounded-full object-contain shadow-sm group-hover:scale-105 transition-transform border border-brand-border"
+            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-contain shadow-xs group-hover:scale-105 transition-transform border border-brand-border"
             priority
           />
-          <span className="font-black text-lg sm:text-xl text-brand-text tracking-tight uppercase">
+          <span className="font-lilita text-xl sm:text-2xl text-brand-text tracking-tight uppercase">
             Bujho
           </span>
         </Link>
 
         {/* Center Nav Links (Desktop) */}
-        <nav className="hidden md:flex items-center gap-6 text-sm font-bold text-brand-muted">
+        <nav className="hidden md:flex items-center gap-6 text-sm font-extrabold text-brand-muted">
+          <button
+            onClick={() => scrollToSection("vibe-check")}
+            className="hover:text-party-orange transition-colors cursor-pointer flex items-center gap-1"
+          >
+            <span>Vibe Check</span>
+            <span className="px-1.5 py-0.5 text-[9px] rounded-full bg-party-orange/15 text-party-orange">
+              NEW
+            </span>
+          </button>
           <button
             onClick={() => scrollToSection("how-to-play")}
             className="hover:text-brand-text transition-colors cursor-pointer"
@@ -65,15 +74,15 @@ export function Navbar() {
         </nav>
 
         {/* Right Controls */}
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2 shrink-0">
           <Button
             variant="primary"
             size="sm"
             onClick={() => scrollToSection("waitlist-section")}
-            className="hidden sm:inline-flex items-center gap-1.5"
+            className="hidden! md:inline-flex! items-center gap-1.5 font-black uppercase tracking-wider px-4 py-2"
           >
             <Sparkles className="w-3.5 h-3.5 text-current fill-current" />
-            <span>Beta Access</span>
+            <span>Join the Chaos!</span>
           </Button>
 
           <ThemeToggle />

@@ -147,16 +147,17 @@ export const WaitlistForm = forwardRef<HTMLDivElement>((props, ref) => {
                 exit={{ opacity: 0 }}
               >
                 <div className="text-center mb-6">
-                  <div className="inline-flex items-center gap-1.5 text-xs font-black tracking-wider uppercase px-3.5 py-1 rounded-full bg-brand-primary/15 text-brand-text mb-3 border border-brand-primary/30 shadow-xs">
-                    <Sparkles className="w-3.5 h-3.5 text-brand-primary" />
-                    <span>Android Early Access</span>
+                  <div className="inline-flex items-center gap-1.5 text-xs font-black tracking-wider uppercase px-4 py-1.5 rounded-full bg-linear-to-r from-party-pink/15 to-party-orange/15 text-party-orange mb-3 border border-party-orange/30 shadow-xs">
+                    <Sparkles className="w-3.5 h-3.5 text-party-orange" />
+                    <span>PRIORITY ANDROID EARLY ACCESS</span>
                   </div>
                   <h2 className="text-2xl sm:text-4xl font-black text-brand-text uppercase tracking-tight mb-2">
-                    Be First to Play Bujho
+                    Join the Chaos - Get Early Access!
                   </h2>
-                  <p className="text-sm sm:text-base text-brand-muted font-medium">
-                    Join early playtesters getting priority Android beta invites
-                    & exclusive custom decks.
+                  <p className="text-sm sm:text-base text-brand-muted font-bold">
+                    Join early playtesters getting priority Android beta
+                    invites, exclusive custom pop-culture decks, and zero ad
+                    interruptions.
                   </p>
                 </div>
 
@@ -168,7 +169,7 @@ export const WaitlistForm = forwardRef<HTMLDivElement>((props, ref) => {
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     error={nameError}
-                    icon={<User className="w-4 h-4" />}
+                    icon={<User className="w-4 h-4 text-party-orange" />}
                     disabled={status === "loading"}
                   />
 
@@ -180,12 +181,12 @@ export const WaitlistForm = forwardRef<HTMLDivElement>((props, ref) => {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     error={emailError}
-                    icon={<Mail className="w-4 h-4" />}
+                    icon={<Mail className="w-4 h-4 text-party-pink" />}
                     disabled={status === "loading"}
                   />
 
                   {status === "error" && (
-                    <div className="flex items-center gap-2 p-3 rounded-xl bg-brand-pass/10 text-brand-pass text-xs font-semibold border border-brand-border">
+                    <div className="flex items-center gap-2 p-3 rounded-xl bg-brand-pass/10 text-brand-pass text-xs font-bold border border-brand-border">
                       <AlertCircle className="w-4 h-4 shrink-0" />
                       <span>{errorMessage}</span>
                     </div>
@@ -197,11 +198,11 @@ export const WaitlistForm = forwardRef<HTMLDivElement>((props, ref) => {
                     size="lg"
                     fullWidth
                     isLoading={status === "loading"}
-                    className="mt-4 text-xs sm:text-base md:text-lg font-black uppercase tracking-wider py-3.5 sm:py-4 px-3 sm:px-6 whitespace-nowrap"
+                    className="mt-4 text-xs sm:text-base md:text-lg font-black uppercase tracking-wider py-4 px-4 whitespace-nowrap shadow-xl shadow-party-orange/25 hover:scale-105 transition-transform"
                   >
                     <div className="flex items-center justify-center gap-2 sm:gap-2.5">
-                      <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 text-current shrink-0" />
-                      <span>Join Early Access Waitlist</span>
+                      <Smartphone className="w-5 h-5 text-current shrink-0" />
+                      <span>Get the Party Started</span>
                     </div>
                   </Button>
                 </form>

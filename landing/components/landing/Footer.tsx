@@ -25,8 +25,7 @@ export function Footer() {
             Bujho
           </span>
           <span className="font-bold">
-            © {new Date().getFullYear()} All rights reserved. 100% Ad-Free
-            Motion Charades.
+            © {new Date().getFullYear()} Bujho - The Desi Charades Game. 100% Ad-Free & Offline.
           </span>
         </div>
 

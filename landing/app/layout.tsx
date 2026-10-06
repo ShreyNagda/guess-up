@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Manrope } from "next/font/google";
+import { Manrope, Lilita_One } from "next/font/google";
 import "./globals.css";
 import { ArcadeBackground } from "@/components/ui/ArcadeBackground";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
@@ -11,20 +11,28 @@ const manrope = Manrope({
   display: "swap",
 });
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL || "https://bujho.vercel.app";
+const lilitaOne = Lilita_One({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-lilita",
+  display: "swap",
+});
+
+const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://bujho.vercel.app";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
   title: {
-    default: "Bujho - #1 Ad-Free Desi Party Charades Mobile Game",
-    template: "%s | Bujho Party Charades",
+    default: "Bujho - The Desi Charades Game | Ad-Free Party Game for India",
+    template: "%s | Bujho - The Desi Charades Game",
   },
   description:
-    "Flip your phone to your forehead! Let your friends enact wild clues, tilt down for correct & up to pass. Handcrafted Desi pop-culture decks, dual tilt & tap control modes, and 100% ad-free offline gameplay for Indian party nights.",
+    "Bujho is the ultimate desi charades game for your next party! Act out Bollywood, cricket & street food clues. 100% ad-free, offline & hilariously chaotic. Get it now!",
   applicationName: "Bujho",
   keywords: [
     "Bujho",
+    "The Desi Charades Game",
+    "Desi Charades App",
     "Bujho Game",
     "Bujho App",
     "Party Charades India",
@@ -48,9 +56,9 @@ export const metadata: Metadata = {
     canonical: siteUrl,
   },
   openGraph: {
-    title: "Bujho - #1 Ad-Free Desi Party Charades Mobile Game",
+    title: "Bujho - The Desi Charades Game | Ad-Free Party Game for India",
     description:
-      "Put your phone on your forehead, let your crew enact wild clues, and nod down to score! Handcrafted for Indian youth, house parties, and hostel hangouts.",
+      "Bujho is the ultimate desi charades game for your next party! Act out Bollywood, cricket & street food clues. 100% ad-free, offline & hilariously chaotic. Get it now!",
     url: siteUrl,
     siteName: "Bujho",
     images: [
@@ -58,7 +66,7 @@ export const metadata: Metadata = {
         url: "/images/bujho-icon.png",
         width: 512,
         height: 512,
-        alt: "Bujho Party Charades Logo",
+        alt: "Bujho The Desi Charades Game Logo",
       },
     ],
     locale: "en_IN",
@@ -66,9 +74,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bujho - #1 Ad-Free Desi Party Charades Game",
+    title: "Bujho - The Desi Charades Game | Ad-Free Party Game for India",
     description:
-      "Flip your phone on your forehead! 100% ad-free offline charades built for Indian house parties.",
+      "Bujho is the ultimate desi charades game for your next party! Act out Bollywood, cricket & street food clues. 100% ad-free, offline & hilariously chaotic. Get it now!",
     images: ["/images/bujho-icon.png"],
   },
   robots: {
@@ -158,7 +166,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={manrope.variable} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${manrope.variable} ${lilitaOne.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script
           type="application/ld+json"

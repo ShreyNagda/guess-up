@@ -6,6 +6,7 @@ import {
   getWelcomeEmailText,
 } from "@/lib/email_templates";
 
+export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
 export async function POST(request: Request) {
@@ -97,12 +98,18 @@ export async function POST(request: Request) {
             "[signup-email] Welcome email sent successfully to",
             cleanEmail,
             "messageId:",
-            userMailResult.value.messageId
+            userMailResult.value.messageId,
           );
           emailSent = true;
         } else {
-          emailError = userMailResult.reason?.message || String(userMailResult.reason);
-          console.error("[signup-email] Welcome email failed for", cleanEmail, ":", emailError);
+          emailError =
+            userMailResult.reason?.message || String(userMailResult.reason);
+          console.error(
+            "[signup-email] Welcome email failed for",
+            cleanEmail,
+            ":",
+            emailError,
+          );
         }
 
         if (adminMailResult.status === "fulfilled") {
@@ -110,23 +117,26 @@ export async function POST(request: Request) {
             "[signup-email] Admin notification sent successfully for",
             cleanEmail,
             "messageId:",
-            adminMailResult.value.messageId
+            adminMailResult.value.messageId,
           );
         } else {
           console.error(
             "[signup-email] Admin notification failed for",
             cleanEmail,
             ":",
-            adminMailResult.reason?.message || adminMailResult.reason
+            adminMailResult.reason?.message || adminMailResult.reason,
           );
         }
       } catch (mailError: any) {
         emailError = mailError?.message || String(mailError);
-        console.error("[signup-email] Exception sending signup email:", mailError);
+        console.error(
+          "[signup-email] Exception sending signup email:",
+          mailError,
+        );
       }
     } else {
       console.warn(
-        "[signup-email] SMTP environment variables (SMTP_HOST, SMTP_USER, SMTP_PASS) not set. Skipping email dispatch."
+        "[signup-email] SMTP environment variables (SMTP_HOST, SMTP_USER, SMTP_PASS) not set. Skipping email dispatch.",
       );
     }
 
@@ -148,4 +158,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

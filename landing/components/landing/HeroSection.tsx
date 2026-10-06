@@ -5,45 +5,51 @@ import { motion } from "framer-motion";
 import {
   Smartphone,
   Zap,
-  ShieldCheck,
   Flame,
   WifiOff,
   Sparkles,
   Share2,
+  PartyPopper,
+  Play,
 } from "lucide-react";
 import { Phone3DAnimation } from "./Phone3DAnimation";
 import { Button } from "../ui/Button";
 
 interface HeroSectionProps {
   onCtaClick: () => void;
+  onVibeClick?: () => void;
 }
 
-export function HeroSection({ onCtaClick }: HeroSectionProps) {
+export function HeroSection({ onCtaClick, onVibeClick }: HeroSectionProps) {
   const heroHighlights = [
     {
-      icon: <Zap className="w-4 h-4 text-brand-primary fill-brand-primary" />,
+      icon: <Zap className="w-4 h-4 text-party-cyan fill-party-cyan/20" />,
       label: "Tilt & Tap Controls",
-    },
-    {
-      icon: <Flame className="w-4 h-4 text-brand-primary fill-brand-primary" />,
-      label: "Desi Pop Culture Decks",
+      color: "border-party-cyan/30 bg-party-cyan/10 text-brand-text",
     },
     {
       icon: (
-        <Share2 className="w-4 h-4 text-brand-primary fill-brand-primary/20" />
+        <Flame className="w-4 h-4 text-party-orange fill-party-orange/20" />
       ),
-      label: "Social Score Sharing",
+      label: "Bollywood, Cricket & Street Food",
+      color: "border-party-orange/30 bg-party-orange/10 text-brand-text",
     },
     {
-      icon: <WifiOff className="w-4 h-4 text-brand-primary" />,
-      label: "Play 100% Offline",
+      icon: <Share2 className="w-4 h-4 text-party-pink fill-party-pink/20" />,
+      label: "Instagram Story Scorecards",
+      color: "border-party-pink/30 bg-party-pink/10 text-brand-text",
+    },
+    {
+      icon: <WifiOff className="w-4 h-4 text-[#FFD600]" />,
+      label: "100% Offline & Ad-Free",
+      color: "border-[#FFD600]/30 bg-[#FFD600]/10 text-brand-text",
     },
   ];
 
   return (
     <section className="relative pt-8 pb-14 md:py-20 overflow-hidden">
-      {/* Ambient background glow */}
-      <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-140 h-140 bg-brand-primary/10 rounded-full blur-3xl pointer-events-none -z-10" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-150 h-150 bg-linear-to-tr from-party-pink/20 via-party-orange/20 to-[#FFD600]/20 rounded-full blur-3xl pointer-events-none -z-10 animate-pulse" />
+      {/* Dynamic ambient gradient glow */}
 
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         <motion.div
@@ -52,52 +58,58 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
           transition={{ duration: 0.5, ease: "easeOut" }}
           className="flex flex-col items-center text-center"
         >
-          {/* Top Pill Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 sm:px-4 sm:py-1.5 rounded-full bg-brand-primary/10 text-brand-primary text-[10px] sm:text-xs md:text-sm font-extrabold tracking-wider uppercase mb-4 sm:mb-6 border border-brand-primary/30 shadow-xs max-w-[92%] sm:max-w-none text-balance">
-            <Sparkles className="w-3.5 h-3.5 text-brand-primary fill-brand-primary shrink-0" />
-            <span>AD-FREE PARTY CHARADES GAME FOR INDIA</span>
-          </div>
-
-          {/* Centered Headline */}
-          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight sm:tracking-tighter uppercase leading-tight sm:leading-[0.95] mb-4 sm:mb-6 max-w-5xl px-2 text-balance">
-            <span className="block text-brand-text mb-1 sm:mb-2">
-              FLIP YOUR PHONE.
+          {/* Centered H1 Headline */}
+          <h1 className="text-5xl sm:text-7xl lg:text-8xl font-black tracking-tight sm:tracking-tighter uppercase leading-[0.95] mb-5 max-w-5xl px-2 text-balance">
+            <span className="block text-brand-text mb-1">
+              THE DESI CHARADES
             </span>
-            <span className="block text-brand-primary drop-shadow-[0_0_35px_rgba(229,158,0,0.35)]">
-              HILARIOUS CHAOS UNLOCKED.
+            <span className="block bg-linear-to-r from-party-pink via-party-orange to-[#FFD600] bg-clip-text text-transparent drop-shadow-[0_0_40px_rgba(255,107,0,0.45)]">
+              GAME.
             </span>
           </h1>
 
-          {/* Centered Tagline */}
-          <p className="text-sm sm:text-lg md:text-xl text-brand-text/90 font-medium sm:font-bold max-w-4xl mx-auto leading-relaxed mb-3 px-3 text-balance">
-            Put your phone on your forehead, let your crew enact wild clues, and
-            nod down to score! Handcrafted for Indian youth, house parties, and
-            hostel hangouts.
+          {/* Centered Sub-headline */}
+          <p className="text-base sm:text-xl md:text-2xl text-brand-text font-bold max-w-4xl mx-auto leading-relaxed mb-4 px-3 text-balance">
+            Flip your phone. Gather your crew. Act out wild clues from
+            Bollywood, cricket & street food. The 100% ad-free party game that
+            turns any hangout into hilarious chaos.
           </p>
 
-          {/* Secondary Micro-Copy */}
-          <p className="text-xs sm:text-sm text-brand-muted font-medium max-w-2xl mx-auto mb-6 sm:mb-8 px-4 text-balance">
-            Curated Desi pop-culture decks, dual tilt & tap controls, instant
-            9:16 Instagram story scorecards, and 100% uninterrupted game flow.
+          {/* Secondary Hype Micro-Copy */}
+          <p className="text-xs sm:text-sm text-brand-muted font-semibold max-w-2xl mx-auto mb-8 px-4 text-balance flex items-center justify-center gap-2">
+            <PartyPopper className="w-4 h-4 text-party-pink shrink-0 inline" />
+            <span>
+              No ads. No setup. No buzzkills. Just pure, unfiltered party chaos.
+            </span>
           </p>
 
-          {/* Primary CTA Button */}
-          <div className="flex flex-col items-center gap-2.5 mb-12 w-full sm:w-auto">
+          {/* Primary & Secondary CTA Buttons */}
+          <div className="flex flex-col sm:flex-row items-center gap-3.5 mb-12 w-full sm:w-auto justify-center">
             <Button
               variant="primary"
               size="lg"
               onClick={onCtaClick}
-              className="w-full sm:w-auto px-4 py-3 sm:px-8 sm:py-4 text-xs sm:text-base md:text-lg font-black uppercase tracking-wider whitespace-nowrap"
+              className="w-full sm:w-auto px-6 py-4 text-sm sm:text-lg font-black uppercase tracking-wider whitespace-nowrap shadow-xl shadow-party-orange/25 hover:scale-105 transition-transform"
             >
-              <div className="flex items-center justify-center gap-2 sm:gap-2.5">
-                <Smartphone className="w-4 h-4 sm:w-5 sm:h-5 text-current shrink-0" />
-                <span>Register for Free Beta Access</span>
+              <div className="flex items-center justify-center gap-2.5">
+                <Smartphone className="w-5 h-5 text-current shrink-0" />
+                <span>Get the Party Started</span>
               </div>
             </Button>
 
-            <span className="text-xs text-brand-muted font-medium tracking-wide">
-              *iOS version currently in active development.
-            </span>
+            {onVibeClick && (
+              <Button
+                variant="secondary"
+                size="lg"
+                onClick={onVibeClick}
+                className="w-full sm:w-auto px-6 py-4 text-sm sm:text-lg font-black uppercase tracking-wider whitespace-nowrap border-2 border-party-cyan/40 hover:bg-party-cyan/10 text-brand-text"
+              >
+                <div className="flex items-center justify-center gap-2">
+                  <Play className="w-4 h-4 text-party-cyan fill-party-cyan shrink-0" />
+                  <span>Vibe Check ⚡</span>
+                </div>
+              </Button>
+            )}
           </div>
 
           {/* Centered 3D Phone Animation */}
@@ -105,12 +117,12 @@ export function HeroSection({ onCtaClick }: HeroSectionProps) {
             <Phone3DAnimation />
           </div>
 
-          {/* Quick Stats / USPs Bar - Ensured single line per feature */}
-          <div className="pt-6 border-t border-brand-border flex flex-wrap items-center justify-center gap-x-6 sm:gap-x-8 gap-y-3 w-full max-w-4xl text-center">
+          {/* Quick Stats / Highlights Bar */}
+          <div className="pt-6 border-t border-brand-border flex flex-wrap items-center justify-center gap-3 sm:gap-4 w-full max-w-5xl text-center">
             {heroHighlights.map((item, idx) => (
               <div
                 key={idx}
-                className="flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-brand-text whitespace-nowrap shrink-0"
+                className={`flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs sm:text-sm font-extrabold whitespace-nowrap shrink-0 transition-transform hover:scale-105 ${item.color}`}
               >
                 {item.icon}
                 <span className="whitespace-nowrap">{item.label}</span>

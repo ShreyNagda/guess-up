@@ -2,11 +2,14 @@ import { NextResponse } from "next/server";
 import { transporter } from "@/lib/mailer";
 import { getTestersFromFirestore } from "@/lib/firestore";
 import {
+  getWelcomeEmailHtml,
+  getTesterStepsEmailHtml,
   getReleaseEmailHtml,
   getFeedbackEmailHtml,
   getCustomEmailHtml,
 } from "@/lib/email_templates";
 
+export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 export const maxDuration = 60;
 
@@ -71,7 +74,13 @@ export async function POST(request: Request) {
 
     // Pick HTML body template based on selected template type
     let formattedHtmlBody = "";
-    if (templateType === "release") {
+    if (templateType === "welcome") {
+      formattedHtmlBody = getWelcomeEmailHtml(recipients?.[0] || "Playtester");
+    } else if (templateType === "tester_steps") {
+      formattedHtmlBody = getTesterStepsEmailHtml(
+        recipients?.[0] || "Playtester",
+      );
+    } else if (templateType === "release") {
       formattedHtmlBody = getReleaseEmailHtml(messageBody);
     } else if (templateType === "feedback") {
       formattedHtmlBody = getFeedbackEmailHtml(messageBody);
@@ -83,13 +92,15 @@ export async function POST(request: Request) {
     let failedCount = 0;
     const errors: string[] = [];
 
-    console.log(`[email-batch] Starting announcement send to ${targetEmails.length} recipients...`);
+    console.log(
+      `[email-batch] Starting announcement send to ${targetEmails.length} recipients...`,
+    );
 
     // Chunk in groups of 3 with 1s delay to respect SMTP rate limits & avoid serverless timeout
     const CHUNK_SIZE = 3;
     for (let i = 0; i < targetEmails.length; i += CHUNK_SIZE) {
       const chunk = targetEmails.slice(i, i + CHUNK_SIZE);
-      
+
       const chunkResults = await Promise.allSettled(
         chunk.map(async (email) => {
           console.log(`[email-batch] Dispatching to: ${email}`);
@@ -100,9 +111,11 @@ export async function POST(request: Request) {
             text: messageBody,
             html: formattedHtmlBody,
           });
-          console.log(`[email-batch] Sent to ${email}, messageId: ${info.messageId}`);
+          console.log(
+            `[email-batch] Sent to ${email}, messageId: ${info.messageId}`,
+          );
           return email;
-        })
+        }),
       );
 
       chunkResults.forEach((result, idx) => {
@@ -122,7 +135,9 @@ export async function POST(request: Request) {
       }
     }
 
-    console.log(`[email-batch] Completed batch send. Success: ${successCount}, Failed: ${failedCount}`);
+    console.log(
+      `[email-batch] Completed batch send. Success: ${successCount}, Failed: ${failedCount}`,
+    );
 
     if (successCount === 0 && failedCount > 0) {
       return NextResponse.json(
@@ -153,4 +168,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

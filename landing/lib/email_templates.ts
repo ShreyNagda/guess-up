@@ -37,9 +37,9 @@ export function getEmailStyles(): string {
       .email-heading  { color: #0F172A; }
       .email-text     { color: #334155; }
       .email-muted    { color: #64748B; }
-      .email-brand    { color: #D97706; }
-      .email-accent   { color: #D97706; }
-      .email-link     { color: #D97706; text-decoration: none; font-weight: 700; }
+      .email-brand    { color: #FF6B00; }
+      .email-accent   { color: #FF1493; }
+      .email-link     { color: #FF6B00; text-decoration: none; font-weight: 700; }
 
       /* Light Theme Overrides */
       @media (prefers-color-scheme: light) {
@@ -49,21 +49,21 @@ export function getEmailStyles(): string {
         .email-heading  { color: #0F172A !important; }
         .email-text     { color: #334155 !important; }
         .email-muted    { color: #64748B !important; }
-        .email-brand    { color: #D97706 !important; }
-        .email-accent   { color: #D97706 !important; }
-        .email-link     { color: #D97706 !important; }
+        .email-brand    { color: #FF6B00 !important; }
+        .email-accent   { color: #FF1493 !important; }
+        .email-link     { color: #FF6B00 !important; }
       }
 
       /* Dark Theme Overrides */
       @media (prefers-color-scheme: dark) {
-        .email-bg       { background-color: #0E0C1C !important; color: #F4F6FC !important; }
-        .email-card     { background-color: #18152B !important; border: 1px solid rgba(255, 255, 255, 0.12) !important; color: #F4F6FC !important; box-shadow: 0 8px 24px rgba(0,0,0,0.3) !important; }
-        .email-step-box { background-color: #0E0C1C !important; border: 1px solid rgba(255, 255, 255, 0.08) !important; color: #F4F6FC !important; }
-        .email-heading  { color: #F4F6FC !important; }
+        .email-bg       { background-color: #0B0813 !important; color: #F8FAFC !important; }
+        .email-card     { background-color: #141024 !important; border: 1px solid rgba(255, 255, 255, 0.14) !important; color: #F8FAFC !important; box-shadow: 0 8px 24px rgba(0,0,0,0.4) !important; }
+        .email-step-box { background-color: #1A152E !important; border: 1px solid rgba(255, 255, 255, 0.1) !important; color: #F8FAFC !important; }
+        .email-heading  { color: #F8FAFC !important; }
         .email-text     { color: #CBD5E1 !important; }
         .email-muted    { color: #94A3B8 !important; }
         .email-brand    { color: #FFD600 !important; }
-        .email-accent   { color: #FFD600 !important; }
+        .email-accent   { color: #FF1493 !important; }
         .email-link     { color: #FFD600 !important; }
       }
     </style>
@@ -77,16 +77,13 @@ function getBrandHeader(): string {
   return `
     <div style="text-align: center; margin-bottom: 28px;">
       <div class="email-brand" style="font-size: 32px; font-weight: 900; letter-spacing: 4px; text-transform: uppercase; line-height: 1;">BUJHO</div>
-      <div class="email-muted" style="margin-top: 6px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-weight: 700;">
-        100% Ad-Free Desi Party Charades
+      <div class="email-muted" style="margin-top: 6px; font-size: 11px; letter-spacing: 2px; text-transform: uppercase; font-weight: 800;">
+        The Desi Charades Game • 100% Ad-Free
       </div>
     </div>
   `;
 }
 
-/**
- * Standardized Email Footer with WhatsApp CTA & Modular Quick Links
- */
 export function getEmailFooterHtml(): string {
   const siteUrl = getSiteUrl();
   const whatsappUrl = getWhatsAppUrl();
@@ -137,15 +134,15 @@ export function getEmailFooterText(): string {
 • WhatsApp Chat Direct: ${whatsappUrl}
 • Web Feedback Form: ${feedbackUrl}
 • Official Website: ${siteUrl}
-• Google Play Beta Link: ${PLAY_STORE_TESTING_URL}
 
-© ${year} Bujho • 100% Ad-Free Party Charades
+© ${year} Bujho • The Desi Charades Game
 Handcrafted for house parties & game nights.
 `;
 }
 
 /**
- * Welcome Email HTML — Modular Card Design (Light & Dark Theme adaptive)
+ * Initial Signup Welcome Email (WITHOUT ANY STEPS OR LINKS)
+ * Welcomes tester and explains to wait 1-2 hours for testing access email.
  */
 export function getWelcomeEmailHtml(name: string): string {
   const cleanName = name.trim() || "Playtester";
@@ -159,55 +156,119 @@ export function getWelcomeEmailHtml(name: string): string {
 
           ${getBrandHeader()}
 
-          <!-- Hero Welcome Card -->
-          <div class="email-card" style="padding: 28px; border-radius: 20px; margin-bottom: 20px;">
-            <h1 class="email-heading" style="font-size: 24px; font-weight: 800; line-height: 1.3; margin: 0 0 12px 0;">
-              Welcome Aboard, ${cleanName}! 🎉
+          <!-- Welcome Card WITHOUT links or steps -->
+          <div class="email-card" style="padding: 32px 28px; border-radius: 24px; margin-bottom: 20px; text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
+            <h1 class="email-heading" style="font-size: 26px; font-weight: 900; line-height: 1.3; margin: 0 0 16px 0;">
+              Welcome to Bujho, ${cleanName}!
             </h1>
-            <p class="email-text" style="font-size: 15px; line-height: 1.65; margin: 0 0 12px 0;">
-              You're officially on the priority list for <strong class="email-heading">Bujho Android Beta Access</strong>!
+            <p class="email-text" style="font-size: 16px; line-height: 1.65; margin: 0 0 16px 0;">
+              Thank you for registering for early beta access to <strong>Bujho - The Desi Charades Game</strong>!
             </p>
-            <p class="email-text" style="font-size: 15px; line-height: 1.65; margin: 0;">
-              Get ready for 100% ad-free charades, buttery 60 FPS tilt motion detection, curated Desi pop-culture decks, and custom deck creation with your squad.
+
+            <div class="email-step-box" style="padding: 20px; border-radius: 18px; margin: 20px 0; border: 2px dashed #FF6B00; text-align: left;">
+              <div style="font-size: 14px; font-weight: 800; color: #FF6B00; margin-bottom: 8px; text-transform: uppercase;">
+                ⏳ What happens next?
+              </div>
+              <p class="email-text" style="font-size: 14px; line-height: 1.6; margin: 0;">
+                Our team is preparing your Play Store testing account access. Please <strong>wait for 1-2 hours</strong>. An email with the complete initial steps and access links will be sent out to you shortly!
+              </p>
+            </div>
+
+            <p class="email-muted" style="font-size: 13px; line-height: 1.6; margin: 0;">
+              Get ready for 100% ad-free party charades, motion tilt sensing, and wild pop-culture decks!
             </p>
           </div>
 
-          <!-- Installation Steps Card -->
-          <div class="email-card" style="padding: 28px; border-radius: 20px; margin-bottom: 20px;">
-            <div class="email-brand" style="font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; font-weight: 800; margin-bottom: 20px; text-align: center;">
-              📱 2 Simple Steps to Install Bujho:
+          ${getEmailFooterHtml()}
+        </div>
+      </body>
+    </html>
+  `;
+}
+
+/**
+ * Initial Signup Welcome Email Plain Text (WITHOUT LINKS OR STEPS)
+ */
+export function getWelcomeEmailText(name: string = "Playtester"): string {
+  return (
+    `Hi ${name},\n\n` +
+    `Welcome to Bujho - The Desi Charades Game! 🎉\n\n` +
+    `Thank you for registering for early beta access. Our team is preparing your Play Store testing account access.\n\n` +
+    `⏳ WHAT HAPPENS NEXT?\n` +
+    `Please wait for 1-2 hours. An email with the complete initial steps and access links will be sent out to you shortly!\n\n` +
+    `Get ready for 100% ad-free charades with your squad.\n\n` +
+    `Cheers,\nThe Bujho Team\n` +
+    getEmailFooterText()
+  );
+}
+
+/**
+ * NEW EMAIL TEMPLATE: Initial Testing Steps Email
+ * Contains step-by-step instructions, accept invite link, Play Store screenshot, & Play Store install link.
+ */
+export function getTesterStepsEmailHtml(name: string = "Playtester"): string {
+  const cleanName = name.trim() || "Playtester";
+  const siteUrl = getSiteUrl();
+  const screenshotUrl = `${siteUrl}/images/play_invite_screenshot.png`;
+
+  return `
+    <!DOCTYPE html>
+    <html>
+      <head>${getEmailStyles()}</head>
+      <body class="email-bg">
+        <div style="max-width: 580px; margin: 0 auto; padding: 32px 16px;">
+
+          ${getBrandHeader()}
+
+          <!-- Header Card -->
+          <div class="email-card" style="padding: 28px; border-radius: 24px; margin-bottom: 20px;">
+            <h1 class="email-heading" style="font-size: 24px; font-weight: 900; line-height: 1.3; margin: 0 0 12px 0;">
+              Your Testing Access is Ready, ${cleanName}! 🚀
+            </h1>
+            <p class="email-text" style="font-size: 15px; line-height: 1.65; margin: 0;">
+              Follow the 2 simple steps below to join the Android beta program and install Bujho directly from the Google Play Store!
+            </p>
+          </div>
+
+          <!-- STEP 1 CARD WITH SCREENSHOT -->
+          <div class="email-card" style="padding: 28px; border-radius: 24px; margin-bottom: 20px;">
+            <div style="margin-bottom: 12px;">
+              <span style="background-color: #FF6B00; color: #FFFFFF; font-weight: 900; font-size: 12px; padding: 4px 10px; border-radius: 8px; margin-right: 8px; text-transform: uppercase;">STEP 1</span>
+              <strong class="email-heading" style="font-size: 17px;">Accept Google Play Beta Invitation</strong>
             </div>
 
-            <!-- STEP 1 CARD -->
-            <div class="email-step-box" style="padding: 18px; border-radius: 16px; margin-bottom: 14px;">
-              <div style="margin-bottom: 6px;">
-                <span style="background-color: #FFD600; color: #0E0C1C; font-weight: 900; font-size: 11px; padding: 3px 8px; border-radius: 8px; margin-right: 8px; text-transform: uppercase;">STEP 1</span>
-                <strong class="email-heading" style="font-size: 15px;">Accept Google Play Beta Invite</strong>
-              </div>
-              <p class="email-muted" style="font-size: 13px; line-height: 1.5; margin: 4px 0 12px 0;">
-                Open this link in your phone browser and tap <strong>"Become a Tester"</strong>:
-              </p>
-              <div style="text-align: center;">
-                <a href="${PLAY_STORE_TESTING_URL}" style="display: inline-block; background-color: #FFD600; color: #0E0C1C; font-weight: 900; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; padding: 10px 20px; border-radius: 12px; text-decoration: none;">
-                  👉 Step 1: Accept Invite (Web Link)
-                </a>
-              </div>
+            <p class="email-text" style="font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+              Open the web link below in your mobile browser and tap the green <strong>"BECOME A TESTER"</strong> button:
+            </p>
+
+            <!-- Play Store Web Page Screenshot Visual -->
+            <div style="margin: 16px 0; text-align: center; border-radius: 16px; overflow: hidden; border: 2px solid #E2E8F0;">
+              <img src="${screenshotUrl}" alt="Google Play Accept Invite Screenshot" style="width: 100%; max-width: 100%; height: auto; display: block;" />
             </div>
 
-            <!-- STEP 2 CARD -->
-            <div class="email-step-box" style="padding: 18px; border-radius: 16px;">
-              <div style="margin-bottom: 6px;">
-                <span style="background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 11px; padding: 3px 8px; border-radius: 8px; margin-right: 8px; text-transform: uppercase;">STEP 2</span>
-                <strong class="email-heading" style="font-size: 15px;">Download Normally from Play Store</strong>
-              </div>
-              <p class="email-muted" style="font-size: 13px; line-height: 1.5; margin: 4px 0 12px 0;">
-                Once accepted, open the Play Store app listing on your phone to install:
-              </p>
-              <div style="text-align: center;">
-                <a href="${PLAY_STORE_APP_URL}" style="display: inline-block; background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 12px; letter-spacing: 0.5px; text-transform: uppercase; padding: 10px 20px; border-radius: 12px; text-decoration: none;">
-                  📲 Step 2: Download on Play Store
-                </a>
-              </div>
+            <div style="text-align: center; margin-top: 18px;">
+              <a href="${PLAY_STORE_TESTING_URL}" target="_blank" style="display: inline-block; background-color: #FF6B00; color: #FFFFFF; font-weight: 900; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; padding: 14px 28px; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 14px rgba(255, 107, 0, 0.3);">
+                👉 Step 1: Tap Here to Accept Invite
+              </a>
+            </div>
+          </div>
+
+          <!-- STEP 2 CARD -->
+          <div class="email-card" style="padding: 28px; border-radius: 24px; margin-bottom: 20px;">
+            <div style="margin-bottom: 12px;">
+              <span style="background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 12px; padding: 4px 10px; border-radius: 8px; margin-right: 8px; text-transform: uppercase;">STEP 2</span>
+              <strong class="email-heading" style="font-size: 17px;">Install App from Google Play Store</strong>
+            </div>
+
+            <p class="email-text" style="font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
+              Once you have accepted the invitation, click below to open the official Play Store app listing and tap <strong>Install</strong>:
+            </p>
+
+            <div style="text-align: center;">
+              <a href="${PLAY_STORE_APP_URL}" target="_blank" style="display: inline-block; background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; padding: 14px 28px; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 14px rgba(34, 197, 94, 0.3);">
+                📲 Step 2: Download Bujho on Play Store
+              </a>
             </div>
           </div>
 
@@ -219,19 +280,19 @@ export function getWelcomeEmailHtml(name: string): string {
 }
 
 /**
- * Welcome Email Plain Text
+ * Initial Testing Steps Email Plain Text
  */
-export function getWelcomeEmailText(name: string = "Playtester"): string {
+export function getTesterStepsEmailText(name: string = "Playtester"): string {
   return (
     `Hi ${name},\n\n` +
-    `Thank you for joining Bujho Early Access Beta! We're thrilled to have you test our 100% ad-free party charades game.\n\n` +
+    `Your Bujho Android Beta testing access is now active! 🚀\n\n` +
     `📱 2 SIMPLE STEPS TO INSTALL ON YOUR PHONE:\n\n` +
-    `STEP 1: Accept the Google Play Beta Invitation (Web Browser Link):\n` +
+    `STEP 1: Accept the Google Play Web Invitation:\n` +
     `${PLAY_STORE_TESTING_URL}\n` +
-    `-> Tap "Become a Tester" on the webpage.\n\n` +
-    `STEP 2: Download Normally from Google Play Store (App Link):\n` +
+    `-> Tap "BECOME A TESTER" on the webpage.\n\n` +
+    `STEP 2: Download directly from Play Store app:\n` +
     `${PLAY_STORE_APP_URL}\n` +
-    `-> Open directly in Play Store app to install Bujho!\n\n` +
+    `-> Open in Play Store to install Bujho!\n\n` +
     `💬 HAVE QUESTIONS OR FEEDBACK?\n` +
     `Reach out to us directly on WhatsApp: ${getWhatsAppUrl()}\n\n` +
     `Cheers,\nThe Bujho Team\n` +
@@ -240,7 +301,7 @@ export function getWelcomeEmailText(name: string = "Playtester"): string {
 }
 
 /**
- * Release Update Email HTML — Modular Card Design
+ * Release Update Email HTML
  */
 export function getReleaseEmailHtml(customNotes?: string): string {
   const notesContent =
@@ -312,7 +373,7 @@ export function getReleaseEmailText(): string {
 }
 
 /**
- * Feedback Request Email HTML — Modular Card Design
+ * Feedback Request Email HTML
  */
 export function getFeedbackEmailHtml(customMessage?: string): string {
   const siteUrl = getSiteUrl();
@@ -377,7 +438,7 @@ export function getFeedbackEmailText(): string {
 }
 
 /**
- * Custom Announcement Email HTML — Modular Card Design
+ * Custom Announcement Email HTML
  */
 export function getCustomEmailHtml(
   subject: string,
