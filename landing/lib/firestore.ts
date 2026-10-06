@@ -387,3 +387,33 @@ export async function addFeedbackToFirestore(
     };
   }
 }
+
+export interface FeedbackEntry {
+  id?: string;
+  name: string;
+  role: string;
+  rating: number;
+  feedback: string;
+  createdAt?: any;
+}
+
+export async function getFeedbackFromFirestore(): Promise<FeedbackEntry[]> {
+  try {
+    const db = getDb();
+    const q = query(collection(db, "feedback"), orderBy("createdAt", "desc"));
+    const snapshot = await getDocs(q);
+    return snapshot.docs.map((docSnap) => {
+      const data = docSnap.data();
+      return {
+        id: docSnap.id,
+        name: data.name || "Anonymous Player",
+        role: data.role || "House Party Host",
+        rating: typeof data.rating === "number" ? data.rating : 5,
+        feedback: data.feedback || "",
+      };
+    });
+  } catch (error) {
+    console.warn("Firestore get feedback warning:", error);
+    return [];
+  }
+}
