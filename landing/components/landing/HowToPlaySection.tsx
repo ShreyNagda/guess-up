@@ -120,9 +120,9 @@ export function HowToPlaySection() {
                   <h3 className="text-sm sm:text-lg font-lilita font-black text-brand-text mb-1.5 uppercase tracking-tight">
                     {step.title}
                   </h3>
-                  <p className="text-[11px] sm:text-sm text-brand-muted font-bold leading-snug sm:leading-relaxed">
+                  {/* <p className="text-[11px] sm:text-sm text-brand-muted font-bold leading-snug sm:leading-relaxed">
                     {step.subtitle}
-                  </p>
+                  </p> */}
                 </div>
               </motion.div>
             );

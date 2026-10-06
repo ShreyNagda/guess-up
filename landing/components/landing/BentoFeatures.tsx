@@ -24,28 +24,28 @@ interface BentoCardProps {
 function BentoCard({ icon, title, subtitle, badge, featured }: BentoCardProps) {
   return (
     <div
-      className={`h-full p-4 sm:p-7 rounded-2xl sm:rounded-3xl border transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between ${
+      className={`h-full p-6 sm:p-7 rounded-3xl border transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between ${
         featured
           ? "bg-linear-to-br from-brand-surface to-party-pink/5 border-party-pink/30 shadow-xl shadow-party-pink/5"
-          : "bg-brand-surface/90 border-brand-border shadow-xs hover:border-party-cyan/40"
+          : "bg-brand-surface/90 border-brand-border shadow-sm hover:border-party-cyan/40"
       }`}
     >
       <div>
-        <div className="flex items-center justify-between mb-3 sm:mb-4 gap-1">
-          <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-brand-primary/15 text-brand-text flex items-center justify-center border border-brand-primary/30 shrink-0">
+        <div className="flex items-center justify-between mb-4">
+          <div className="w-12 h-12 rounded-2xl bg-brand-primary/15 text-brand-text flex items-center justify-center border border-brand-primary/30">
             {icon}
           </div>
           {badge && (
-            <span className="text-[9px] sm:text-xs font-extrabold px-2 py-0.5 sm:px-3 sm:py-1 rounded-full bg-party-orange/15 text-party-orange border border-party-orange/30 uppercase tracking-wider truncate">
+            <span className="text-xs font-extrabold px-3 py-1 rounded-full bg-party-orange/15 text-party-orange border border-party-orange/30 uppercase tracking-wider">
               {badge}
             </span>
           )}
         </div>
 
-        <h3 className="text-sm sm:text-xl font-lilita font-black text-brand-text mb-1 sm:mb-2.5 tracking-tight uppercase">
+        <h3 className="text-lg sm:text-xl font-lilita font-black text-brand-text mb-2.5 tracking-tight uppercase">
           {title}
         </h3>
-        <p className="text-[11px] sm:text-sm text-brand-muted leading-snug sm:leading-relaxed font-bold">
+        <p className="text-xs sm:text-sm text-brand-muted leading-relaxed font-bold">
           {subtitle}
         </p>
       </div>
@@ -143,8 +143,8 @@ export function BentoFeatures() {
           </p>
         </motion.div>
 
-        {/* Bento Grid with exact 3-column span patterns (2-column layout on mobile) */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-6 items-stretch">
+        {/* Bento Grid with exact 3-column span patterns */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
           {features.map((feat, idx) => (
             <motion.div
               key={feat.title}

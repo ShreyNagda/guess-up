@@ -39,15 +39,6 @@ export function Navbar() {
         {/* Center Nav Links (Desktop) */}
         <nav className="hidden md:flex items-center gap-6 text-sm font-extrabold text-brand-muted">
           <button
-            onClick={() => scrollToSection("vibe-check")}
-            className="hover:text-party-orange transition-colors cursor-pointer flex items-center gap-1"
-          >
-            <span>Vibe Check</span>
-            <span className="px-1.5 py-0.5 text-[9px] rounded-full bg-party-orange/15 text-party-orange">
-              NEW
-            </span>
-          </button>
-          <button
             onClick={() => scrollToSection("how-to-play")}
             className="hover:text-brand-text transition-colors cursor-pointer"
           >

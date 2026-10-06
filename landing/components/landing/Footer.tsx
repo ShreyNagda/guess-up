@@ -24,9 +24,7 @@ export function Footer() {
           <span className="font-black text-brand-text uppercase tracking-tight">
             Bujho
           </span>
-          <span className="font-bold">
-            © {new Date().getFullYear()} Bujho - The Desi Charades Game. 100% Ad-Free & Offline.
-          </span>
+          <span className="font-bold">© {new Date().getFullYear()}</span>
         </div>
 
         {/* Links & Theme Toggle */}

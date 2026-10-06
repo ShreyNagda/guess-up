@@ -17,10 +17,9 @@ import { Button } from "../ui/Button";
 
 interface HeroSectionProps {
   onCtaClick: () => void;
-  onVibeClick?: () => void;
 }
 
-export function HeroSection({ onCtaClick, onVibeClick }: HeroSectionProps) {
+export function HeroSection({ onCtaClick }: HeroSectionProps) {
   const heroHighlights = [
     {
       icon: <Zap className="w-4 h-4 text-party-cyan fill-party-cyan/20" />,
@@ -83,7 +82,7 @@ export function HeroSection({ onCtaClick, onVibeClick }: HeroSectionProps) {
             </span>
           </p>
 
-          {/* Primary & Secondary CTA Buttons */}
+          {/* Primary CTA Button */}
           <div className="flex flex-col sm:flex-row items-center gap-3.5 mb-12 w-full sm:w-auto justify-center">
             <Button
               variant="primary"
@@ -96,21 +95,8 @@ export function HeroSection({ onCtaClick, onVibeClick }: HeroSectionProps) {
                 <span>Get the Party Started</span>
               </div>
             </Button>
-
-            {onVibeClick && (
-              <Button
-                variant="secondary"
-                size="lg"
-                onClick={onVibeClick}
-                className="w-full sm:w-auto px-6 py-4 text-sm sm:text-lg font-black uppercase tracking-wider whitespace-nowrap border-2 border-party-cyan/40 hover:bg-party-cyan/10 text-brand-text"
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <Play className="w-4 h-4 text-party-cyan fill-party-cyan shrink-0" />
-                  <span>Vibe Check ⚡</span>
-                </div>
-              </Button>
-            )}
           </div>
+          {/* </div> */}
 
           {/* Centered 3D Phone Animation */}
           <div className="w-full flex justify-center mb-12">
@@ -122,7 +108,7 @@ export function HeroSection({ onCtaClick, onVibeClick }: HeroSectionProps) {
             {heroHighlights.map((item, idx) => (
               <div
                 key={idx}
-                className={`flex items-center justify-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs sm:text-sm font-extrabold whitespace-nowrap shrink-0 transition-transform hover:scale-105 ${item.color}`}
+                className={`flex flex-wrap items-center justify-center gap-2 px-3.5 py-1.5 rounded-xl border text-xs sm:text-sm font-extrabold whitespace-nowrap shrink-0 transition-transform hover:scale-105 ${item.color}`}
               >
                 {item.icon}
                 <span className="whitespace-nowrap">{item.label}</span>

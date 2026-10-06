@@ -4,7 +4,6 @@ import React, { useRef, useState, useEffect } from "react";
 import { Sparkles, Smartphone } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
-import { VibeCheckSection } from "@/components/landing/VibeCheckSection";
 import { HowToPlaySection } from "@/components/landing/HowToPlaySection";
 import { DeckShowcaseSection } from "@/components/landing/DeckShowcaseSection";
 import { BentoFeatures } from "@/components/landing/BentoFeatures";
@@ -39,18 +38,10 @@ export default function LandingPage() {
     });
   };
 
-  const scrollToVibe = () => {
-    const el = document.getElementById("vibe-check");
-    if (el) {
-      el.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  };
-
   return (
     <main className="relative z-10 min-h-screen bg-brand-bg text-brand-text transition-colors duration-300 pb-16 md:pb-0">
       <Navbar />
-      <HeroSection onCtaClick={scrollToWaitlist} onVibeClick={scrollToVibe} />
-      <VibeCheckSection />
+      <HeroSection onCtaClick={scrollToWaitlist} />
       <HowToPlaySection />
       <DeckShowcaseSection />
       <BentoFeatures />

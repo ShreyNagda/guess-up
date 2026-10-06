@@ -98,8 +98,8 @@ export function TestimonialsSection() {
           </Link>
         </motion.div>
 
-        {/* Casual Screenshot / Instagram Story Cards Layout (2-column layout on mobile) */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-8">
+        {/* Casual Screenshot / Instagram Story Cards Layout */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 sm:gap-8">
           {partyHighlights.map((item, idx) => (
             <motion.div
               key={idx}
@@ -108,7 +108,7 @@ export function TestimonialsSection() {
               viewport={{ once: true }}
               transition={{ duration: 0.4, delay: idx * 0.12 }}
               whileHover={{ y: -6, rotate: idx % 2 === 0 ? 1 : -1 }}
-              className="rounded-2xl sm:rounded-3xl p-4 sm:p-6 bg-brand-surface border-2 border-brand-border shadow-xl relative flex flex-col justify-between overflow-hidden"
+              className="rounded-3xl p-6 bg-brand-surface border-2 border-brand-border shadow-xl relative flex flex-col justify-between overflow-hidden"
             >
               {/* Instagram Story-style Header */}
               <div>
