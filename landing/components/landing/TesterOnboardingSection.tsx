@@ -52,7 +52,9 @@ export const TesterOnboardingSection = forwardRef<
 
     // Optional email subscription state
     const [email, setEmail] = useState<string>("");
-    const [emailStatus, setEmailStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+    const [emailStatus, setEmailStatus] = useState<
+      "idle" | "loading" | "success" | "error"
+    >("idle");
     const [emailMessage, setEmailMessage] = useState<string>("");
 
     // Load persisted state
@@ -173,7 +175,7 @@ export const TesterOnboardingSection = forwardRef<
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.5 }}
-            className={`relative overflow-hidden p-6 sm:p-10 rounded-3xl shadow-2xl border-2 transition-all duration-300 backdrop-blur-xl bg-brand-surface/90 ${
+            className={`relative overflow-hidden p-6 sm:p-10 rounded-3xl shadow-2xl border-2 transition-all duration-300 backdrop-blur-xl ${
               isHighlighted
                 ? "border-party-orange ring-4 ring-party-orange/30 shadow-party-orange/20"
                 : "border-brand-border"
@@ -189,7 +191,9 @@ export const TesterOnboardingSection = forwardRef<
                 Join the Bujho Testers 🎉
               </h2>
               <p className="font-manrope text-sm sm:text-base text-brand-muted font-bold leading-relaxed">
-                Because Bujho is in private testing on Google Play, Google requires you to join our official Google Group before allowing you to download.
+                Because Bujho is in private testing on Google Play, Google
+                requires you to join our official Google Group before allowing
+                you to download.
               </p>
             </div>
 
@@ -201,7 +205,13 @@ export const TesterOnboardingSection = forwardRef<
                   Crucial: You Must Join Google Group in Step 1
                 </p>
                 <p className="text-brand-muted leading-relaxed font-medium">
-                  Google Play strictly restricts private beta apps to verified group members. If you skip Step 1 and go straight to Google Play, Google will display an error: <strong className="text-brand-text">&quot;A testing version hasn&apos;t been published yet or isn&apos;t available.&quot;</strong>
+                  Google Play strictly restricts private beta apps to verified
+                  group members. If you skip Step 1 and go straight to Google
+                  Play, Google will display an error:{" "}
+                  <strong className="text-brand-text">
+                    &quot;A testing version hasn&apos;t been published yet or
+                    isn&apos;t available.&quot;
+                  </strong>
                 </p>
               </div>
             </div>
@@ -241,7 +251,11 @@ export const TesterOnboardingSection = forwardRef<
                             : "bg-party-orange text-white"
                         }`}
                       >
-                        {hasJoinedGroup ? <CheckCircle2 className="w-5 h-5" /> : "1"}
+                        {hasJoinedGroup ? (
+                          <CheckCircle2 className="w-5 h-5" />
+                        ) : (
+                          "1"
+                        )}
                       </span>
                       <div>
                         <div className="flex items-center gap-2">
@@ -253,7 +267,12 @@ export const TesterOnboardingSection = forwardRef<
                           </span>
                         </div>
                         <p className="text-xs text-brand-muted font-medium mt-1 leading-relaxed">
-                          Tap the button below to open Google Group. Log in with your Google account and tap <strong className="text-brand-text">&quot;Join group&quot;</strong>.
+                          Tap the button below to open Google Group. Log in with
+                          your Google account and tap{" "}
+                          <strong className="text-brand-text">
+                            &quot;Join group&quot;
+                          </strong>
+                          .
                         </p>
                       </div>
                     </div>
@@ -265,7 +284,9 @@ export const TesterOnboardingSection = forwardRef<
                     size="md"
                     onClick={handleJoinGroup}
                     className={`w-full font-lilita text-sm sm:text-base uppercase tracking-wider py-3.5 justify-center shadow-md ${
-                      hasJoinedGroup ? "border-emerald-500/40 text-emerald-400 bg-emerald-500/5!" : ""
+                      hasJoinedGroup
+                        ? "border-emerald-500/40 text-emerald-400 bg-emerald-500/5!"
+                        : ""
                     }`}
                   >
                     {hasJoinedGroup ? (
@@ -312,7 +333,12 @@ export const TesterOnboardingSection = forwardRef<
                         )}
                       </div>
                       <p className="text-xs text-brand-muted font-medium mt-1 leading-relaxed">
-                        Once you&apos;ve joined the group, open the Play Store invite link. Tap <strong className="text-party-orange">&quot;BECOME A TESTER&quot;</strong> and download Bujho!
+                        Once you&apos;ve joined the group, open the Play Store
+                        invite link. Tap{" "}
+                        <strong className="text-party-orange">
+                          &quot;BECOME A TESTER&quot;
+                        </strong>{" "}
+                        and download Bujho!
                       </p>
                     </div>
                   </div>
@@ -360,9 +386,13 @@ export const TesterOnboardingSection = forwardRef<
                   <div className="flex items-center justify-between">
                     <span className="font-extrabold text-brand-text flex items-center gap-1.5">
                       <Mail className="w-3.5 h-3.5 text-party-orange" />
-                      <span>Want Email Updates &amp; Build Releases? (Optional)</span>
+                      <span>
+                        Want Email Updates &amp; Build Releases? (Optional)
+                      </span>
                     </span>
-                    <span className="text-[10px] text-brand-muted font-bold">No spam</span>
+                    <span className="text-[10px] text-brand-muted font-bold">
+                      No spam
+                    </span>
                   </div>
 
                   {emailStatus === "success" ? (
@@ -401,7 +431,9 @@ export const TesterOnboardingSection = forwardRef<
                     </form>
                   )}
                   {emailStatus === "error" && (
-                    <p className="text-[11px] text-rose-400 font-medium">{emailMessage}</p>
+                    <p className="text-[11px] text-rose-400 font-medium">
+                      {emailMessage}
+                    </p>
                   )}
                 </div>
               </div>
@@ -424,7 +456,11 @@ export const TesterOnboardingSection = forwardRef<
                   </div>
 
                   <p className="text-[11px] text-brand-muted italic font-medium">
-                    Tap the blue <strong className="text-party-orange">&quot;BECOME A TESTER&quot;</strong> button to unlock download.
+                    Tap the blue{" "}
+                    <strong className="text-party-orange">
+                      &quot;BECOME A TESTER&quot;
+                    </strong>{" "}
+                    button to unlock download.
                   </p>
                 </div>
 
@@ -450,13 +486,16 @@ export const TesterOnboardingSection = forwardRef<
                   </div>
 
                   <p className="text-[11px] text-brand-muted font-medium max-w-xs">
-                    Visiting on computer? Scan with your Android camera after joining the group.
+                    Visiting on computer? Scan with your Android camera after
+                    joining the group.
                   </p>
                 </div>
 
                 {/* iPhone Note */}
                 <div className="p-3 rounded-xl bg-brand-surface border border-brand-border text-[11px] text-brand-muted font-medium">
-                  🍏 <strong className="text-brand-text">iPhone user?</strong> iOS version is in active development. Enter your email on the left to be first on the TestFlight list!
+                  🍏 <strong className="text-brand-text">iPhone user?</strong>{" "}
+                  iOS version is in active development. Enter your email on the
+                  left to be first on the TestFlight list!
                 </div>
               </div>
             </div>

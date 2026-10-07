@@ -10,16 +10,26 @@ export function Footer() {
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
         {/* Left: BUJHO (font-lilita) + Made in India */}
         <div className="flex items-center gap-2">
-          <span className="font-lilita text-xl text-brand-text uppercase tracking-tight">
+          <Link
+            href="/"
+            className="font-lilita text-xl text-brand-text uppercase tracking-tight hover:opacity-90"
+          >
             BUJHO
-          </span>
+          </Link>
           <span className="font-manrope text-brand-muted font-bold text-xs">
             · Made in India 🇮🇳
           </span>
         </div>
 
-        {/* Middle: Privacy · Contact · Instagram · Feedback */}
+        {/* Middle: Become a Tester · Privacy · Contact · Instagram */}
         <div className="flex flex-wrap items-center justify-center gap-4 font-manrope font-bold text-xs">
+          <Link
+            href="/become-a-tester"
+            className="text-party-orange hover:underline font-extrabold"
+          >
+            Become a Tester
+          </Link>
+          <span>·</span>
           <Link
             href="/privacy"
             className="hover:text-brand-text transition-colors"
@@ -41,15 +51,6 @@ export function Footer() {
             className="hover:text-brand-text transition-colors"
           >
             Instagram
-          </a>
-          <span>·</span>
-          <a
-            href="https://groups.google.com/g/bujho-testers"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-brand-text transition-colors"
-          >
-            Feedback
           </a>
         </div>
 
