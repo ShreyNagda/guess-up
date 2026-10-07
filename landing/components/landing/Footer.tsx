@@ -1,78 +1,64 @@
 "use client";
 
-import React, { useState } from "react";
+import React from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { Modal } from "../ui/Modal";
 import { ThemeToggle } from "../ui/ThemeToggle";
 
 export function Footer() {
-  const [activeModal, setActiveModal] = useState<"terms" | null>(null);
-
   return (
-    <footer className="py-10 border-t border-brand-border text-xs text-brand-muted bg-brand-surface transition-colors duration-300">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-        {/* Copyright */}
-        <div className="flex items-center gap-2.5">
-          <Image
-            src="/images/bujho-icon.png"
-            alt="Bujho Icon"
-            width={24}
-            height={24}
-            className="w-6 h-6 rounded-lg object-contain border border-brand-border"
-          />
-          <span className="font-black text-brand-text uppercase tracking-tight">
-            Bujho
+    <footer className="py-8 border-t border-brand-border/40 text-xs text-brand-muted bg-transparent transition-colors duration-300">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
+        {/* Left: BUJHO (font-lilita) + Made in India */}
+        <div className="flex items-center gap-2">
+          <span className="font-lilita text-xl text-brand-text uppercase tracking-tight">
+            BUJHO
           </span>
-          <span className="font-bold">© {new Date().getFullYear()}</span>
+          <span className="font-manrope text-brand-muted font-bold text-xs">
+            · Made in India 🇮🇳
+          </span>
         </div>
 
-        {/* Links & Theme Toggle */}
-        <div className="flex items-center gap-6">
-          <Link
-            href="/feedback"
-            id="footer-feedback-link"
-            className="hover:text-brand-text transition-colors font-extrabold"
-          >
-            Submit Feedback
-          </Link>
+        {/* Middle: Privacy · Contact · Instagram · Feedback */}
+        <div className="flex flex-wrap items-center justify-center gap-4 font-manrope font-bold text-xs">
           <Link
             href="/privacy"
-            id="footer-privacy-policy-link"
-            className="hover:text-brand-text transition-colors font-extrabold"
+            className="hover:text-brand-text transition-colors"
           >
-            Privacy Policy
+            Privacy
           </Link>
-          <button
-            onClick={() => setActiveModal("terms")}
-            id="footer-terms-link"
-            className="hover:text-brand-text transition-colors font-extrabold cursor-pointer"
+          <span>·</span>
+          <a
+            href="mailto:support@bujho.app"
+            className="hover:text-brand-text transition-colors"
           >
-            Terms of Service
-          </button>
+            Contact
+          </a>
+          <span>·</span>
+          <a
+            href="https://instagram.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-brand-text transition-colors"
+          >
+            Instagram
+          </a>
+          <span>·</span>
+          <a
+            href="https://groups.google.com/g/bujho-testers"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-brand-text transition-colors"
+          >
+            Feedback
+          </a>
+        </div>
+
+        {/* Right: Theme Toggle + Copyright */}
+        <div className="flex items-center gap-3 font-manrope font-bold text-xs">
           <ThemeToggle />
+          <span>© {new Date().getFullYear()}</span>
         </div>
       </div>
-
-      {/* Terms of Service Modal */}
-      <Modal
-        isOpen={activeModal === "terms"}
-        onClose={() => setActiveModal(null)}
-        title="Terms of Service"
-      >
-        <div className="space-y-3 text-sm text-brand-muted font-bold leading-relaxed">
-          <p>
-            By signing up for early access, you agree to receive email
-            notifications regarding Bujho Android beta testing builds and
-            release updates.
-          </p>
-          <p>
-            Bujho is currently under active development. Game features, card
-            content, and user interface elements are subject to continuous
-            enhancement prior to public launch.
-          </p>
-        </div>
-      </Modal>
     </footer>
   );
 }

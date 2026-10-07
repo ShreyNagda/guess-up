@@ -1,251 +1,86 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React from "react";
 import { motion } from "framer-motion";
-import {
-  Film,
-  Trophy,
-  Utensils,
-  Compass,
-  Train,
-  Sparkles,
-  Layers,
-} from "lucide-react";
-import {
-  getDecksFromFirestore,
-  Deck as FirestoreDeck,
-} from "../../lib/firestore";
 
-interface Deck {
-  id: string;
+interface DeckCard {
   name: string;
-  category: string;
-  description: string;
-  icon: React.ReactNode;
+  emoji: string;
   cards: string[];
+  gradient: string;
 }
 
-const defaultDecks: Deck[] = [
-  {
-    id: "bollywood",
-    name: "Bollywood Buff",
-    category: "Movies & Stars",
-    description: "Iconic Indian movies, famous dialogues, and superstars.",
-    icon: <Film className="w-5 h-5" />,
-    cards: ["Sholay", "DDLJ", "Pathaan", "3 Idiots", "Gabbar Singh", "K3G"],
-  },
-  {
-    id: "cricket",
-    name: "Cricket Fever",
-    category: "Sports & Legends",
-    description: "Legendary players, IPL moments, and iconic shots.",
-    icon: <Trophy className="w-5 h-5" />,
-    cards: [
-      "MS Dhoni",
-      "Helicopter Shot",
-      "IPL Final",
-      "Virat Kohli",
-      "Wankhede",
-    ],
-  },
-  {
-    id: "food",
-    name: "Sweet & Spicy",
-    category: "Street Food",
-    description: "Street snacks, Indian delicacies, and 2 AM cravings.",
-    icon: <Utensils className="w-5 h-5" />,
-    cards: [
-      "Vada Pav",
-      "Pani Puri",
-      "Hyderabadi Biryani",
-      "Gulab Jamun",
-      "Samosa",
-    ],
-  },
-  {
-    id: "mumbai",
-    name: "Aamchi Mumbai",
-    category: "City Nostalgia",
-    description: "Local train vibes, Marine Drive sunsets, and cutting chai.",
-    icon: <Train className="w-5 h-5" />,
-    cards: [
-      "Local Train",
-      "Marine Drive",
-      "Cutting Chai",
-      "Gateway of India",
-      "Dabbawala",
-    ],
-  },
-  {
-    id: "india",
-    name: "Incredible India",
-    category: "Culture & Vibes",
-    description: "Famous monuments, cultural festivals, and desi quirks.",
-    icon: <Compass className="w-5 h-5" />,
-    cards: [
-      "Taj Mahal",
-      "Garba Night",
-      "Auto Rickshaw",
-      "Diwali Sweets",
-      "Holi Colors",
-    ],
-  },
-  {
-    id: "memes",
-    name: "Gen-Z & Memes",
-    category: "Internet Trends",
-    description: "Viral Indian memes, trending reels, and internet humor.",
-    icon: <Sparkles className="w-5 h-5" />,
-    cards: [
-      "Viral Reel",
-      "Binge Watch",
-      "FOMO",
-      "POV",
-      "Sigma Grind",
-      "Desi Aunties",
-    ],
-  },
-];
-
 export function DeckShowcaseSection() {
-  const [decks, setDecks] = useState<Deck[]>(defaultDecks);
-  const [selectedDeck, setSelectedDeck] = useState<Deck>(defaultDecks[0]);
-  const [loading, setLoading] = useState<boolean>(true);
-
-  useEffect(() => {
-    async function fetchFirebaseDecks() {
-      try {
-        const firestoreDecks: FirestoreDeck[] = await getDecksFromFirestore();
-        if (firestoreDecks && firestoreDecks.length > 0) {
-          const mapped: Deck[] = firestoreDecks.map((d, index) => {
-            const fallbackIcon = defaultDecks[index % defaultDecks.length]
-              ?.icon || <Layers className="w-5 h-5" />;
-            return {
-              id: d.id || `deck-${index}`,
-              name: d.name || d.title || "Untitled Deck",
-              category: "Deck",
-              description:
-                d.description || "Exciting party charades deck ready to play.",
-              icon: fallbackIcon,
-              cards:
-                d.cards && d.cards.length > 0
-                  ? d.cards
-                  : ["Sample Card 1", "Sample Card 2"],
-            };
-          });
-          setDecks(mapped);
-          setSelectedDeck(mapped[0]);
-        }
-      } catch (err) {
-        console.warn(
-          "Could not fetch decks from Firebase, using defaults:",
-          err,
-        );
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    fetchFirebaseDecks();
-  }, []);
+  const deckCards: DeckCard[] = [
+    {
+      name: "Bollywood Buff",
+      emoji: "🎬",
+      cards: ["Sholay", "DDLJ", "Pathaan", "3 Idiots"],
+      gradient: "from-party-pink/20 to-party-orange/20 border-party-pink/30",
+    },
+    {
+      name: "Incredible India",
+      emoji: "🕌",
+      cards: ["Taj Mahal", "Garba Night", "Auto Rickshaw"],
+      gradient:
+        "from-party-orange/20 to-party-yellow/20 border-party-orange/30",
+    },
+    {
+      name: "Cricket Fever",
+      emoji: "🏏",
+      cards: ["MS Dhoni", "Virat Kohli", "Helicopter Shot"],
+      gradient: "from-[#FFD600]/20 to-party-cyan/20 border-[#FFD600]/30",
+    },
+  ];
 
   return (
     <section
       id="decks"
-      className="py-16 md:py-24 bg-brand-surface transition-colors duration-300"
+      className="py-16 md:py-24 bg-transparent transition-colors duration-300"
     >
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        {/* Section Header with subtle fade-in */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center max-w-3xl mx-auto mb-12 sm:mb-16"
-        >
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-party-pink/15 text-party-pink text-xs font-black uppercase tracking-wider mb-4 border border-party-pink/30 shadow-xs">
-            <Sparkles className="w-3.5 h-3.5 text-party-pink" />
-            <span>50+ POP-CULTURE CATEGORY DECKS</span>
-          </div>
-          <h2 className="text-3xl sm:text-5xl font-black text-brand-text tracking-tight uppercase mb-4">
-            Curated Desi Decks
-          </h2>
-          <p className="text-base sm:text-xl text-brand-muted font-bold leading-relaxed">
-            From Bollywood blockbusters to 2 AM street food cravings & Cricket
-            fever, explore decks built for pure party chaos.
-          </p>
-        </motion.div>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
+        {/* Header (font-lilita) */}
+        <h2 className="font-lilita text-4xl sm:text-6xl text-brand-text uppercase tracking-tight mb-12">
+          Zero boring words.
+        </h2>
 
-        {/* Grid of Deck Cards - Show Top 3 Decks Only */}
+        {/* Grid of 3 decks only */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {decks.slice(0, 3).map((deck, idx) => {
-            const isSelected = selectedDeck.id === deck.id;
-            return (
-              <motion.div
-                key={deck.id}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ duration: 0.4, delay: idx * 0.08 }}
-                onClick={() => setSelectedDeck(deck)}
-                whileHover={{ y: -5 }}
-                className={`cursor-pointer relative overflow-hidden p-6 rounded-3xl border-2 transition-all duration-300 flex flex-col justify-between ${
-                  isSelected
-                    ? "bg-brand-surface border-party-orange/40 shadow-xl shadow-party-orange/10 scale-[1.02]"
-                    : "bg-brand-bg/80 border-brand-border hover:border-party-cyan/40"
-                }`}
-              >
-                {/* Card Header */}
-                <div>
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="w-11 h-11 rounded-2xl bg-party-orange/15 text-party-orange flex items-center justify-center border border-party-orange/30 shadow-xs shrink-0">
-                      {deck.icon}
-                    </div>
-                    <span className="text-xs font-black px-3 py-1 rounded-full bg-brand-surface text-brand-text border border-brand-border uppercase tracking-wider">
-                      {deck.category}
-                    </span>
-                  </div>
+          {deckCards.map((deck, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, y: 16 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.3, delay: idx * 0.08 }}
+              whileHover={{ y: -4 }}
+              className={`p-6 rounded-3xl bg-brand-card/90 backdrop-blur-md border-2 ${deck.gradient} shadow-card-light flex flex-col justify-between text-left`}
+            >
+              <div>
+                <div className="text-4xl mb-3">{deck.emoji}</div>
+                <h3 className="font-lilita text-2xl text-brand-text uppercase tracking-tight mb-4">
+                  {deck.name}
+                </h3>
+              </div>
 
-                  <h3 className="text-xl font-lilita font-black text-brand-text mb-1 uppercase tracking-tight">
-                    {deck.name}
-                  </h3>
-                  <p className="text-xs text-brand-muted leading-relaxed mb-4 font-bold">
-                    {deck.description}
-                  </p>
-                </div>
-
-                {/* Sample Card Chips */}
-                <div className="flex flex-wrap gap-1.5 pt-3 border-t border-brand-border">
-                  {deck.cards.slice(0, 4).map((card, cardIdx) => (
-                    <span
-                      key={cardIdx}
-                      className="text-xs font-black px-2.5 py-1 rounded-xl bg-linear-to-r from-party-pink/15 to-party-orange/15 text-brand-text border border-party-orange/20"
-                    >
-                      {card}
-                    </span>
-                  ))}
-                  {deck.cards.length > 4 && (
-                    <span className="text-xs font-black px-2 py-1 text-brand-muted">
-                      +{deck.cards.length - 4} more
-                    </span>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
+              <div className="flex flex-wrap gap-1.5 pt-3 border-t border-brand-border">
+                {deck.cards.map((c, cIdx) => (
+                  <span
+                    key={cIdx}
+                    className="font-manrope text-xs font-black px-2.5 py-1 rounded-xl bg-brand-surface/80 text-brand-text border border-brand-border"
+                  >
+                    {c}
+                  </span>
+                ))}
+              </div>
+            </motion.div>
+          ))}
         </div>
 
-        {/* Small Footnote callout text */}
-        <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.4, delay: 0.2 }}
-          className="flex items-center justify-center gap-2 text-xs sm:text-sm font-bold text-brand-muted tracking-wide"
-        >
-          <Sparkles className="w-3.5 h-3.5 text-[#FFD600] animate-pulse" />
-          <span>and many more in the android app</span>
-        </motion.div>
+        {/* Footer line below grid */}
+        <p className="font-manrope text-sm sm:text-base text-brand-muted font-bold tracking-wide">
+          Showing 5+ in the app, others under development.
+        </p>
       </div>
     </section>
   );

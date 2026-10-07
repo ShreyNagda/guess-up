@@ -15,10 +15,11 @@ import {
   Sparkles,
   Eye,
   Edit3,
-  ShieldAlert,
-  Flame,
+  CheckSquare,
+  Square,
   Check,
   Smartphone,
+  ExternalLink,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -38,6 +39,7 @@ export function TestersManager() {
   const [testers, setTesters] = useState<Tester[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [selectedEmails, setSelectedEmails] = useState<string[]>([]);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
 
   // Email Template Selection State
@@ -60,6 +62,8 @@ export function TestersManager() {
     setLoading(true);
     const data = await getTestersFromFirestore();
     setTesters(data);
+    // Select all by default on fetch
+    setSelectedEmails(data.map((t) => t.email));
     setLoading(false);
   };
 
@@ -87,41 +91,50 @@ export function TestersManager() {
     }
   }, [templateType]);
 
-  // Export CSV formatted for Google Play Console Internal Testing upload
-  const handleExportPlayConsoleCSV = () => {
-    if (testers.length === 0) return;
+  const filteredTesters = testers.filter(
+    (t) =>
+      t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      t.email.toLowerCase().includes(searchTerm.toLowerCase()),
+  );
 
-    const headers = ["Email"];
-    const rows = testers.map((t) => [t.email]);
+  const isAllSelected =
+    filteredTesters.length > 0 &&
+    filteredTesters.every((t) => selectedEmails.includes(t.email));
 
-    const csvContent =
-      "data:text/csv;charset=utf-8," +
-      [headers.join(","), ...rows.map((e) => e.join(","))].join("\n");
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute(
-      "download",
-      `bujho_play_console_testers_${new Date().toISOString().slice(0, 10)}.csv`,
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+  const toggleSelectAll = () => {
+    if (isAllSelected) {
+      setSelectedEmails([]);
+    } else {
+      setSelectedEmails(filteredTesters.map((t) => t.email));
+    }
   };
 
-  // Launch default mail client
+  const toggleSelectEmail = (email: string) => {
+    setSelectedEmails((prev) =>
+      prev.includes(email) ? prev.filter((e) => e !== email) : [...prev, email],
+    );
+  };
+
+  // Launch default mail client for selective recipients
   const handleLaunchMailClient = () => {
-    const emailList = testers.map((t) => t.email).join(",");
+    const targetEmails =
+      selectedEmails.length > 0
+        ? selectedEmails
+        : testers.map((t) => t.email);
+    const emailList = targetEmails.join(",");
     const mailtoUrl = `mailto:${encodeURIComponent(emailList)}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
     window.location.href = mailtoUrl;
   };
 
   // Copy template & recipient emails to clipboard
   const handleCopyEmailDetails = () => {
-    const emailList = testers.map((t) => t.email).join(", ");
+    const targetEmails =
+      selectedEmails.length > 0
+        ? selectedEmails
+        : testers.map((t) => t.email);
+    const emailList = targetEmails.join(", ");
     const textToCopy =
-      `RECIPIENTS:\n${emailList}\n\n` +
+      `RECIPIENTS (${targetEmails.length}):\n${emailList}\n\n` +
       `SUBJECT:\n${emailSubject}\n\n` +
       `BODY:\n${emailBody}`;
 
@@ -130,8 +143,15 @@ export function TestersManager() {
     setTimeout(() => setCopied(false), 2500);
   };
 
-  // Send email via Server API (Nodemailer)
+  // Send email via Server API for selective recipients
   const handleSendViaServer = async () => {
+    const targetEmails =
+      selectedEmails.length > 0
+        ? selectedEmails
+        : testers.map((t) => t.email);
+
+    if (targetEmails.length === 0) return;
+
     setSending(true);
     setSendResult(null);
     try {
@@ -139,7 +159,7 @@ export function TestersManager() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          sendToAll: true,
+          recipients: targetEmails,
           subject: emailSubject,
           messageBody: emailBody,
           templateType,
@@ -149,12 +169,12 @@ export function TestersManager() {
       if (data.success) {
         setSendResult({
           success: true,
-          message: `Successfully sent email to ${data.messageSentCount} playtester(s) via Nodemailer!`,
+          message: `Successfully sent email to ${data.messageSentCount} selected recipient(s)!`,
         });
       } else {
         setSendResult({
           success: false,
-          message: data.error || "Failed to send email via Nodemailer.",
+          message: data.error || "Failed to send email.",
         });
       }
     } catch (err: any) {
@@ -177,12 +197,6 @@ export function TestersManager() {
     return `<div style="font-family: sans-serif; padding: 20px;"><h2>${emailSubject}</h2><p style="white-space: pre-wrap;">${emailBody}</p></div>`;
   };
 
-  const filteredTesters = testers.filter(
-    (t) =>
-      t.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      t.email.toLowerCase().includes(searchTerm.toLowerCase()),
-  );
-
   return (
     <div className="space-y-6">
       {/* Top Banner Stats */}
@@ -190,7 +204,7 @@ export function TestersManager() {
         <div className="p-5 rounded-3xl bg-brand-surface border border-brand-border shadow-md flex items-center justify-between">
           <div>
             <div className="text-xs font-black uppercase text-brand-muted tracking-wider mb-1">
-              Registered Testers
+              Registered Emails
             </div>
             <div className="text-3xl font-black text-brand-text">
               {testers.length}
@@ -204,26 +218,25 @@ export function TestersManager() {
         <div className="p-5 rounded-3xl bg-brand-surface border border-brand-border shadow-md flex items-center justify-between">
           <div>
             <div className="text-xs font-black uppercase text-brand-muted tracking-wider mb-1">
-              Google Play Internal
+              Google Groups Sync
             </div>
             <div className="text-xs font-bold text-emerald-400 flex items-center gap-1">
               <Check className="w-3.5 h-3.5" />
-              <span>CSV Upload Ready</span>
+              <span>Automated Play Access</span>
             </div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-            <FileSpreadsheet className="w-6 h-6" />
+            <ExternalLink className="w-6 h-6" />
           </div>
         </div>
 
         <div className="p-5 rounded-3xl bg-brand-surface border border-brand-border shadow-md flex items-center justify-between">
           <div>
             <div className="text-xs font-black uppercase text-brand-muted tracking-wider mb-1">
-              Email Broadcasts
+              Selected Recipients
             </div>
-            <div className="text-xs font-bold text-party-pink flex items-center gap-1">
-              <Flame className="w-3.5 h-3.5 fill-current" />
-              <span>Nodemailer Engine</span>
+            <div className="text-3xl font-black text-party-pink">
+              {selectedEmails.length}
             </div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-party-pink/15 text-party-pink flex items-center justify-center border border-party-pink/30">
@@ -237,10 +250,10 @@ export function TestersManager() {
         <div>
           <h2 className="text-lg sm:text-xl font-black text-brand-text flex items-center gap-2 uppercase tracking-tight">
             <Users className="w-5 h-5 text-party-orange" />
-            <span>Playtester Roster</span>
+            <span>Playtester Directory</span>
           </h2>
           <p className="text-xs text-brand-muted font-bold">
-            Real-time signup queue from Firestore
+            Real-time subscriber emails from Firestore
           </p>
         </div>
 
@@ -258,23 +271,27 @@ export function TestersManager() {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => setIsEmailModalOpen(true)}
+            onClick={toggleSelectAll}
             disabled={testers.length === 0}
-            className="flex-1 sm:flex-none justify-center font-extrabold border-2 border-party-orange/40 hover:bg-party-orange/10 text-brand-text"
+            className="font-extrabold border-2 border-brand-border"
           >
-            <Mail className="w-4 h-4 mr-1.5 text-party-orange" />
-            <span>Broadcast Email</span>
+            {isAllSelected ? (
+              <CheckSquare className="w-4 h-4 mr-1.5 text-party-orange" />
+            ) : (
+              <Square className="w-4 h-4 mr-1.5" />
+            )}
+            <span>{isAllSelected ? "Deselect All" : "Select All"}</span>
           </Button>
 
           <Button
             variant="primary"
             size="sm"
-            onClick={handleExportPlayConsoleCSV}
-            disabled={testers.length === 0}
+            onClick={() => setIsEmailModalOpen(true)}
+            disabled={testers.length === 0 || selectedEmails.length === 0}
             className="flex-1 sm:flex-none justify-center font-black uppercase shadow-lg shadow-party-orange/20"
           >
-            <FileSpreadsheet className="w-4 h-4 mr-1.5" />
-            <span>Export Play Console CSV</span>
+            <Mail className="w-4 h-4 mr-1.5" />
+            <span>Compose Email ({selectedEmails.length})</span>
           </Button>
         </div>
       </div>
@@ -302,31 +319,49 @@ export function TestersManager() {
         <>
           {/* Mobile Card Stack */}
           <div className="grid grid-cols-1 gap-3 md:hidden">
-            {filteredTesters.map((tester, idx) => (
-              <div
-                key={tester.id || idx}
-                className="p-4 rounded-2xl bg-brand-surface border border-brand-border space-y-2 shadow-sm"
-              >
-                <div className="flex items-center gap-2.5">
-                  <span className="w-9 h-9 rounded-xl bg-linear-to-tr from-party-pink/20 to-party-orange/20 text-brand-text text-xs font-black flex items-center justify-center shrink-0 border border-party-orange/30">
-                    {tester.name.charAt(0).toUpperCase()}
-                  </span>
-                  <span className="font-black text-brand-text text-sm truncate">
-                    {tester.name}
-                  </span>
-                </div>
+            {filteredTesters.map((tester, idx) => {
+              const isSelected = selectedEmails.includes(tester.email);
+              return (
+                <div
+                  key={tester.id || idx}
+                  onClick={() => toggleSelectEmail(tester.email)}
+                  className={`p-4 rounded-2xl border transition-all cursor-pointer space-y-2 shadow-sm ${
+                    isSelected
+                      ? "bg-party-orange/10 border-party-orange"
+                      : "bg-brand-surface border-brand-border"
+                  }`}
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-9 h-9 rounded-xl bg-linear-to-tr from-party-pink/20 to-party-orange/20 text-brand-text text-xs font-black flex items-center justify-center shrink-0 border border-party-orange/30">
+                        {tester.name.charAt(0).toUpperCase()}
+                      </span>
+                      <span className="font-black text-brand-text text-sm truncate">
+                        {tester.name}
+                      </span>
+                    </div>
 
-                <div className="flex items-center gap-1.5 text-xs text-brand-muted font-mono pt-1">
-                  <Mail className="w-3.5 h-3.5 text-party-orange shrink-0" />
-                  <span className="truncate">{tester.email}</span>
-                </div>
+                    <div className="text-party-orange">
+                      {isSelected ? (
+                        <CheckSquare className="w-5 h-5 text-party-orange" />
+                      ) : (
+                        <Square className="w-5 h-5 text-brand-muted" />
+                      )}
+                    </div>
+                  </div>
 
-                <div className="flex items-center gap-1.5 text-xs text-brand-muted font-bold">
-                  <Calendar className="w-3.5 h-3.5 shrink-0" />
-                  <span>{new Date(tester.createdAt).toLocaleString()}</span>
+                  <div className="flex items-center gap-1.5 text-xs text-brand-muted font-mono pt-1">
+                    <Mail className="w-3.5 h-3.5 text-party-orange shrink-0" />
+                    <span className="truncate">{tester.email}</span>
+                  </div>
+
+                  <div className="flex items-center gap-1.5 text-xs text-brand-muted font-bold">
+                    <Calendar className="w-3.5 h-3.5 shrink-0" />
+                    <span>{new Date(tester.createdAt).toLocaleString()}</span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           {/* Desktop Table View */}
@@ -334,41 +369,65 @@ export function TestersManager() {
             <table className="w-full text-left text-sm text-brand-text">
               <thead className="text-xs uppercase bg-brand-bg/80 text-brand-muted border-b border-brand-border font-black tracking-wider">
                 <tr>
+                  <th className="px-4 py-4 w-12 text-center">
+                    <input
+                      type="checkbox"
+                      checked={isAllSelected}
+                      onChange={toggleSelectAll}
+                      className="w-4 h-4 rounded text-party-orange focus:ring-party-orange cursor-pointer"
+                    />
+                  </th>
                   <th className="px-6 py-4">Name</th>
                   <th className="px-6 py-4">Email</th>
                   <th className="px-6 py-4">Signup Date</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-border/60">
-                {filteredTesters.map((tester, idx) => (
-                  <tr
-                    key={tester.id || idx}
-                    className="hover:bg-brand-bg/50 transition-colors"
-                  >
-                    <td className="px-6 py-4 font-black text-brand-text flex items-center gap-3">
-                      <span className="w-8 h-8 rounded-xl bg-linear-to-tr from-party-pink/20 to-party-orange/20 text-brand-text text-xs font-black flex items-center justify-center border border-party-orange/30">
-                        {tester.name.charAt(0).toUpperCase()}
-                      </span>
-                      <span>{tester.name}</span>
-                    </td>
-                    <td className="px-6 py-4 text-brand-muted">
-                      <div className="flex items-center gap-2 font-mono text-xs font-bold">
-                        <Mail className="w-3.5 h-3.5 text-party-orange" />
-                        <span>{tester.email}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 text-brand-muted text-xs font-bold">
-                      {new Date(tester.createdAt).toLocaleString()}
-                    </td>
-                  </tr>
-                ))}
+                {filteredTesters.map((tester, idx) => {
+                  const isSelected = selectedEmails.includes(tester.email);
+                  return (
+                    <tr
+                      key={tester.id || idx}
+                      onClick={() => toggleSelectEmail(tester.email)}
+                      className={`transition-colors cursor-pointer ${
+                        isSelected
+                          ? "bg-party-orange/10"
+                          : "hover:bg-brand-bg/50"
+                      }`}
+                    >
+                      <td className="px-4 py-4 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectEmail(tester.email)}
+                          className="w-4 h-4 rounded text-party-orange focus:ring-party-orange cursor-pointer"
+                        />
+                      </td>
+                      <td className="px-6 py-4 font-black text-brand-text flex items-center gap-3">
+                        <span className="w-8 h-8 rounded-xl bg-linear-to-tr from-party-pink/20 to-party-orange/20 text-brand-text text-xs font-black flex items-center justify-center border border-party-orange/30">
+                          {tester.name.charAt(0).toUpperCase()}
+                        </span>
+                        <span>{tester.name}</span>
+                      </td>
+                      <td className="px-6 py-4 text-brand-muted">
+                        <div className="flex items-center gap-2 font-mono text-xs font-bold">
+                          <Mail className="w-3.5 h-3.5 text-party-orange" />
+                          <span>{tester.email}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 text-brand-muted text-xs font-bold">
+                        {new Date(tester.createdAt).toLocaleString()}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
         </>
       )}
 
-      {/* STATE-OF-THE-ART EMAIL BROADCAST MODAL */}
+      {/* EMAIL BROADCAST MODAL */}
       {isEmailModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-6 bg-black/80 backdrop-blur-md overflow-y-auto">
           <div className="w-full max-w-4xl bg-brand-surface text-brand-text rounded-3xl border-2 border-brand-border shadow-2xl overflow-hidden my-auto max-h-[92vh] flex flex-col">
@@ -383,7 +442,7 @@ export function TestersManager() {
                     Email Broadcast Studio
                   </h3>
                   <p className="text-xs text-brand-muted font-bold">
-                    Targeting {testers.length} registered beta playtesters
+                    Targeting {selectedEmails.length} selected playtester(s)
                   </p>
                 </div>
               </div>
@@ -404,7 +463,6 @@ export function TestersManager() {
                   SELECT EMAIL TEMPLATE TYPE
                 </label>
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  {/* Template 1: Initial Testing Steps */}
                   <button
                     type="button"
                     onClick={() => setTemplateType("tester_steps")}
@@ -417,20 +475,19 @@ export function TestersManager() {
                     <div className="flex items-center justify-between mb-2">
                       <Smartphone className="w-4 h-4 text-party-orange" />
                       <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-party-orange/20 text-party-orange">
-                        STEP 1 & 2
+                        INSTANT
                       </span>
                     </div>
                     <div>
                       <div className="font-black text-xs text-brand-text">
-                        Tester Testing Steps
+                        Testing Steps
                       </div>
                       <div className="text-[10px] text-brand-muted font-bold">
-                        Invite Screenshot & Play Store Links
+                        Google Group &amp; Play Store Links
                       </div>
                     </div>
                   </button>
 
-                  {/* Template 2: Welcome Info Only */}
                   <button
                     type="button"
                     onClick={() => setTemplateType("welcome")}
@@ -443,7 +500,7 @@ export function TestersManager() {
                     <div className="flex items-center justify-between mb-2">
                       <Sparkles className="w-4 h-4 text-party-pink" />
                       <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-party-pink/20 text-party-pink">
-                        NO LINKS
+                        WELCOME
                       </span>
                     </div>
                     <div>
@@ -451,12 +508,11 @@ export function TestersManager() {
                         Welcome Info
                       </div>
                       <div className="text-[10px] text-brand-muted font-bold">
-                        Explains 1-2 hours wait notice
+                        General early access welcome
                       </div>
                     </div>
                   </button>
 
-                  {/* Template 3: Release Build */}
                   <button
                     type="button"
                     onClick={() => setTemplateType("release")}
@@ -474,15 +530,14 @@ export function TestersManager() {
                     </div>
                     <div>
                       <div className="font-black text-xs text-brand-text">
-                        New Release Build
+                        New Build Release
                       </div>
                       <div className="text-[10px] text-brand-muted font-bold">
-                        Changelog & Play Store CTA
+                        Changelog &amp; Play Store CTA
                       </div>
                     </div>
                   </button>
 
-                  {/* Template 4: Feedback Request */}
                   <button
                     type="button"
                     onClick={() => setTemplateType("feedback")}
@@ -503,7 +558,7 @@ export function TestersManager() {
                         Feedback Request
                       </div>
                       <div className="text-[10px] text-brand-muted font-bold">
-                        WhatsApp & Web form links
+                        WhatsApp &amp; Web form links
                       </div>
                     </div>
                   </button>
@@ -542,7 +597,7 @@ export function TestersManager() {
                 <div className="text-[11px] font-bold text-brand-muted hidden sm:block">
                   Recipients:{" "}
                   <span className="text-brand-text font-black">
-                    {testers.length} Separate Emails
+                    {selectedEmails.length} Selected Email(s)
                   </span>
                 </div>
               </div>
@@ -637,11 +692,11 @@ export function TestersManager() {
                   size="sm"
                   onClick={handleSendViaServer}
                   isLoading={sending}
-                  disabled={sending || testers.length === 0}
+                  disabled={sending || selectedEmails.length === 0}
                   className="w-full sm:w-auto font-black uppercase tracking-wider py-3 px-6 shadow-xl shadow-party-orange/25"
                 >
                   <Mail className="w-4 h-4 mr-2" />
-                  <span>Send via Nodemailer Server</span>
+                  <span>Send via Nodemailer ({selectedEmails.length})</span>
                 </Button>
               </div>
             </div>

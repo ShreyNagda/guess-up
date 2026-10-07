@@ -47,7 +47,7 @@ export function FaqSection() {
   return (
     <section
       id="faq"
-      className="py-16 md:py-24 bg-brand-surface transition-colors duration-300"
+      className="py-16 md:py-24 bg-transparent transition-colors duration-300"
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         {/* Section Header with subtle fade-in */}

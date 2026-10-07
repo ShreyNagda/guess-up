@@ -26,7 +26,7 @@ export function HowToPlaySection() {
       icon: <Layers className="w-6 h-6 text-party-pink" />,
       tagline: "Deck Selection",
       badge: "Step 1",
-      color: "border-party-pink/30 bg-party-pink/5",
+      color: "border-party-pink/40 bg-party-pink/10 shadow-party-pink/10",
     },
     {
       id: 2,
@@ -36,7 +36,7 @@ export function HowToPlaySection() {
       icon: <Smartphone className="w-6 h-6 text-party-orange" />,
       tagline: "Forehead Position",
       badge: "Step 2",
-      color: "border-party-orange/30 bg-party-orange/5",
+      color: "border-party-orange/40 bg-party-orange/10 shadow-party-orange/10",
     },
     {
       id: 3,
@@ -46,7 +46,7 @@ export function HowToPlaySection() {
       icon: <Volume2 className="w-6 h-6 text-party-cyan" />,
       tagline: "Shout & Act",
       badge: "Step 3",
-      color: "border-party-cyan/30 bg-party-cyan/5",
+      color: "border-party-cyan/40 bg-party-cyan/10 shadow-party-cyan/10",
     },
     {
       id: 4,
@@ -56,14 +56,14 @@ export function HowToPlaySection() {
       icon: <Joystick className="w-6 h-6 text-[#FFD600]" />,
       tagline: "Tilt & Tap Controls",
       badge: "Step 4",
-      color: "border-[#FFD600]/30 bg-[#FFD600]/5",
+      color: "border-[#FFD600]/40 bg-[#FFD600]/10 shadow-[#FFD600]/10",
     },
   ];
 
   return (
     <section
       id="how-to-play"
-      className="py-16 md:py-24 bg-brand-bg/80 transition-colors duration-300 relative"
+      className="py-16 md:py-24 bg-transparent transition-colors duration-300 relative"
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
@@ -78,17 +78,16 @@ export function HowToPlaySection() {
             <Sparkles className="w-3.5 h-3.5 text-party-cyan" />
             <span>4 STEPS TO TOTAL CHAOS</span>
           </div>
-          <h2 className="text-3xl sm:text-5xl font-black text-brand-text tracking-tight uppercase mb-4">
+          <h2 className="text-3xl sm:text-5xl font-lilita font-black text-brand-text tracking-tight uppercase mb-4">
             How To Play Bujho
           </h2>
           <p className="text-base sm:text-xl text-brand-muted font-bold leading-relaxed">
-            Zero setup, zero rules to learn. Grab a phone, gather your crew, and
-            let the chaos begin!
+            Zero setup, zero rules to learn. Grab a phone, gather your crew, and let the chaos begin!
           </p>
         </motion.div>
 
-        {/* 4-Step Interactive Grid (2x2 layout on mobile for compact height) */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6">
+        {/* 4-Step Interactive Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {steps.map((step, idx) => {
             const isActive = activeStep === step.id;
             return (
@@ -99,30 +98,30 @@ export function HowToPlaySection() {
                 viewport={{ once: true }}
                 transition={{ duration: 0.4, delay: idx * 0.1 }}
                 onClick={() => setActiveStep(step.id)}
-                whileHover={{ y: -6, transition: { duration: 0.1 } }}
-                className={`cursor-pointer p-4 sm:p-6 rounded-2xl sm:rounded-3xl border-2 transition-all duration-300 flex flex-col justify-between ${
+                whileHover={{ y: -6, transition: { duration: 0.15 } }}
+                className={`cursor-pointer p-6 rounded-3xl border-2 transition-all duration-300 flex flex-col justify-between ${
                   isActive
                     ? `${step.color} shadow-xl scale-[1.02]`
-                    : "bg-brand-surface border-brand-border hover:border-brand-border"
+                    : "bg-brand-card/90 backdrop-blur-md border-brand-border hover:border-brand-border"
                 }`}
               >
                 <div>
                   {/* Badge & Icon Header */}
-                  <div className="flex items-center justify-between mb-3 sm:mb-4 gap-1">
-                    <span className="text-[10px] sm:text-xs font-black px-2 py-0.5 sm:px-3 sm:py-1 rounded-lg sm:rounded-xl bg-brand-bg text-brand-text border border-brand-border uppercase">
+                  <div className="flex items-center justify-between mb-4 gap-2">
+                    <span className="text-xs font-black px-3 py-1 rounded-xl bg-brand-surface text-brand-text border border-brand-border uppercase tracking-wider">
                       {step.badge}
                     </span>
-                    <div className="w-8 h-8 sm:w-12 sm:h-12 rounded-xl sm:rounded-2xl bg-brand-surface flex items-center justify-center shadow-xs border border-brand-border shrink-0">
+                    <div className="w-12 h-12 rounded-2xl bg-brand-surface border border-brand-border flex items-center justify-center shadow-xs shrink-0">
                       {step.icon}
                     </div>
                   </div>
 
-                  <h3 className="text-sm sm:text-lg font-lilita font-black text-brand-text mb-1.5 uppercase tracking-tight">
+                  <h3 className="text-lg sm:text-xl font-lilita font-black text-brand-text mb-2 uppercase tracking-tight">
                     {step.title}
                   </h3>
-                  {/* <p className="text-[11px] sm:text-sm text-brand-muted font-bold leading-snug sm:leading-relaxed">
+                  <p className="text-xs sm:text-sm text-brand-muted font-bold leading-relaxed">
                     {step.subtitle}
-                  </p> */}
+                  </p>
                 </div>
               </motion.div>
             );
@@ -132,3 +131,4 @@ export function HowToPlaySection() {
     </section>
   );
 }
+
