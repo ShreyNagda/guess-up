@@ -1,40 +1,40 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { CheckCircle2, ExternalLink, X, Sparkles } from "lucide-react";
+import { CheckCircle2, X, Sparkles } from "lucide-react";
 import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { HowToPlaySection } from "@/components/landing/HowToPlaySection";
 import { DeckShowcaseSection } from "@/components/landing/DeckShowcaseSection";
+import { SocialProofSection } from "@/components/landing/SocialProofSection";
 import { VibeChipStrip } from "@/components/landing/VibeChipStrip";
 import { FaqSection } from "@/components/landing/FaqSection";
-import {
-  TesterOnboardingSection,
-  DEFAULT_PLAY_STORE_URL,
-} from "@/components/landing/TesterOnboardingSection";
+import { EarlyAccessSection } from "@/components/landing/EarlyAccessSection";
+import { ShareSection } from "@/components/landing/ShareSection";
+import { IosWaitlistSection } from "@/components/landing/IosWaitlistSection";
 import { Footer } from "@/components/landing/Footer";
-import { CTAButton } from "@/components/ui/CTAButton";
+import { Button } from "@/components/ui/Button";
 
 export default function LandingPage() {
   const [showMobileBottomBar, setShowMobileBottomBar] = useState(false);
-  const [showSuccessToast, setShowSuccessToast] = useState(false);
-  const [isTesterHighlighted, setIsTesterHighlighted] = useState(false);
-  const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [isEarlyAccessHighlighted, setIsEarlyAccessHighlighted] =
+    useState(false);
+  const toastTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     const handleScroll = () => {
-      const section = document.getElementById("tester-onboarding");
-      let isTesterSectionVisible = false;
+      const section = document.getElementById("early-access");
+      let isEarlyAccessVisible = false;
 
       if (section) {
         const rect = section.getBoundingClientRect();
-        // Section is in view or almost in view
-        isTesterSectionVisible =
+        // Hide if early access section is in viewport
+        isEarlyAccessVisible =
           rect.top < window.innerHeight - 80 && rect.bottom > 80;
       }
 
-      // Show floating bar only when scrolled past hero and tester section isn't already taking over
-      if (window.scrollY > 300 && !isTesterSectionVisible) {
+      if (window.scrollY > 300 && !isEarlyAccessVisible) {
         setShowMobileBottomBar(true);
       } else {
         setShowMobileBottomBar(false);
@@ -45,95 +45,95 @@ export default function LandingPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const scrollToTesterSection = () => {
-    const section = document.getElementById("tester-onboarding");
+  const triggerToast = (msg: string) => {
+    setToastMessage(msg);
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 4000);
+  };
+
+  const scrollToEarlyAccess = () => {
+    const section = document.getElementById("early-access");
     if (section) {
       section.scrollIntoView({ behavior: "smooth" });
-      setIsTesterHighlighted(true);
-      if (highlightTimeoutRef.current)
-        clearTimeout(highlightTimeoutRef.current);
-      highlightTimeoutRef.current = setTimeout(() => {
-        setIsTesterHighlighted(false);
+      setIsEarlyAccessHighlighted(true);
+      setTimeout(() => {
+        setIsEarlyAccessHighlighted(false);
       }, 2000);
     }
   };
 
-  const handleConfirmTesterFlow = () => {
-    setShowSuccessToast(true);
-  };
-
   return (
     <main className="relative z-10 min-h-screen bg-transparent text-brand-text transition-colors duration-300 pb-20 md:pb-0">
-      {/* 1. NAV (Thin, sticky, with in-page smooth navigation anchors) */}
-      <Navbar onOpenTesterModal={scrollToTesterSection} />
+      {/* 1. NAVBAR (sticky) */}
+      <Navbar onOpenEarlyAccess={scrollToEarlyAccess} />
 
-      {/* 2. HERO */}
-      <HeroSection onCtaClick={scrollToTesterSection} />
+      {/* 2. HERO — MARKETING FIRST */}
+      <HeroSection onCtaClick={scrollToEarlyAccess} />
 
-      {/* 3. HOW TO PLAY (Visual 4-step cards) */}
+      {/* 3. HOW IT PLAYS */}
       <HowToPlaySection />
 
-      {/* 4. DECKS SHOWCASE */}
+      {/* 4. DECK PREVIEW */}
       <DeckShowcaseSection />
 
-      {/* 5. VIBE CHIP STRIP (Marquee) */}
+      {/* 5. SOCIAL PROOF BLOCK (3 columns: Testimonials, Cities, Founder Note) */}
+      <SocialProofSection />
+
+      {/* 6. FEATURE MARQUEE */}
       <VibeChipStrip />
 
-      {/* 6. FAQ SECTION */}
+      {/* 7. FAQ (EXPANDED ACCORDION) */}
       <FaqSection />
 
-      {/* 7. ZERO-FRICTION IN-PAGE TESTER ONBOARDING SECTION */}
-      <TesterOnboardingSection
-        onConfirm={handleConfirmTesterFlow}
-        isHighlighted={isTesterHighlighted}
+      {/* 8. EARLY ACCESS SECTION (id="early-access") — THE FUNNEL */}
+      <EarlyAccessSection
+        onToastMessage={triggerToast}
+        isHighlighted={isEarlyAccessHighlighted}
       />
 
-      {/* 8. FOOTER */}
+      {/* 9. SHARE / RECRUITMENT BLOCK */}
+      <ShareSection onToastMessage={triggerToast} />
+
+      {/* 10. iOS WAITLIST SECTION */}
+      <IosWaitlistSection />
+
+      {/* 11. FOOTER */}
       <Footer />
 
-      {/* Success Toast Notification after enrolling */}
-      {showSuccessToast && (
+      {/* Dynamic Toast Feedback Notification */}
+      {toastMessage && (
         <div className="fixed bottom-20 md:bottom-6 right-4 left-4 sm:left-auto sm:max-w-md z-50 p-4 rounded-2xl bg-brand-surface border-2 border-emerald-500/40 text-brand-text shadow-2xl flex items-center justify-between gap-3 animate-in slide-in-from-bottom duration-300 font-manrope">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/40">
-              <CheckCircle2 className="w-6 h-6 text-emerald-400" />
+              <Sparkles className="w-5 h-5 text-emerald-400" />
             </div>
-            <div>
-              <div className="font-extrabold text-xs sm:text-sm text-brand-text flex items-center gap-1.5">
-                <span>You&apos;re Whitelisted! 🎉</span>
-                <Sparkles className="w-3.5 h-3.5 text-party-orange" />
-              </div>
-              <a
-                href={DEFAULT_PLAY_STORE_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs font-bold text-party-orange hover:underline inline-flex items-center gap-1 mt-0.5"
-              >
-                <span>Tap here to open on Google Play Store</span>
-                <ExternalLink className="w-3.5 h-3.5" />
-              </a>
+            <div className="text-xs sm:text-sm font-extrabold text-brand-text">
+              {toastMessage}
             </div>
           </div>
           <button
-            onClick={() => setShowSuccessToast(false)}
+            onClick={() => setToastMessage(null)}
             className="p-1 text-brand-muted hover:text-brand-text rounded-lg cursor-pointer"
-            aria-label="Dismiss toast"
+            aria-label="Dismiss notification"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
       )}
 
-      {/* Floating Bottom Quick CTA Bar for Mobile (auto-hides when tester section is in view) */}
+      {/* Floating Bottom Quick CTA Bar for Mobile */}
       {showMobileBottomBar && (
         <div className="md:hidden fixed bottom-0 left-0 right-0 z-40 p-2.5 bg-brand-surface/95 backdrop-blur-xl border-t border-brand-border shadow-[0_-10px_25px_rgba(0,0,0,0.3)] transition-all animate-in slide-in-from-bottom duration-300 flex justify-center">
-          <CTAButton
-            onClick={scrollToTesterSection}
+          <Button
+            variant="primary"
             size="md"
-            className="w-full justify-center shadow-lg"
+            onClick={scrollToEarlyAccess}
+            className="w-full justify-center shadow-lg font-lilita"
           >
-            Let the chaos begin ▶
-          </CTAButton>
+            <span>Get Early Access ▶</span>
+          </Button>
         </div>
       )}
     </main>

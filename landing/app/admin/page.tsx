@@ -80,7 +80,7 @@ export default function AdminPage() {
               priority
             />
             <div>
-              <h1 className="font-black text-brand-text text-base sm:text-lg tracking-tight uppercase leading-tight">
+              <h1 className="font-lilita text-brand-text text-lg sm:text-2xl tracking-tight uppercase leading-tight">
                 Bujho Admin
               </h1>
             </div>

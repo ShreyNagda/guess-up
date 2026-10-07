@@ -4,90 +4,113 @@ import Link from "next/link";
 import { Navbar } from "@/components/landing/Navbar";
 import { Footer } from "@/components/landing/Footer";
 import {
+  FileText,
   ShieldCheck,
-  UserX,
   Smartphone,
-  HardDrive,
-  Cloud,
+  Sparkles,
+  Users,
+  AlertCircle,
   Mail,
   ArrowLeft,
   CheckCircle2,
-  Lock,
+  HardDrive,
+  Scale,
 } from "lucide-react";
 
 export const metadata: Metadata = {
-  title: "Privacy Policy | Bujho - Motion Charades & Party Game",
+  title: "Terms of Use | Bujho — The Desi Charades Game",
   description:
-    "Bujho Privacy Policy. We collect zero personal data, process motion sensors strictly on-device, and require no account registration for party charades.",
+    "Bujho Terms of Use. Transparent terms for playing our motion charades party game, forehead tilt safety, and offline play guidelines.",
   keywords: [
-    "Bujho Privacy Policy",
-    "Bujho Game",
-    "No Data Collection Party App",
-    "Motion Charades Privacy",
-    "Privacy First Party Game",
+    "Bujho Terms of Use",
+    "Bujho Game Rules",
+    "Party Charades Terms",
+    "Motion Charades Safety",
+    "Desi Party App Terms",
   ],
 };
 
-export default function PrivacyPage() {
-  const policySections = [
+export default function TermsPage() {
+  const highlights = [
     {
-      id: "no-data",
-      icon: <UserX className="w-6 h-6 text-brand-primary" />,
-      title: "1. No Account or Personal Data Collection",
-      content:
-        "Bujho does not require any registration, email address, phone number, or personal user account. We do not track, collect, sell, or rent your personal identifiable information to third parties.",
+      label: "Completely Free",
+      value: "Zero Ads / Zero Fees",
+      icon: <Sparkles className="w-4 h-4 text-brand-primary" />,
     },
     {
-      id: "motion-sensors",
-      icon: <Smartphone className="w-6 h-6 text-brand-primary" />,
-      title: "2. Motion Sensors & Forehead Tilt",
-      content:
-        "The game utilizes your device's built-in accelerometer and gyroscope strictly for real-time forehead tilt controls (tilting down for Correct, tilting up to Pass). Sensor data is computed locally on your device and is never stored or transmitted anywhere.",
+      label: "Safety First",
+      value: "Play Responsibly",
+      icon: <AlertCircle className="w-4 h-4 text-party-orange" />,
     },
     {
-      id: "local-storage",
-      icon: <HardDrive className="w-6 h-6 text-brand-primary" />,
-      title: "3. Local Storage Preferences",
-      content:
-        "Game settings (such as music, sound effects, haptics, tilt sensitivity, and custom deck data) are stored locally on your device using encrypted key-value storage. Clearing app data or uninstalling the app will clear these local preferences.",
+      label: "Offline & Local",
+      value: "No Account Required",
+      icon: <HardDrive className="w-4 h-4 text-emerald-500" />,
     },
     {
-      id: "cloud-categories",
-      icon: <Cloud className="w-6 h-6 text-brand-primary" />,
-      title: "4. Cloud Categories & Data Access",
-      content:
-        "Pre-built game categories are retrieved anonymously from secure cloud storage. No telemetry or user device identifiers are attached to these category fetch requests.",
-    },
-    {
-      id: "contact-us",
-      icon: <Mail className="w-6 h-6 text-brand-primary" />,
-      title: "5. Contact Us",
-      content:
-        "If you have any questions or feedback regarding this Privacy Policy, feel free to reach out at:",
-      email: "shreynagda2714@gmail.com",
+      label: "Fair Usage",
+      value: "For Fun With Friends",
+      icon: <Users className="w-4 h-4 text-party-cyan" />,
     },
   ];
 
-  const highlights = [
+  const termsSections = [
     {
-      label: "Personal Data Collected",
-      value: "None (0 Bytes)",
-      icon: <Lock className="w-4 h-4 text-emerald-500" />,
+      id: "acceptance",
+      icon: <Scale className="w-6 h-6 text-brand-primary" />,
+      title: "1. Acceptance of Terms",
+      content:
+        "By downloading, installing, or playing Bujho, you agree to these Terms of Use. If you do not agree with any part of these terms, please do not use or install the game.",
     },
     {
-      label: "Account Registration",
-      value: "Not Required",
-      icon: <CheckCircle2 className="w-4 h-4 text-emerald-500" />,
+      id: "license",
+      icon: <CheckCircle2 className="w-6 h-6 text-brand-primary" />,
+      title: "2. Personal License to Play",
+      content:
+        "We grant you a non-exclusive, non-transferable, revocable license to install and play Bujho on your personal Android or iOS device for personal, non-commercial entertainment with family and friends.",
     },
     {
-      label: "Motion Sensor Data",
-      value: "100% On-Device",
-      icon: <Smartphone className="w-4 h-4 text-amber-500" />,
+      id: "motion-safety",
+      icon: <Smartphone className="w-6 h-6 text-brand-primary" />,
+      title: "3. Motion Sensors & Physical Safety Notice",
+      content:
+        "Bujho utilizes device motion tilt sensors for gameplay (placing the phone on your forehead and tilting to score or pass). You are responsible for holding your phone securely and being mindful of your physical environment, nearby people, and obstacles while playing. Bujho is not liable for device drops, damage, or accidental bumps during energetic gameplay.",
     },
     {
-      label: "Third-Party Ad Tracking",
-      value: "Zero Ads / Zero Trackers",
-      icon: <ShieldCheck className="w-4 h-4 text-emerald-500" />,
+      id: "offline-data",
+      icon: <HardDrive className="w-6 h-6 text-brand-primary" />,
+      title: "4. Offline Gameplay & Device Storage",
+      content:
+        "Bujho does not require account creation, login credentials, or constant internet connectivity. Game settings and preferences are stored locally on your device. You may uninstall the game at any time to remove locally stored app data.",
+    },
+    {
+      id: "custom-decks",
+      icon: <Users className="w-6 h-6 text-brand-primary" />,
+      title: "5. User Conduct & Custom Content",
+      content:
+        "When using features like custom deck creation or naming teams, you agree not to input content that is unlawful, defamatory, hateful, or abusive. Custom decks created on your device remain stored locally under your own control.",
+    },
+    {
+      id: "ip",
+      icon: <ShieldCheck className="w-6 h-6 text-brand-primary" />,
+      title: "6. Intellectual Property & Cultural Tribute",
+      content:
+        "All visual branding, logos, sound effects, animations, and software code of Bujho are protected intellectual property. Cultural trivia terms, film titles, celebrity names, and song references featured in category decks are used in good faith under fair use for social trivia, parody, and entertainment purposes.",
+    },
+    {
+      id: "liability",
+      icon: <AlertCircle className="w-6 h-6 text-brand-primary" />,
+      title: "7. Disclaimer of Warranties",
+      content:
+        "Bujho is provided 'AS IS' and 'AS AVAILABLE' without warranties of any kind. While we strive to deliver a smooth, bug-free, 60fps experience, we do not warrant that gameplay will be uninterrupted on all hardware configurations.",
+    },
+    {
+      id: "contact",
+      icon: <Mail className="w-6 h-6 text-brand-primary" />,
+      title: "8. Questions & Contact",
+      content:
+        "If you have any questions or feedback regarding these Terms of Use, please reach out to us directly:",
+      email: "shreynagda2714@gmail.com",
     },
   ];
 
@@ -100,7 +123,7 @@ export default function PrivacyPage() {
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-xs sm:text-sm font-extrabold text-brand-muted hover:text-brand-text transition-colors mb-6 group"
-          id="privacy-back-home-link"
+          id="terms-back-home-link"
         >
           <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" />
           <span>Back to Home</span>
@@ -112,11 +135,11 @@ export default function PrivacyPage() {
 
           {/* Squircle Icon Badge */}
           <div className="inline-flex items-center justify-center p-4 mb-4 rounded-2xl bg-brand-primary/15 border-2 border-brand-primary/30 shadow-md">
-            <ShieldCheck className="w-10 h-10 text-brand-primary" />
+            <FileText className="w-10 h-10 text-brand-primary" />
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-lilita font-black text-brand-text tracking-tight mb-2 uppercase">
-            Your Privacy Matters
+            Terms of Use
           </h1>
 
           <p className="text-xs sm:text-sm font-semibold text-brand-muted uppercase tracking-widest mb-4">
@@ -124,12 +147,12 @@ export default function PrivacyPage() {
           </p>
 
           <p className="text-sm sm:text-base text-brand-text font-medium max-w-2xl mx-auto leading-relaxed">
-            Bujho is designed to bring people together for fun party games
-            without compromising your privacy or personal data.
+            Simple, transparent guidelines for playing Bujho with your squad,
+            understanding forehead tilt safety, and enjoying offline games.
           </p>
         </div>
 
-        {/* Privacy Highlights Grid */}
+        {/* Highlights Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 mb-10">
           {highlights.map((h, i) => (
             <div
@@ -149,9 +172,9 @@ export default function PrivacyPage() {
           ))}
         </div>
 
-        {/* Policy Sections */}
+        {/* Terms Sections */}
         <div className="space-y-4">
-          {policySections.map((section) => (
+          {termsSections.map((section) => (
             <article
               key={section.id}
               id={section.id}

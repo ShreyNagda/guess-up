@@ -38,7 +38,7 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(
               error
                 ? "border-brand-pass ring-2 ring-brand-pass/20"
                 : "focus:border-brand-primary"
-            } rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-primary/30 transition-all text-base placeholder-brand-muted shadow-xs font-medium ${className}`}
+            } rounded-2xl focus:outline-none focus:ring-2 focus:ring-brand-primary/30 transition-all text-base placeholder:text-brand-muted shadow-xs font-medium ${className}`}
             {...props}
           />
         </div>

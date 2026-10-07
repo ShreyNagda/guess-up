@@ -57,18 +57,18 @@
 .dark,
 [data-theme="dark"] {
   color-scheme: dark;
-  --bg-primary: #0b0813;
-  --bg-surface: #141024;
-  --bg-card: #1a152e;
+  --bg-primary: #0d0d12;
+  --bg-surface: #15141b;
+  --bg-card: #1c1b23;
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
-  --border-color: rgba(255, 255, 255, 0.14);
+  --border-color: rgba(255, 255, 255, 0.12);
   --primary-accent: #ffd600;
   --primary-hover: #ffe033;
   --primary-shadow: #ccab00;
   --primary-text: #0f172a;
-  --btn-secondary-bg: #1a152e;
-  --btn-secondary-hover: #231c3d;
+  --btn-secondary-bg: #1c1b23;
+  --btn-secondary-hover: #24232c;
   --btn-3d-shadow: rgba(0, 0, 0, 0.6);
 }
 

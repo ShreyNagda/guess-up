@@ -35,12 +35,9 @@ export function Button({
   };
 
   const variantStyles = {
-    primary:
-      "bg-brand-primary text-[var(--primary-text)] hover:bg-brand-primary-hover border border-[var(--primary-text)]/20 shadow-[0_6px_0_0_var(--primary-shadow)] hover:shadow-[0_8px_0_0_var(--primary-shadow)] active:shadow-[0_2px_0_0_var(--primary-shadow)]",
-    secondary:
-      "bg-brand-surface text-brand-text hover:bg-brand-card border border-brand-border shadow-[0_4px_0_0_var(--btn-3d-shadow)] hover:shadow-[0_6px_0_0_var(--btn-3d-shadow)] active:shadow-[0_2px_0_0_var(--btn-3d-shadow)]",
-    outline:
-      "bg-transparent border-2 border-brand-border text-brand-text hover:bg-brand-surface/60 shadow-[0_4px_0_0_var(--btn-3d-shadow)] hover:shadow-[0_6px_0_0_var(--btn-3d-shadow)] active:shadow-[0_2px_0_0_var(--btn-3d-shadow)]",
+    primary: "btn-theme-primary",
+    secondary: "btn-theme-secondary",
+    outline: "btn-theme-outline",
     ghost:
       "bg-transparent text-brand-text hover:bg-brand-surface/40 shadow-none border-none tracking-normal font-bold lowercase capitalize",
   };

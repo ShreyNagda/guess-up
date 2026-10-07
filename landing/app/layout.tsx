@@ -3,6 +3,7 @@ import { Manrope, Lilita_One } from "next/font/google";
 import "./globals.css";
 import { ArcadeBackground } from "@/components/ui/ArcadeBackground";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { SITE_URL } from "@/lib/config";
 
 const manrope = Manrope({
   subsets: ["latin"],
@@ -18,13 +19,11 @@ const lilitaOne = Lilita_One({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://bujho.vercel.app";
-
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: "Bujho - The Desi Charades Game | Ad-Free Party Game",
+  metadataBase: new URL(SITE_URL),
+  title: "Bujho — The Desi Charades Game",
   description:
-    "The desi charades game. Phone on forehead. Friends act out clues. Tilt to score. 50+ desi decks. Ad-free. Offline. Free on Android.",
+    "Phone on forehead. Friends screaming. Tilt to score. Get early access before public launch.",
   applicationName: "Bujho",
   keywords: [
     "Bujho",
@@ -48,18 +47,20 @@ export const metadata: Metadata = {
     apple: "/images/bujho-splash-icon.png",
   },
   alternates: {
-    canonical: siteUrl,
+    canonical: SITE_URL,
   },
   openGraph: {
-    title: "Bujho - The Desi Charades Game",
+    title: "Bujho — The Desi Charades Game",
     description:
-      "Phone on forehead. Friends screaming clues. Tilt to score. Zero ads. Zero Wi-Fi. 50+ desi decks.",
-    url: siteUrl,
+      "Phone on forehead. Friends screaming. Tilt to score. Get early access before public launch.",
+    url: SITE_URL,
     siteName: "Bujho",
     images: [
       {
-        url: `${siteUrl}/og-image.png`,
-        alt: "Bujho - The Desi Charades Game",
+        url: `${SITE_URL}/opengraph-image`,
+        width: 1200,
+        height: 630,
+        alt: "Bujho — The Desi Charades Game | Get Early Access",
       },
     ],
     locale: "en_IN",
@@ -67,9 +68,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bujho - The Desi Charades Game",
-    description: "Phone on forehead. Friends screaming clues. Tilt to score.",
-    images: [`${siteUrl}/og-image.png`],
+    title: "Bujho — The Desi Charades Game",
+    description:
+      "Phone on forehead. Friends screaming. Tilt to score. Get early access before public launch.",
+    images: [`${SITE_URL}/opengraph-image`],
   },
   robots: {
     index: true,
@@ -84,7 +86,7 @@ export const viewport: Viewport = {
   userScalable: false,
   themeColor: [
     { media: "(prefers-color-scheme: light)", color: "#F4F6FC" },
-    { media: "(prefers-color-scheme: dark)", color: "#0E0C1C" },
+    { media: "(prefers-color-scheme: dark)", color: "#0D0D12" },
   ],
 };
 
@@ -92,12 +94,12 @@ const jsonLdApp = {
   "@context": "https://schema.org",
   "@type": "MobileApplication",
   name: "Bujho",
-  alternateName: "Bujho - The Desi Charades Game",
+  alternateName: "Bujho — The Desi Charades Game",
   description:
     "The desi charades party game. Phone on forehead, friends act out clues, tilt to score.",
   applicationCategory: "GameApplication",
   operatingSystem: "Android",
-  offers: { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+  offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
 };
 
 export default function RootLayout({
@@ -130,4 +132,3 @@ export default function RootLayout({
     </html>
   );
 }
-

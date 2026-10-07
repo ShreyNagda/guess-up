@@ -81,7 +81,7 @@ export function ArcadeBackground() {
       ctx.clearRect(0, 0, width, height);
 
       // 1. Base Arcade Deep Canvas Color
-      const bgColor = isDark ? "#0E0C1C" : "#F4F6FC";
+      const bgColor = isDark ? "#0D0D12" : "#F8FAF9";
       ctx.fillStyle = bgColor;
       ctx.fillRect(0, 0, width, height);
 

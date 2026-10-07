@@ -388,11 +388,11 @@ export function DecksManager() {
 
       {/* Create / Edit Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-fade-in">
-          <div className="relative w-full max-w-xl bg-[#17132e] border border-indigo-500/30 rounded-3xl p-6 sm:p-8 text-white shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-fade-in">
+          <div className="relative w-full max-w-xl bg-brand-surface border border-brand-border rounded-3xl p-6 sm:p-8 text-brand-text shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
             {/* Modal Header */}
-            <div className="flex items-center justify-between pb-4 border-b border-indigo-500/20">
-              <h3 className="text-lg font-black tracking-wide text-white flex items-center gap-2">
+            <div className="flex items-center justify-between pb-4 border-b border-brand-border">
+              <h3 className="text-lg font-black tracking-wide text-brand-text flex items-center gap-2">
                 <span>
                   {editingDeck ? "Edit Firebase Deck" : "Create New Deck"}
                 </span>
@@ -400,7 +400,7 @@ export function DecksManager() {
               <button
                 type="button"
                 onClick={() => setIsModalOpen(false)}
-                className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white/70 hover:text-white hover:bg-white/20 transition-colors"
+                className="w-8 h-8 rounded-full bg-brand-bg border border-brand-border flex items-center justify-center text-brand-muted hover:text-brand-text transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -414,7 +414,7 @@ export function DecksManager() {
               {/* Name & Icon Row */}
               <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                 <div className="sm:col-span-3">
-                  <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-400 mb-1.5">
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-brand-muted mb-1.5">
                     DECK NAME (name) *
                   </label>
                   <Input
@@ -426,21 +426,21 @@ export function DecksManager() {
                 </div>
 
                 <div>
-                  <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-400 mb-1.5">
+                  <label className="block text-[11px] font-black uppercase tracking-wider text-brand-muted mb-1.5">
                     ICON (icon)
                   </label>
                   <input
                     type="text"
                     value={icon}
                     onChange={(e) => setIcon(e.target.value)}
-                    className="w-full px-3 py-2.5 rounded-xl bg-[#252044] border border-indigo-500/20 text-white font-bold text-center text-xl focus:outline-none"
+                    className="w-full px-3 py-2.5 rounded-xl bg-brand-bg border border-brand-border text-brand-text font-bold text-center text-xl focus:outline-none"
                   />
                 </div>
               </div>
 
               {/* Emoji Picker Presets */}
               <div>
-                <label className="block text-[10px] font-bold uppercase tracking-wider text-neutral-400 mb-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-brand-muted mb-1.5">
                   PRESET ICONS
                 </label>
                 <div className="flex flex-wrap gap-1.5">
@@ -449,10 +449,10 @@ export function DecksManager() {
                       key={e}
                       type="button"
                       onClick={() => setIcon(e)}
-                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-base transition-transform active:scale-95 ${
+                      className={`w-8 h-8 rounded-lg flex items-center justify-center text-base transition-transform active:scale-95 cursor-pointer ${
                         icon === e
-                          ? "bg-amber-400 text-black shadow-md scale-105"
-                          : "bg-[#252044] hover:bg-white/10 text-white border border-white/10"
+                          ? "bg-brand-primary text-brand-text shadow-md scale-105"
+                          : "bg-brand-bg hover:bg-brand-surface text-brand-text border border-brand-border"
                       }`}
                     >
                       {e}
@@ -463,7 +463,7 @@ export function DecksManager() {
 
               {/* Description */}
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-400 mb-1.5">
+                <label className="block text-[11px] font-black uppercase tracking-wider text-brand-muted mb-1.5">
                   DESCRIPTION (description)
                 </label>
                 <textarea
@@ -471,17 +471,17 @@ export function DecksManager() {
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="From batting masterclasses to deadly yorkers—guess legendary..."
-                  className="w-full px-4 py-3 rounded-xl bg-[#252044] border border-indigo-500/20 text-white font-medium text-xs focus:outline-none leading-relaxed"
+                  className="w-full px-4 py-3 rounded-xl bg-brand-bg border border-brand-border text-brand-text font-medium text-xs focus:outline-none leading-relaxed"
                 />
               </div>
 
               {/* Custom Gradient Picker */}
-              <div className="p-4 rounded-2xl bg-[#252044]/60 border border-indigo-500/20 space-y-3">
+              <div className="p-4 rounded-2xl bg-brand-bg/60 border border-brand-border space-y-3">
                 <div className="flex items-center justify-between">
-                  <label className="text-[11px] font-black uppercase tracking-wider text-neutral-300">
+                  <label className="text-[11px] font-black uppercase tracking-wider text-brand-text">
                     DECK CARD GRADIENT (gradient)
                   </label>
-                  <span className="text-[10px] text-amber-400 font-bold font-mono">
+                  <span className="text-[10px] text-brand-primary font-bold font-mono">
                     {gradientStart} → {gradientEnd}
                   </span>
                 </div>
@@ -503,10 +503,10 @@ export function DecksManager() {
                 {/* Hex Inputs + Color Pickers */}
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-brand-muted block mb-1">
                       Start Color
                     </span>
-                    <div className="flex items-center gap-2 bg-[#1b1735] border border-indigo-500/20 rounded-xl p-1.5">
+                    <div className="flex items-center gap-2 bg-brand-surface border border-brand-border rounded-xl p-1.5">
                       <input
                         type="color"
                         value={
@@ -523,16 +523,16 @@ export function DecksManager() {
                         type="text"
                         value={gradientStart}
                         onChange={(e) => setGradientStart(e.target.value)}
-                        className="w-full bg-transparent text-white font-mono text-xs uppercase focus:outline-none"
+                        className="w-full bg-transparent text-brand-text font-mono text-xs uppercase focus:outline-none"
                       />
                     </div>
                   </div>
 
                   <div>
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-brand-muted block mb-1">
                       End Color
                     </span>
-                    <div className="flex items-center gap-2 bg-[#1b1735] border border-indigo-500/20 rounded-xl p-1.5">
+                    <div className="flex items-center gap-2 bg-brand-surface border border-brand-border rounded-xl p-1.5">
                       <input
                         type="color"
                         value={
@@ -547,7 +547,7 @@ export function DecksManager() {
                         type="text"
                         value={gradientEnd}
                         onChange={(e) => setGradientEnd(e.target.value)}
-                        className="w-full bg-transparent text-white font-mono text-xs uppercase focus:outline-none"
+                        className="w-full bg-transparent text-brand-text font-mono text-xs uppercase focus:outline-none"
                       />
                     </div>
                   </div>
@@ -555,7 +555,7 @@ export function DecksManager() {
 
                 {/* Preset Gradient Chips */}
                 <div>
-                  <span className="text-[10px] font-bold uppercase tracking-wider text-neutral-400 block mb-1.5">
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-brand-muted block mb-1.5">
                     PRESET GRADIENTS
                   </span>
                   <div className="flex flex-wrap gap-1.5">
@@ -569,8 +569,8 @@ export function DecksManager() {
                         }}
                         className={`h-6 px-2 rounded-lg border flex items-center gap-1 transition-all active:scale-95 cursor-pointer ${
                           gradientStart === p[0] && gradientEnd === p[1]
-                            ? "border-amber-400 ring-2 ring-amber-400/50 scale-105"
-                            : "border-white/10 hover:border-white/30 opacity-80 hover:opacity-100"
+                            ? "border-brand-primary ring-2 ring-brand-primary/50 scale-105"
+                            : "border-brand-border hover:border-brand-muted opacity-80 hover:opacity-100"
                         }`}
                         style={{
                           background: `linear-gradient(135deg, ${p[0]}, ${p[1]})`,
@@ -587,7 +587,7 @@ export function DecksManager() {
 
               {/* Sort Order */}
               <div>
-                <label className="block text-[11px] font-black uppercase tracking-wider text-neutral-400 mb-1.5">
+                <label className="block text-[11px] font-black uppercase tracking-wider text-brand-muted mb-1.5">
                   SORT ORDER (sortOrder)
                 </label>
                 <Input
@@ -600,8 +600,8 @@ export function DecksManager() {
 
               {/* Status Toggles: Active & Trending */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#252044] border border-indigo-500/20">
-                  <span className="font-black text-xs uppercase tracking-wider text-white">
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-brand-bg border border-brand-border">
+                  <span className="font-black text-xs uppercase tracking-wider text-brand-text">
                     isAvailable
                   </span>
                   <button
@@ -609,16 +609,16 @@ export function DecksManager() {
                     onClick={() => setIsAvailable(!isAvailable)}
                     className={`w-12 h-6 rounded-full transition-colors p-1 flex items-center cursor-pointer ${
                       isAvailable
-                        ? "bg-amber-400 justify-end"
-                        : "bg-neutral-700 justify-start"
+                        ? "bg-brand-primary justify-end"
+                        : "bg-brand-surface border border-brand-border justify-start"
                     }`}
                   >
-                    <div className="w-4 h-4 rounded-full bg-black shadow-md" />
+                    <div className="w-4 h-4 rounded-full bg-brand-text shadow-md" />
                   </button>
                 </div>
 
-                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-[#252044] border border-indigo-500/20">
-                  <span className="font-black text-xs uppercase tracking-wider text-white">
+                <div className="flex items-center justify-between p-3.5 rounded-2xl bg-brand-bg border border-brand-border">
+                  <span className="font-black text-xs uppercase tracking-wider text-brand-text">
                     isTrending
                   </span>
                   <button
@@ -626,11 +626,11 @@ export function DecksManager() {
                     onClick={() => setIsTrending(!isTrending)}
                     className={`w-12 h-6 rounded-full transition-colors p-1 flex items-center cursor-pointer ${
                       isTrending
-                        ? "bg-amber-400 justify-end"
-                        : "bg-neutral-700 justify-start"
+                        ? "bg-brand-primary justify-end"
+                        : "bg-brand-surface border border-brand-border justify-start"
                     }`}
                   >
-                    <div className="w-4 h-4 rounded-full bg-black shadow-md" />
+                    <div className="w-4 h-4 rounded-full bg-brand-text shadow-md" />
                   </button>
                 </div>
               </div>
@@ -638,10 +638,10 @@ export function DecksManager() {
               {/* Words List Textarea with Count Badge */}
               <div>
                 <div className="flex items-center justify-between mb-1.5">
-                  <label className="text-[11px] font-black uppercase tracking-wider text-neutral-400">
+                  <label className="text-[11px] font-black uppercase tracking-wider text-brand-muted">
                     WORDS (words / wordsCount: {parsedWordsCount})
                   </label>
-                  <span className="text-[10px] text-neutral-400 font-medium">
+                  <span className="text-[10px] text-brand-muted font-medium">
                     Comma-separated list
                   </span>
                 </div>
@@ -650,18 +650,18 @@ export function DecksManager() {
                   value={wordsInput}
                   onChange={(e) => setWordsInput(e.target.value)}
                   placeholder="Sachin Tendulkar, Virat Kohli, MS Dhoni, Jasprit Bumrah..."
-                  className="w-full px-4 py-3 rounded-xl bg-[#252044] border border-indigo-500/20 text-white font-mono text-xs focus:outline-none leading-relaxed"
+                  className="w-full px-4 py-3 rounded-xl bg-brand-bg border border-brand-border text-brand-text font-mono text-xs focus:outline-none leading-relaxed"
                 />
               </div>
 
               {/* Actions: Cancel & Save */}
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-indigo-500/20">
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-brand-border">
                 <Button
                   variant="ghost"
                   size="sm"
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="text-neutral-400 hover:text-white"
+                  className="text-brand-muted hover:text-brand-text"
                 >
                   Cancel
                 </Button>

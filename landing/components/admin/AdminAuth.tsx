@@ -79,7 +79,7 @@ export function AdminAuth({ onAuthenticated }: AdminAuthProps) {
             className="w-12 h-12 sm:w-14 sm:h-14 mx-auto mb-3 rounded-2xl object-contain border border-brand-border shadow-md"
             priority
           />
-          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-brand-text uppercase">
+          <h1 className="text-2xl sm:text-3xl font-lilita font-black tracking-tight text-brand-text uppercase">
             Bujho Admin Login
           </h1>
           <p className="text-xs font-medium text-brand-muted mt-1">

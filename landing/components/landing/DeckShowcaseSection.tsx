@@ -79,7 +79,7 @@ export function DeckShowcaseSection() {
 
         {/* Footer line below grid */}
         <p className="font-manrope text-sm sm:text-base text-brand-muted font-bold tracking-wide">
-          Showing 5+ in the app, others under development.
+          More decks drop during early access.
         </p>
       </div>
     </section>
