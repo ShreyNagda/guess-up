@@ -1,3 +1,4 @@
+export const GOOGLE_GROUP_URL = "https://groups.google.com/g/bujho-testers";
 export const PLAY_STORE_TESTING_URL =
   "https://play.google.com/apps/testing/com.shreynagda.guess_up";
 export const PLAY_STORE_APP_URL =
@@ -104,6 +105,8 @@ export function getEmailFooterHtml(): string {
       <div style="margin-bottom: 16px; font-size: 13px; letter-spacing: 0.3px;">
         <a href="${siteUrl}" class="email-link">Website</a>
         <span class="email-muted" style="padding: 0 10px;">·</span>
+        <a href="${GOOGLE_GROUP_URL}" class="email-link">Google Group</a>
+        <span class="email-muted" style="padding: 0 10px;">·</span>
         <a href="${feedbackUrl}" class="email-link">Submit Feedback</a>
         <span class="email-muted" style="padding: 0 10px;">·</span>
         <a href="${PLAY_STORE_TESTING_URL}" class="email-link">Google Play Beta</a>
@@ -132,6 +135,7 @@ export function getEmailFooterText(): string {
 --------------------------------------------------
 💬 REACH OUT FOR FEEDBACK:
 • WhatsApp Chat Direct: ${whatsappUrl}
+• Google Group: ${GOOGLE_GROUP_URL}
 • Web Feedback Form: ${feedbackUrl}
 • Official Website: ${siteUrl}
 
@@ -141,8 +145,8 @@ Handcrafted for house parties & game nights.
 }
 
 /**
- * Initial Signup Welcome Email (WITHOUT ANY STEPS OR LINKS)
- * Welcomes tester and explains to wait 1-2 hours for testing access email.
+ * Initial Signup Welcome Email
+ * Explains Google Group requirement and Play Store access steps.
  */
 export function getWelcomeEmailHtml(name: string): string {
   const cleanName = name.trim() || "Playtester";
@@ -156,7 +160,7 @@ export function getWelcomeEmailHtml(name: string): string {
 
           ${getBrandHeader()}
 
-          <!-- Welcome Card WITHOUT links or steps -->
+          <!-- Welcome Card -->
           <div class="email-card" style="padding: 32px 28px; border-radius: 24px; margin-bottom: 20px; text-align: center;">
             <div style="font-size: 48px; margin-bottom: 12px;">🎉</div>
             <h1 class="email-heading" style="font-size: 26px; font-weight: 900; line-height: 1.3; margin: 0 0 16px 0;">
@@ -166,17 +170,22 @@ export function getWelcomeEmailHtml(name: string): string {
               Thank you for registering for early beta access to <strong>Bujho - The Desi Charades Game</strong>!
             </p>
 
-            <div class="email-step-box" style="padding: 20px; border-radius: 18px; margin: 20px 0; border: 2px dashed #FF6B00; text-align: left;">
+            <div class="email-step-box" style="padding: 20px; border-radius: 18px; margin: 20px 0; border: 2px solid #FF6B00; text-align: left;">
               <div style="font-size: 14px; font-weight: 800; color: #FF6B00; margin-bottom: 8px; text-transform: uppercase;">
-                ⏳ What happens next?
+                ⚠️ Important: Unlock Google Play Access
               </div>
-              <p class="email-text" style="font-size: 14px; line-height: 1.6; margin: 0;">
-                Our team is preparing your Play Store testing account access. Please <strong>wait for 1-2 hours</strong>. An email with the complete initial steps and access links will be sent out to you shortly!
+              <p class="email-text" style="font-size: 14px; line-height: 1.6; margin: 0 0 14px 0;">
+                Because Bujho is in private testing, Google requires you to join our official Google Group before allowing you to download. Without joining the group, Google Play will display a <strong>"Not allowed / Content not found"</strong> error.
               </p>
+              <div style="text-align: center;">
+                <a href="${GOOGLE_GROUP_URL}" target="_blank" style="display: inline-block; background-color: #FF6B00; color: #FFFFFF; font-weight: 900; font-size: 13px; text-transform: uppercase; padding: 12px 24px; border-radius: 12px; text-decoration: none;">
+                  1. Join Google Group (Takes 5s) →
+                </a>
+              </div>
             </div>
 
             <p class="email-muted" style="font-size: 13px; line-height: 1.6; margin: 0;">
-              Get ready for 100% ad-free party charades, motion tilt sensing, and wild pop-culture decks!
+              Once joined, you can download Bujho directly on the Google Play Store!
             </p>
           </div>
 
@@ -188,24 +197,28 @@ export function getWelcomeEmailHtml(name: string): string {
 }
 
 /**
- * Initial Signup Welcome Email Plain Text (WITHOUT LINKS OR STEPS)
+ * Initial Signup Welcome Email Plain Text
  */
 export function getWelcomeEmailText(name: string = "Playtester"): string {
   return (
     `Hi ${name},\n\n` +
     `Welcome to Bujho - The Desi Charades Game! 🎉\n\n` +
-    `Thank you for registering for early beta access. Our team is preparing your Play Store testing account access.\n\n` +
-    `⏳ WHAT HAPPENS NEXT?\n` +
-    `Please wait for 1-2 hours. An email with the complete initial steps and access links will be sent out to you shortly!\n\n` +
-    `Get ready for 100% ad-free charades with your squad.\n\n` +
+    `Thank you for registering for early beta access.\n\n` +
+    `⚠️ HOW TO UNLOCK GOOGLE PLAY ACCESS:\n` +
+    `Because Bujho is in private Google Play Closed Testing, you MUST join our Google Group first:\n` +
+    `👉 Join here: ${GOOGLE_GROUP_URL}\n\n` +
+    `*NOTE: If you skip joining the group, Google Play will show "Not allowed" or "Content not found".*\n\n` +
+    `Once you tap "Join group", open the Play Store testing link:\n` +
+    `${PLAY_STORE_TESTING_URL}\n\n` +
     `Cheers,\nThe Bujho Team\n` +
     getEmailFooterText()
   );
 }
 
 /**
- * NEW EMAIL TEMPLATE: Initial Testing Steps Email
- * Contains step-by-step instructions, accept invite link, Play Store screenshot, & Play Store install link.
+ * Testing Steps Email: Explicit 2-Step Flow
+ * Step 1: Join Google Group (Mandatory to prevent "Not allowed / Content not found")
+ * Step 2: Accept Invite & Download on Play Store
  */
 export function getTesterStepsEmailHtml(name: string = "Playtester"): string {
   const cleanName = name.trim() || "Playtester";
@@ -227,47 +240,57 @@ export function getTesterStepsEmailHtml(name: string = "Playtester"): string {
               Your Testing Access is Ready, ${cleanName}! 🚀
             </h1>
             <p class="email-text" style="font-size: 15px; line-height: 1.65; margin: 0;">
-              Follow the 2 simple steps below to join the Android beta program and install Bujho directly from the Google Play Store!
+              Follow the 2 simple steps below to join the Android beta program and install Bujho directly from Google Play Store!
             </p>
           </div>
 
-          <!-- STEP 1 CARD WITH SCREENSHOT -->
+          <!-- CRUCIAL NOTICE CALLOUT (PREVENTS 404 / CONTENT NOT FOUND) -->
+          <div style="background-color: #FEF3C7; border: 2px solid #F59E0B; border-radius: 20px; padding: 20px; margin-bottom: 20px;">
+            <div style="font-weight: 900; color: #B45309; font-size: 14px; text-transform: uppercase; margin-bottom: 6px;">
+              ⚠️ Crucial: Complete Step 1 First!
+            </div>
+            <p style="color: #92400E; font-size: 13px; line-height: 1.6; margin: 0;">
+              Google Play strictly restricts private beta testing to registered Google Group members. If you skip Step 1 and go straight to Google Play, Google will display an error: <strong>"Not allowed"</strong> or <strong>"Content not found / A testing version isn't available"</strong>.
+            </p>
+          </div>
+
+          <!-- STEP 1 CARD (MANDATORY GOOGLE GROUP) -->
           <div class="email-card" style="padding: 28px; border-radius: 24px; margin-bottom: 20px;">
             <div style="margin-bottom: 12px;">
-              <span style="background-color: #FF6B00; color: #FFFFFF; font-weight: 900; font-size: 12px; padding: 4px 10px; border-radius: 8px; margin-right: 8px; text-transform: uppercase;">STEP 1</span>
-              <strong class="email-heading" style="font-size: 17px;">Accept Google Play Beta Invitation</strong>
+              <span style="background-color: #FF6B00; color: #FFFFFF; font-weight: 900; font-size: 12px; padding: 4px 10px; border-radius: 8px; margin-right: 8px; text-transform: uppercase;">STEP 1 (REQUIRED)</span>
+              <strong class="email-heading" style="font-size: 17px;">Join Official Google Group</strong>
             </div>
 
             <p class="email-text" style="font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
-              Open the web link below in your mobile browser and tap the green <strong>"BECOME A TESTER"</strong> button:
+              Click below to open our Google Group with your Google account and tap <strong style="color: #FF6B00;">"Join group"</strong>. This grants your Google account permission to download the game.
             </p>
 
-            <!-- Play Store Web Page Screenshot Visual -->
-            <div style="margin: 16px 0; text-align: center; border-radius: 16px; overflow: hidden; border: 2px solid #E2E8F0;">
-              <img src="${screenshotUrl}" alt="Google Play Accept Invite Screenshot" style="width: 100%; max-width: 100%; height: auto; display: block;" />
-            </div>
-
             <div style="text-align: center; margin-top: 18px;">
-              <a href="${PLAY_STORE_TESTING_URL}" target="_blank" style="display: inline-block; background-color: #FF6B00; color: #FFFFFF; font-weight: 900; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; padding: 14px 28px; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 14px rgba(255, 107, 0, 0.3);">
-                👉 Step 1: Tap Here to Accept Invite
+              <a href="${GOOGLE_GROUP_URL}" target="_blank" style="display: inline-block; background-color: #FF6B00; color: #FFFFFF; font-weight: 900; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; padding: 14px 28px; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 14px rgba(255, 107, 0, 0.3);">
+                👉 Step 1: Join Google Group (Takes 5s)
               </a>
             </div>
           </div>
 
-          <!-- STEP 2 CARD -->
+          <!-- STEP 2 CARD WITH SCREENSHOT -->
           <div class="email-card" style="padding: 28px; border-radius: 24px; margin-bottom: 20px;">
             <div style="margin-bottom: 12px;">
               <span style="background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 12px; padding: 4px 10px; border-radius: 8px; margin-right: 8px; text-transform: uppercase;">STEP 2</span>
-              <strong class="email-heading" style="font-size: 17px;">Install App from Google Play Store</strong>
+              <strong class="email-heading" style="font-size: 17px;">Download on Google Play Store</strong>
             </div>
 
             <p class="email-text" style="font-size: 14px; line-height: 1.6; margin: 0 0 16px 0;">
-              Once you have accepted the invitation, click below to open the official Play Store app listing and tap <strong>Install</strong>:
+              Once you have joined the group, click the button below to open the Play Store invite. On that page, tap the blue <strong style="color: #2563EB;">"BECOME A TESTER"</strong> button (shown below), then download the app!
             </p>
 
-            <div style="text-align: center;">
-              <a href="${PLAY_STORE_APP_URL}" target="_blank" style="display: inline-block; background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; padding: 14px 28px; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 14px rgba(34, 197, 94, 0.3);">
-                📲 Step 2: Download Bujho on Play Store
+            <!-- Play Store Screenshot Visual -->
+            <div style="margin: 16px 0; text-align: center; border-radius: 16px; overflow: hidden; border: 2px solid #E2E8F0;">
+              <img src="${screenshotUrl}" alt="Google Play Accept Invite Screenshot Preview" style="width: 100%; max-width: 100%; height: auto; display: block;" />
+            </div>
+
+            <div style="text-align: center; margin-top: 18px;">
+              <a href="${PLAY_STORE_TESTING_URL}" target="_blank" style="display: inline-block; background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; padding: 14px 28px; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 14px rgba(34, 197, 94, 0.3);">
+                📲 Step 2: Open Play Store Beta 🚀
               </a>
             </div>
           </div>
@@ -285,15 +308,17 @@ export function getTesterStepsEmailHtml(name: string = "Playtester"): string {
 export function getTesterStepsEmailText(name: string = "Playtester"): string {
   return (
     `Hi ${name},\n\n` +
-    `Your Bujho Android Beta testing access is now active! 🚀\n\n` +
-    `📱 2 SIMPLE STEPS TO INSTALL ON YOUR PHONE:\n\n` +
-    `STEP 1: Accept the Google Play Web Invitation:\n` +
+    `Your Bujho Android Beta testing access is now ready! 🚀\n\n` +
+    `⚠️ CRUCIAL REQUIREMENT:\n` +
+    `Google Play requires you to join our official Google Group first. If you skip Step 1, Google Play will display "Not allowed" or "Content not found".\n\n` +
+    `📱 2 SIMPLE STEPS TO INSTALL:\n\n` +
+    `STEP 1 (REQUIRED): Join the Official Google Group:\n` +
+    `${GOOGLE_GROUP_URL}\n` +
+    `-> Tap "Join group" with your Google account.\n\n` +
+    `STEP 2: Accept Invite & Download on Google Play:\n` +
     `${PLAY_STORE_TESTING_URL}\n` +
-    `-> Tap "BECOME A TESTER" on the webpage.\n\n` +
-    `STEP 2: Download directly from Play Store app:\n` +
-    `${PLAY_STORE_APP_URL}\n` +
-    `-> Open in Play Store to install Bujho!\n\n` +
-    `💬 HAVE QUESTIONS OR FEEDBACK?\n` +
+    `-> Tap "BECOME A TESTER", then install Bujho!\n\n` +
+    `💬 HAVE QUESTIONS OR NEED HELP?\n` +
     `Reach out to us directly on WhatsApp: ${getWhatsAppUrl()}\n\n` +
     `Cheers,\nThe Bujho Team\n` +
     getEmailFooterText()
@@ -336,10 +361,14 @@ export function getReleaseEmailHtml(customNotes?: string): string {
               <div class="email-text" style="font-size: 14px; line-height: 1.65; white-space: pre-wrap;">${notesContent}</div>
             </div>
 
-            <div style="text-align: center;">
+            <div style="text-align: center; margin-bottom: 16px;">
               <a href="${PLAY_STORE_APP_URL}" style="display: inline-block; background-color: #22C55E; color: #FFFFFF; font-weight: 900; font-size: 13px; letter-spacing: 0.5px; text-transform: uppercase; padding: 12px 24px; border-radius: 14px; text-decoration: none; box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);">
                 📲 Update / Install on Play Store
               </a>
+            </div>
+
+            <div style="padding: 12px; background-color: #FEF3C7; border-radius: 12px; font-size: 12px; color: #92400E; text-align: center;">
+              💡 Seeing "Not allowed" or "Content not found"? Make sure you're in the Google Group: <a href="${GOOGLE_GROUP_URL}" style="color: #B45309; font-weight: 800;">Join Group</a>
             </div>
           </div>
 
@@ -363,8 +392,9 @@ export function getReleaseEmailText(): string {
     `• Instant 9:16 Instagram Story victory scorecard sharing\n` +
     `• Performance & battery usage optimizations\n\n` +
     `📱 HOW TO UPDATE / INSTALL ON PHONE:\n` +
-    `1. Accept Web Beta Invite: ${PLAY_STORE_TESTING_URL}\n` +
-    `2. Open Play Store App: ${PLAY_STORE_APP_URL}\n\n` +
+    `1. Make sure you joined the Google Group: ${GOOGLE_GROUP_URL}\n` +
+    `2. Open Play Store: ${PLAY_STORE_APP_URL}\n\n` +
+    `*(If you see "Not allowed / Content not found", ensure you are in the Google Group above!)*\n\n` +
     `💬 HAVE FEEDBACK OR BUG REPORTS?\n` +
     `Reach out directly on WhatsApp: ${getWhatsAppUrl()}\n\n` +
     `Happy Charades,\nThe Bujho Team\n` +

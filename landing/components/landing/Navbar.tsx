@@ -17,6 +17,13 @@ export function Navbar({ onOpenTesterModal }: NavbarProps) {
     }
   };
 
+  const scrollToSection = (id: string) => {
+    const element = document.getElementById(id);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full bg-brand-surface/90 backdrop-blur-md border-b border-brand-border transition-colors duration-300 py-2.5">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 h-12 flex items-center justify-between gap-4">
@@ -35,6 +42,31 @@ export function Navbar({ onOpenTesterModal }: NavbarProps) {
           </span>
         </Link>
 
+        {/* Center: In-Page Quick Navigation (hidden on mobile, visible on md+) */}
+        <nav className="hidden md:flex items-center gap-6 font-manrope font-bold text-xs uppercase tracking-wider text-brand-muted">
+          <button
+            type="button"
+            onClick={() => scrollToSection("how-to-play")}
+            className="hover:text-brand-text transition-colors cursor-pointer"
+          >
+            How to Play
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollToSection("decks")}
+            className="hover:text-brand-text transition-colors cursor-pointer"
+          >
+            Decks
+          </button>
+          <button
+            type="button"
+            onClick={() => scrollToSection("faq")}
+            className="hover:text-brand-text transition-colors cursor-pointer"
+          >
+            FAQ
+          </button>
+        </nav>
+
         {/* Right: Theme Toggle + Get the App CTA */}
         <div className="flex items-center gap-3 shrink-0">
           <ThemeToggle />
@@ -44,11 +76,10 @@ export function Navbar({ onOpenTesterModal }: NavbarProps) {
             onClick={handleCta}
             className="font-lilita font-black text-xs sm:text-sm uppercase tracking-wider px-4 py-2"
           >
-            <span>Get the App</span>
+            <span>Get the Game</span>
           </Button>
         </div>
       </div>
     </header>
   );
 }
-

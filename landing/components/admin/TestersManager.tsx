@@ -20,6 +20,7 @@ import {
   Check,
   Smartphone,
   ExternalLink,
+  AlertTriangle,
 } from "lucide-react";
 import { Button } from "../ui/Button";
 import { Input } from "../ui/Input";
@@ -52,6 +53,7 @@ export function TestersManager() {
   const [activeTab, setActiveTab] = useState<"editor" | "preview">("editor");
 
   const [copied, setCopied] = useState(false);
+  const [copiedCsv, setCopiedCsv] = useState(false);
   const [sending, setSending] = useState(false);
   const [sendResult, setSendResult] = useState<{
     success: boolean;
@@ -74,10 +76,14 @@ export function TestersManager() {
   // Update default subject and body based on template choice
   useEffect(() => {
     if (templateType === "welcome") {
-      setEmailSubject("🎉 Welcome to Bujho Priority Early Access!");
+      setEmailSubject(
+        "🎉 Welcome to Bujho! Step 1: Join Google Group for Beta Access",
+      );
       setEmailBody(getWelcomeEmailText());
     } else if (templateType === "tester_steps") {
-      setEmailSubject("🚀 Your Bujho Testing Access is Ready - Follow 2 Steps");
+      setEmailSubject(
+        "🚀 Action Required: Join Google Group to Unlock Bujho Play Store Beta",
+      );
       setEmailBody(getTesterStepsEmailText());
     } else if (templateType === "release") {
       setEmailSubject("🚀 New Bujho Beta Build Live on Google Play!");
@@ -118,9 +124,7 @@ export function TestersManager() {
   // Launch default mail client for selective recipients
   const handleLaunchMailClient = () => {
     const targetEmails =
-      selectedEmails.length > 0
-        ? selectedEmails
-        : testers.map((t) => t.email);
+      selectedEmails.length > 0 ? selectedEmails : testers.map((t) => t.email);
     const emailList = targetEmails.join(",");
     const mailtoUrl = `mailto:${encodeURIComponent(emailList)}?subject=${encodeURIComponent(emailSubject)}&body=${encodeURIComponent(emailBody)}`;
     window.location.href = mailtoUrl;
@@ -129,9 +133,7 @@ export function TestersManager() {
   // Copy template & recipient emails to clipboard
   const handleCopyEmailDetails = () => {
     const targetEmails =
-      selectedEmails.length > 0
-        ? selectedEmails
-        : testers.map((t) => t.email);
+      selectedEmails.length > 0 ? selectedEmails : testers.map((t) => t.email);
     const emailList = targetEmails.join(", ");
     const textToCopy =
       `RECIPIENTS (${targetEmails.length}):\n${emailList}\n\n` +
@@ -143,12 +145,18 @@ export function TestersManager() {
     setTimeout(() => setCopied(false), 2500);
   };
 
+  // Copy CSV for Google Play Console email list upload
+  const handleCopyCsv = () => {
+    const emailList = testers.map((t) => t.email).join(", ");
+    navigator.clipboard.writeText(emailList);
+    setCopiedCsv(true);
+    setTimeout(() => setCopiedCsv(false), 2200);
+  };
+
   // Send email via Server API for selective recipients
   const handleSendViaServer = async () => {
     const targetEmails =
-      selectedEmails.length > 0
-        ? selectedEmails
-        : testers.map((t) => t.email);
+      selectedEmails.length > 0 ? selectedEmails : testers.map((t) => t.email);
 
     if (targetEmails.length === 0) return;
 
@@ -201,6 +209,7 @@ export function TestersManager() {
     <div className="space-y-6">
       {/* Top Banner Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        {/* Stat 1: Registered Emails */}
         <div className="p-5 rounded-3xl bg-brand-surface border border-brand-border shadow-md flex items-center justify-between">
           <div>
             <div className="text-xs font-black uppercase text-brand-muted tracking-wider mb-1">
@@ -209,27 +218,40 @@ export function TestersManager() {
             <div className="text-3xl font-black text-brand-text">
               {testers.length}
             </div>
+            <div className="text-[11px] text-brand-muted font-bold mt-1">
+              Collected from landing page
+            </div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-party-orange/15 text-party-orange flex items-center justify-center border border-party-orange/30">
             <Users className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="p-5 rounded-3xl bg-brand-surface border border-brand-border shadow-md flex items-center justify-between">
+        {/* Stat 2: Google Groups Access Status */}
+        <a
+          href="https://groups.google.com/g/bujho-testers/members"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="p-5 rounded-3xl bg-brand-surface border border-brand-border shadow-md flex items-center justify-between hover:border-party-orange transition-colors group cursor-pointer"
+        >
           <div>
-            <div className="text-xs font-black uppercase text-brand-muted tracking-wider mb-1">
-              Google Groups Sync
+            <div className="text-xs font-black uppercase text-brand-muted tracking-wider mb-1 flex items-center gap-1.5">
+              <span>Google Group Access</span>
+              <ExternalLink className="w-3 h-3 text-brand-muted group-hover:text-party-orange transition-colors" />
             </div>
-            <div className="text-xs font-bold text-emerald-400 flex items-center gap-1">
-              <Check className="w-3.5 h-3.5" />
-              <span>Automated Play Access</span>
+            <div className="text-xs font-bold text-amber-500 flex items-center gap-1">
+              <span>Required for Beta Access</span>
+            </div>
+            <div className="text-[11px] text-brand-muted font-mono mt-1">
+              bujho-testers@googlegroups.com
             </div>
           </div>
-          <div className="w-12 h-12 rounded-2xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center border border-emerald-500/30">
-            <ExternalLink className="w-6 h-6" />
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/15 text-amber-500 flex items-center justify-center border border-amber-500/30 group-hover:scale-105 transition-transform">
+            <Users className="w-6 h-6" />
           </div>
-        </div>
+        </a>
 
+        {/* Stat 3: Selected Recipients */}
         <div className="p-5 rounded-3xl bg-brand-surface border border-brand-border shadow-md flex items-center justify-between">
           <div>
             <div className="text-xs font-black uppercase text-brand-muted tracking-wider mb-1">
@@ -238,9 +260,57 @@ export function TestersManager() {
             <div className="text-3xl font-black text-party-pink">
               {selectedEmails.length}
             </div>
+            <div className="text-[11px] text-brand-muted font-bold mt-1">
+              Ready for email broadcast
+            </div>
           </div>
           <div className="w-12 h-12 rounded-2xl bg-party-pink/15 text-party-pink flex items-center justify-center border border-party-pink/30">
             <Mail className="w-6 h-6" />
+          </div>
+        </div>
+      </div>
+
+      {/* CLOSED TESTING ARCHITECTURE NOTICE */}
+      <div className="p-4 sm:p-5 rounded-2xl bg-amber-500/10 border-2 border-amber-500/40 flex items-start gap-3.5 text-xs shadow-xs">
+        <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
+        <div className="space-y-1.5">
+          <p className="font-extrabold text-amber-500 uppercase tracking-wide">
+            Google Play Closed Testing Rule: Non-members see &quot;Not allowed /
+            Content not found&quot;
+          </p>
+          <p className="text-brand-muted leading-relaxed font-medium">
+            Google Play strictly requires testers to be verified members of the{" "}
+            <strong className="text-brand-text">bujho-testers</strong> Google
+            Group. If a user opens the Play Store link without joining the group
+            first, Google Play will display an error:{" "}
+            <strong className="text-amber-400">&quot;Not allowed&quot;</strong>{" "}
+            or{" "}
+            <strong className="text-amber-400">
+              &quot;Content not found / A testing version isn&apos;t
+              available&quot;
+            </strong>
+            .
+          </p>
+          <div className="flex flex-wrap items-center gap-3 pt-1 text-[11px] font-bold">
+            <a
+              href="https://groups.google.com/g/bujho-testers/members"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-party-orange hover:underline inline-flex items-center gap-1"
+            >
+              <span>Manage Google Group Members Console</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
+            <span className="text-brand-muted">·</span>
+            <a
+              href="https://play.google.com/console"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-party-orange hover:underline inline-flex items-center gap-1"
+            >
+              <span>Google Play Console</span>
+              <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
         </div>
       </div>
@@ -264,6 +334,7 @@ export function TestersManager() {
             onClick={fetchTesters}
             disabled={loading}
             className="shrink-0"
+            title="Refresh list"
           >
             <RefreshCw className={`w-4 h-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
@@ -281,6 +352,24 @@ export function TestersManager() {
               <Square className="w-4 h-4 mr-1.5" />
             )}
             <span>{isAllSelected ? "Deselect All" : "Select All"}</span>
+          </Button>
+
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopyCsv}
+            disabled={testers.length === 0}
+            className="font-extrabold border-2 border-brand-border"
+            title="Copy all emails as comma-separated text to paste directly into Play Console Email List"
+          >
+            {copiedCsv ? (
+              <Check className="w-4 h-4 mr-1.5 text-emerald-400" />
+            ) : (
+              <FileSpreadsheet className="w-4 h-4 mr-1.5 text-party-cyan" />
+            )}
+            <span>
+              {copiedCsv ? "Copied CSV!" : "Copy CSV for Play Console"}
+            </span>
           </Button>
 
           <Button
@@ -475,7 +564,7 @@ export function TestersManager() {
                     <div className="flex items-center justify-between mb-2">
                       <Smartphone className="w-4 h-4 text-party-orange" />
                       <span className="text-[9px] font-black uppercase px-2 py-0.5 rounded-full bg-party-orange/20 text-party-orange">
-                        INSTANT
+                        2-STEP FLOW
                       </span>
                     </div>
                     <div>
@@ -483,7 +572,7 @@ export function TestersManager() {
                         Testing Steps
                       </div>
                       <div className="text-[10px] text-brand-muted font-bold">
-                        Google Group &amp; Play Store Links
+                        Google Group + Play Store Links
                       </div>
                     </div>
                   </button>
@@ -508,7 +597,7 @@ export function TestersManager() {
                         Welcome Info
                       </div>
                       <div className="text-[10px] text-brand-muted font-bold">
-                        General early access welcome
+                        Group Link &amp; Early Access
                       </div>
                     </div>
                   </button>
