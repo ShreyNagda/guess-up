@@ -45,7 +45,7 @@ export default function LandingPage() {
       <HowToPlaySection />
       <DeckShowcaseSection />
       <BentoFeatures />
-      <TestimonialsSection />
+      {/*<TestimonialsSection />*/}
       <FaqSection />
       <WaitlistForm ref={waitlistRef} />
       <Footer />
