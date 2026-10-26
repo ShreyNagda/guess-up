@@ -236,98 +236,210 @@ class ScorecardCard extends StatelessWidget {
                       const SizedBox(height: 18),
 
                       // Side-by-side Scores Standings Box
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF161C2B),
-                          borderRadius: BorderRadius.circular(24),
-                          border: Border.all(
-                            color: Colors.white.withAlpha(51),
-                            width: 1.5,
-                          ),
-                        ),
-                        child: Row(
-                          children: [
-                            // Cyan Team Box
-                            Expanded(
-                              child: Column(
+                        Builder(
+                          builder: (context) {
+                            final isCyanWinner = teamCyanScore > teamMagentaScore;
+                            final isMagentaWinner = teamMagentaScore > teamCyanScore;
+
+                            return Container(
+                              padding: const EdgeInsets.all(16),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF161C2B),
+                                borderRadius: BorderRadius.circular(24),
+                                border: Border.all(
+                                  color: (isCyanWinner
+                                          ? AppTheme.teamAColor
+                                          : (isMagentaWinner
+                                              ? AppTheme.teamBColor
+                                              : Colors.white))
+                                      .withAlpha(120),
+                                  width: 2.0,
+                                ),
+                              ),
+                              child: Row(
                                 children: [
-                                  Text(
-                                    '$teamCyanEmoji $teamCyanName',
-                                    style: TextStyle(
-                                      color: AppTheme.teamAColor,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 13,
+                                  // Cyan Team Box
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                        horizontal: 6,
+                                      ),
+                                      decoration: isCyanWinner
+                                          ? BoxDecoration(
+                                              color: AppTheme.teamAColor
+                                                  .withAlpha(35),
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              border: Border.all(
+                                                color: AppTheme.teamAColor
+                                                    .withAlpha(160),
+                                                width: 1.5,
+                                              ),
+                                            )
+                                          : null,
+                                      child: Column(
+                                        children: [
+                                          if (isCyanWinner)
+                                            Container(
+                                              margin: const EdgeInsets.only(
+                                                bottom: 4,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.teamAColor,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: const Text(
+                                                '👑 WINNER',
+                                                style: TextStyle(
+                                                  color: Colors.black,
+                                                  fontWeight: FontWeight.w900,
+                                                  fontSize: 9,
+                                                  letterSpacing: 0.8,
+                                                ),
+                                              ),
+                                            ),
+                                          Text(
+                                            '$teamCyanEmoji $teamCyanName',
+                                            style: TextStyle(
+                                              color: isCyanWinner
+                                                  ? AppTheme.teamAColor
+                                                  : Colors.white70,
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: isCyanWinner ? 13 : 12,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '$teamCyanScore',
+                                            style: TextStyle(
+                                              color: isCyanWinner
+                                                  ? AppTheme.teamAColor
+                                                  : Colors.white,
+                                              fontSize: isCyanWinner ? 36 : 28,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                          Text(
+                                            'POINTS',
+                                            style: TextStyle(
+                                              color: isCyanWinner
+                                                  ? AppTheme.teamAColor
+                                                  : Colors.white.withAlpha(180),
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 1.5,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
-                                    textAlign: TextAlign.center,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '$teamCyanScore',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.w900,
-                                    ),
+                                  Container(
+                                    width: 1,
+                                    height: 50,
+                                    color: Colors.white.withAlpha(77),
                                   ),
-                                  Text(
-                                    'POINTS',
-                                    style: TextStyle(
-                                      color: Colors.white.withAlpha(217),
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 1.5,
+                                  // Magenta Team Box
+                                  Expanded(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 8,
+                                        horizontal: 6,
+                                      ),
+                                      decoration: isMagentaWinner
+                                          ? BoxDecoration(
+                                              color: AppTheme.teamBColor
+                                                  .withAlpha(35),
+                                              borderRadius:
+                                                  BorderRadius.circular(16),
+                                              border: Border.all(
+                                                color: AppTheme.teamBColor
+                                                    .withAlpha(160),
+                                                width: 1.5,
+                                              ),
+                                            )
+                                          : null,
+                                      child: Column(
+                                        children: [
+                                          if (isMagentaWinner)
+                                            Container(
+                                              margin: const EdgeInsets.only(
+                                                bottom: 4,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 8,
+                                                    vertical: 2,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color: AppTheme.teamBColor,
+                                                borderRadius:
+                                                    BorderRadius.circular(8),
+                                              ),
+                                              child: const Text(
+                                                '👑 WINNER',
+                                                style: TextStyle(
+                                                  color: Colors.white,
+                                                  fontWeight: FontWeight.w900,
+                                                  fontSize: 9,
+                                                  letterSpacing: 0.8,
+                                                ),
+                                              ),
+                                            ),
+                                          Text(
+                                            '$teamMagentaEmoji $teamMagentaName',
+                                            style: TextStyle(
+                                              color: isMagentaWinner
+                                                  ? AppTheme.teamBColor
+                                                  : Colors.white70,
+                                              fontWeight: FontWeight.w900,
+                                              fontSize: isMagentaWinner ? 13 : 12,
+                                            ),
+                                            textAlign: TextAlign.center,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            '$teamMagentaScore',
+                                            style: TextStyle(
+                                              color: isMagentaWinner
+                                                  ? AppTheme.teamBColor
+                                                  : Colors.white,
+                                              fontSize: isMagentaWinner ? 36 : 28,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                          ),
+                                          Text(
+                                            'POINTS',
+                                            style: TextStyle(
+                                              color: isMagentaWinner
+                                                  ? AppTheme.teamBColor
+                                                  : Colors.white.withAlpha(180),
+                                              fontSize: 9,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 1.5,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
                                     ),
                                   ),
                                 ],
                               ),
-                            ),
-                            Container(
-                              width: 1,
-                              height: 50,
-                              color: Colors.white.withAlpha(77),
-                            ),
-                            // Magenta Team Box
-                            Expanded(
-                              child: Column(
-                                children: [
-                                  Text(
-                                    '$teamMagentaEmoji $teamMagentaName',
-                                    style: TextStyle(
-                                      color: AppTheme.teamBColor,
-                                      fontWeight: FontWeight.w900,
-                                      fontSize: 13,
-                                    ),
-                                    textAlign: TextAlign.center,
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    '$teamMagentaScore',
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 32,
-                                      fontWeight: FontWeight.w900,
-                                    ),
-                                  ),
-                                  Text(
-                                    'POINTS',
-                                    style: TextStyle(
-                                      color: Colors.white.withAlpha(217),
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w900,
-                                      letterSpacing: 1.5,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                            );
+                          },
                         ),
-                      ),
                     ],
                   ),
                 ] else ...[
@@ -565,10 +677,10 @@ class ScorecardCard extends StatelessWidget {
   }
 
   static String _getScoreTagline(int score) {
-    if (score >= 40) return "LEGEND STATUS 👑";
-    if (score >= 25) return "PARTY STARTERS 🔥";
-    if (score >= 15) return "CHARADES PROS ⚡";
-    if (score >= 5) return "WARMUP MODE ☕";
-    return "NEEDS PRACTICE 🦥";
+    if (score >= 15) return "CHARADES MASTER 👑";
+    if (score >= 10) return "PARTY LEGEND 🔥";
+    if (score >= 6) return "SHARP GUESSER ⚡";
+    if (score >= 3) return "NICE TRY! 🎯";
+    return "WARM UP ROUND ☕";
   }
 }

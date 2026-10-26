@@ -40,9 +40,14 @@ export function DeckShowcaseSection() {
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 text-center">
         {/* Header (font-lilita) */}
-        <h2 className="font-lilita text-4xl sm:text-6xl text-brand-text uppercase tracking-tight mb-12">
-          Zero boring words.
-        </h2>
+        <div className="mb-12">
+          <div className="inline-block px-4 py-1.5 rounded-full bg-brand-primary/10 border border-brand-primary/30 text-brand-primary font-lilita text-xs tracking-wider uppercase mb-3">
+            8 Hand-Crafted Decks
+          </div>
+          <h2 className="font-lilita text-4xl sm:text-6xl text-brand-text uppercase tracking-tight">
+            Zero boring words.
+          </h2>
+        </div>
 
         {/* Grid of 3 decks only */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
@@ -77,10 +82,18 @@ export function DeckShowcaseSection() {
           ))}
         </div>
 
-        {/* Footer line below grid */}
-        <p className="font-manrope text-sm sm:text-base text-brand-muted font-bold tracking-wide">
-          More decks drop during early access.
-        </p>
+        {/* Text +5 in the game */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="inline-flex items-center gap-2.5 px-5 py-2.5 rounded-2xl bg-brand-card/90 border border-brand-border shadow-xs">
+            <span className="font-lilita text-lg text-brand-primary uppercase tracking-wide">
+              +5 in the game
+            </span>
+            <span className="text-brand-muted">•</span>
+            <span className="font-manrope text-sm font-bold text-brand-muted">
+              Meme Central, Sweet & Spicy, Desi Nostalgia & more included free
+            </span>
+          </div>
+        </div>
       </div>
     </section>
   );

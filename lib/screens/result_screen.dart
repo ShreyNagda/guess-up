@@ -258,8 +258,8 @@ class _ResultScreenState extends State<ResultScreen> {
                 selectedCategories: widget.selectedCategories ?? [],
                 teamMatchState: null,
               ),
-          ),
-        );
+        ),
+      );
     }
   }
 
@@ -298,10 +298,7 @@ class _ResultScreenState extends State<ResultScreen> {
         scorePillText = "TURN SCORE: +$_currentScore";
       }
     } else {
-      scorePillText =
-          answeredWords.isNotEmpty
-              ? "SCORE: $_currentScore / ${answeredWords.length}"
-              : "SCORE: $_currentScore";
+      scorePillText = "$_currentScore";
     }
 
     return Scaffold(
@@ -346,177 +343,549 @@ class _ResultScreenState extends State<ResultScreen> {
                 ),
                 child: Column(
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        // Title
-                        Flexible(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              FittedBox(
-                                fit: BoxFit.scaleDown,
-                                child: Text(
-                                  titleText,
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 22,
-                                    color:
-                                        isDark
-                                            ? Colors.amber
-                                            : theme.colorScheme.primary,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Row(
-                                children: List.generate(3, (index) {
-                                  int stars =
-                                      _currentScore >= 12
-                                          ? 3
-                                          : (_currentScore >= 6
-                                              ? 2
-                                              : (_currentScore >= 1 ? 1 : 0));
-                                  final isEarned = index < stars;
-                                  return TweenAnimationBuilder<double>(
-                                    tween: Tween(
-                                      begin: 0.0,
-                                      end: isEarned ? 1.0 : 0.4,
-                                    ),
-                                    duration: Duration(
-                                      milliseconds: 350 + (index * 180),
-                                    ),
-                                    curve: Curves.elasticOut,
-                                    builder: (context, scale, child) {
-                                      return Transform.scale(
-                                        scale: scale,
-                                        child: Icon(
-                                          CupertinoIcons.star_fill,
-                                          size: 22,
-                                          color:
-                                              isEarned
-                                                  ? Colors.amber
-                                                  : Colors.black26,
-                                        ),
-                                      );
-                                    },
-                                  );
-                                }),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(width: 14),
-
-                        // Score Pill Badge
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 18,
-                            vertical: 10,
-                          ),
-                          decoration: BoxDecoration(
-                            color: theme.cardColor,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: (isDark
-                                      ? Colors.amber
-                                      : theme.colorScheme.primary)
-                                  .withAlpha(90),
-                              width: 2,
-                            ),
-                          ),
-                          child: Text(
-                            scorePillText,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w900,
-                              fontSize: 18,
-                              letterSpacing: 0.5,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-
-                    if (teamState != null) ...[
-                      const SizedBox(height: 10),
+                    // ==========================================
+                    // 1. HERO SCORE HIGHLIGHT DISPLAY
+                    // ==========================================
+                    if (teamState == null) ...[
+                      // --- SOLO MODE HERO SCORECARD ---
                       Container(
+                        margin: const EdgeInsets.only(bottom: 12),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
+                          horizontal: 18,
+                          vertical: 14,
                         ),
                         decoration: BoxDecoration(
-                          color: theme.cardColor.withAlpha(isDark ? 140 : 220),
-                          borderRadius: BorderRadius.circular(16),
+                          color: theme.cardColor.withAlpha(isDark ? 210 : 240),
+                          borderRadius: BorderRadius.circular(24),
                           border: Border.all(
                             color: (isDark
                                     ? Colors.amber
                                     : theme.colorScheme.primary)
-                                .withAlpha(60),
-                            width: 1.5,
+                                .withAlpha(140),
+                            width: 2.0,
                           ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: (isDark
+                                      ? Colors.amber
+                                      : theme.colorScheme.primary)
+                                  .withAlpha(35),
+                              blurRadius: 18,
+                              spreadRadius: 2,
+                            ),
+                          ],
                         ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
                           children: [
+                            // Top row: title & star rating
                             Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      CupertinoIcons.flame_fill,
+                                      color: Colors.amber,
+                                      size: 16,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      "SOLO SCORECARD",
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w900,
+                                        fontSize: 12,
+                                        letterSpacing: 1.5,
+                                        color:
+                                            isDark
+                                                ? Colors.amber
+                                                : theme.colorScheme.primary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                Row(
+                                  children: List.generate(3, (index) {
+                                    int stars =
+                                        _currentScore >= 12
+                                            ? 3
+                                            : (_currentScore >= 6
+                                                ? 2
+                                                : (_currentScore >= 1 ? 1 : 0));
+                                    final isEarned = index < stars;
+                                    return TweenAnimationBuilder<double>(
+                                      tween: Tween(
+                                        begin: 0.0,
+                                        end: isEarned ? 1.0 : 0.4,
+                                      ),
+                                      duration: Duration(
+                                        milliseconds: 300 + (index * 150),
+                                      ),
+                                      curve: Curves.elasticOut,
+                                      builder: (context, scale, child) {
+                                        return Transform.scale(
+                                          scale: scale,
+                                          child: Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 1.5,
+                                            ),
+                                            child: Icon(
+                                              CupertinoIcons.star_fill,
+                                              size: 16,
+                                              color:
+                                                  isEarned
+                                                      ? Colors.amber
+                                                      : Colors.white24,
+                                            ),
+                                          ),
+                                        );
+                                      },
+                                    );
+                                  }),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+
+                            // HERO HIGHLIGHT: Big solo score number!
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.baseline,
+                              textBaseline: TextBaseline.alphabetic,
                               children: [
                                 Text(
-                                  teamState.teamCyanEmoji,
-                                  style: const TextStyle(fontSize: 18),
-                                ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  "${teamState.teamCyanName}: ",
+                                  "$_currentScore",
                                   style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
+                                    fontSize: 54,
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: -1.0,
                                     color:
-                                        isDark ? Colors.white : Colors.black87,
+                                        isDark
+                                            ? Colors.amber
+                                            : const Color(0xFF0F0C1C),
+                                    height: 1.0,
                                   ),
                                 ),
+                                const SizedBox(width: 8),
                                 Text(
-                                  "${teamState.teamCyanScore}",
+                                  "POINTS",
                                   style: TextStyle(
+                                    fontSize: 14,
                                     fontWeight: FontWeight.w900,
-                                    fontSize: 18,
-                                    color: AppTheme.teamAColor,
+                                    letterSpacing: 2.0,
+                                    color: (isDark
+                                            ? Colors.amber
+                                            : theme.colorScheme.primary)
+                                        .withAlpha(190),
                                   ),
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 4),
+
+                            // Dynamic Rank Tagline Badge
                             Container(
-                              width: 1,
-                              height: 20,
-                              color: theme.dividerColor.withAlpha(80),
-                            ),
-                            Row(
-                              children: [
-                                Text(
-                                  teamState.teamMagentaEmoji,
-                                  style: const TextStyle(fontSize: 18),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 3,
+                              ),
+                              decoration: BoxDecoration(
+                                color: (isDark
+                                        ? Colors.amber
+                                        : theme.colorScheme.primary)
+                                    .withAlpha(30),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: (isDark
+                                          ? Colors.amber
+                                          : theme.colorScheme.primary)
+                                      .withAlpha(100),
                                 ),
-                                const SizedBox(width: 6),
-                                Text(
-                                  "${teamState.teamMagentaName}: ",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.bold,
-                                    fontSize: 14,
-                                    color:
-                                        isDark ? Colors.white : Colors.black87,
+                              ),
+                              child: Text(
+                                _currentScore >= 20
+                                    ? "🔥 CHARADES MASTER"
+                                    : (_currentScore >= 12
+                                        ? "⚡ PARTY STARTER"
+                                        : (_currentScore >= 6
+                                            ? "👏 SOLID GUESSER"
+                                            : "☕ WARMUP MODE")),
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.0,
+                                  color:
+                                      isDark
+                                          ? Colors.amber
+                                          : theme.colorScheme.primary,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 10),
+
+                            // Quick Stat Chips: Correct, Passed, Accuracy
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.withAlpha(
+                                      isDark ? 35 : 25,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        CupertinoIcons.checkmark_alt,
+                                        size: 12,
+                                        color: Colors.greenAccent,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        "${answeredWords.where((e) => e.value == "Correct").length} Correct",
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.greenAccent,
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                Text(
-                                  "${teamState.teamMagentaScore}",
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w900,
-                                    fontSize: 18,
-                                    color: AppTheme.teamBColor,
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.red.withAlpha(
+                                      isDark ? 35 : 25,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      const Icon(
+                                        CupertinoIcons.arrow_right_to_line,
+                                        size: 11,
+                                        color: Colors.redAccent,
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        "${answeredWords.where((e) => e.value == "Pass").length} Passed",
+                                        style: const TextStyle(
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.redAccent,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 3,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.cyan.withAlpha(
+                                      isDark ? 35 : 25,
+                                    ),
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Text(
+                                    "${answeredWords.isNotEmpty ? ((answeredWords.where((e) => e.value == "Correct").length / answeredWords.length) * 100).round() : 0}% Acc",
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.cyanAccent,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
                           ],
                         ),
+                      ),
+                    ] else ...[
+                      // --- TEAM MODE HERO: HIGHLIGHT WINNING TEAM SCORE ---
+                      Builder(
+                        builder: (context) {
+                          final isCyanWinning =
+                              teamState.teamCyanScore >
+                              teamState.teamMagentaScore;
+                          final isMagentaWinning =
+                              teamState.teamMagentaScore >
+                              teamState.teamCyanScore;
+                          final isTied =
+                              teamState.teamCyanScore ==
+                              teamState.teamMagentaScore;
+
+                          final String winningTeamName =
+                              isCyanWinning
+                                  ? teamState.teamCyanName
+                                  : (isMagentaWinning
+                                      ? teamState.teamMagentaName
+                                      : "Both Teams");
+                          final String winningTeamEmoji =
+                              isCyanWinning
+                                  ? teamState.teamCyanEmoji
+                                  : (isMagentaWinning
+                                      ? teamState.teamMagentaEmoji
+                                      : "⚔️");
+                          final Color winningTeamColor =
+                              isCyanWinning
+                                  ? AppTheme.teamAColor
+                                  : (isMagentaWinning
+                                      ? AppTheme.teamBColor
+                                      : Colors.amber);
+                          final int winningScore =
+                              isCyanWinning
+                                  ? teamState.teamCyanScore
+                                  : (isMagentaWinning
+                                      ? teamState.teamMagentaScore
+                                      : teamState.teamCyanScore);
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 18,
+                              vertical: 14,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.cardColor.withAlpha(
+                                isDark ? 210 : 240,
+                              ),
+                              borderRadius: BorderRadius.circular(24),
+                              border: Border.all(
+                                color: winningTeamColor.withAlpha(180),
+                                width: 2.2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: winningTeamColor.withAlpha(50),
+                                  blurRadius: 20,
+                                  spreadRadius: 2,
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                // Winning Team Status Banner
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 14,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: winningTeamColor.withAlpha(45),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: winningTeamColor.withAlpha(160),
+                                      width: 1.5,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        isTied
+                                            ? "⚔️ TIED MATCH"
+                                            : (isTeamMatchComplete
+                                                ? "🏆 MATCH CHAMPION"
+                                                : "👑 CURRENT LEADER"),
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 11,
+                                          letterSpacing: 1.2,
+                                          color: winningTeamColor,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 6),
+                                      Text(
+                                        isTied
+                                            ? "DEAD HEAT!"
+                                            : "$winningTeamEmoji ${winningTeamName.toUpperCase()}",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w900,
+                                          fontSize: 12,
+                                          color:
+                                              isDark
+                                                  ? Colors.white
+                                                  : const Color(0xFF0F0C1C),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+
+                                // HERO HIGHLIGHT: The Winning Team's Score!
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.baseline,
+                                  textBaseline: TextBaseline.alphabetic,
+                                  children: [
+                                    Text(
+                                      "$winningScore",
+                                      style: TextStyle(
+                                        fontSize: 54,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: -1.0,
+                                        color: winningTeamColor,
+                                        height: 1.0,
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      isTied ? "PTS EACH" : "WINNING PTS",
+                                      style: TextStyle(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 2.0,
+                                        color: winningTeamColor.withAlpha(210),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 3),
+
+                                // Turn Context Subtitle
+                                Text(
+                                  "Round ${teamState.currentRound}/${teamState.maxRounds} • +$_currentScore pts by $lastPlayingTeamName this turn",
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w700,
+                                    color: theme.hintColor,
+                                  ),
+                                ),
+                                const SizedBox(height: 10),
+
+                                // Side-by-side Standings comparison
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 8,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withAlpha(
+                                      isDark ? 80 : 25,
+                                    ),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: theme.dividerColor.withAlpha(40),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      // Cyan Team
+                                      Expanded(
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            if (isCyanWinning)
+                                              const Text(
+                                                "👑 ",
+                                                style: TextStyle(fontSize: 12),
+                                              ),
+                                            Flexible(
+                                              child: Text(
+                                                "${teamState.teamCyanEmoji} ${teamState.teamCyanName}: ",
+                                                style: TextStyle(
+                                                  fontWeight:
+                                                      isCyanWinning
+                                                          ? FontWeight.w900
+                                                          : FontWeight.w700,
+                                                  fontSize: 11,
+                                                  color:
+                                                      isCyanWinning
+                                                          ? AppTheme.teamAColor
+                                                          : (isDark
+                                                              ? Colors.white70
+                                                              : Colors.black54),
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            Text(
+                                              "${teamState.teamCyanScore} pts",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 13,
+                                                color: AppTheme.teamAColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      Container(
+                                        width: 1,
+                                        height: 18,
+                                        color: theme.dividerColor.withAlpha(80),
+                                        margin: const EdgeInsets.symmetric(
+                                          horizontal: 6,
+                                        ),
+                                      ),
+                                      // Magenta Team
+                                      Expanded(
+                                        child: Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            if (isMagentaWinning)
+                                              const Text(
+                                                "👑 ",
+                                                style: TextStyle(fontSize: 12),
+                                              ),
+                                            Flexible(
+                                              child: Text(
+                                                "${teamState.teamMagentaEmoji} ${teamState.teamMagentaName}: ",
+                                                style: TextStyle(
+                                                  fontWeight:
+                                                      isMagentaWinning
+                                                          ? FontWeight.w900
+                                                          : FontWeight.w700,
+                                                  fontSize: 11,
+                                                  color:
+                                                      isMagentaWinning
+                                                          ? AppTheme.teamBColor
+                                                          : (isDark
+                                                              ? Colors.white70
+                                                              : Colors.black54),
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
+                                            Text(
+                                              "${teamState.teamMagentaScore} pts",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w900,
+                                                fontSize: 13,
+                                                color: AppTheme.teamBColor,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        },
                       ),
                     ],
 
@@ -545,11 +914,11 @@ class _ResultScreenState extends State<ResultScreen> {
                                     bottom: 10.0,
                                   ),
                                   child: Text(
-                                    "WORD BREAKDOWN (${answeredWords.length})",
+                                    "SCORECARD BREAKDOWN (${answeredWords.length})",
                                     style: theme.textTheme.labelSmall?.copyWith(
                                       fontWeight: FontWeight.w900,
-                                      letterSpacing: 1.8,
-                                      fontSize: 12,
+                                      letterSpacing: 1.6,
+                                      fontSize: 11,
                                       color: theme.hintColor,
                                     ),
                                   ),
@@ -559,16 +928,30 @@ class _ResultScreenState extends State<ResultScreen> {
                                     right: 4.0,
                                     bottom: 10.0,
                                   ),
-                                  child: Text(
-                                    "Tap chip to correct",
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 11,
-                                      color: (isDark
-                                              ? Colors.amber
-                                              : theme.colorScheme.primary)
-                                          .withAlpha(180),
-                                    ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Icon(
+                                        CupertinoIcons.arrow_2_circlepath,
+                                        size: 11,
+                                        color: (isDark
+                                                ? Colors.amber
+                                                : theme.colorScheme.primary)
+                                            .withAlpha(180),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        "Tap to flip result",
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 11,
+                                          color: (isDark
+                                                  ? Colors.amber
+                                                  : theme.colorScheme.primary)
+                                              .withAlpha(180),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],
@@ -606,45 +989,104 @@ class _ResultScreenState extends State<ResultScreen> {
                                               ),
                                               padding:
                                                   const EdgeInsets.symmetric(
-                                                    horizontal: 16,
-                                                    vertical: 12,
+                                                    horizontal: 14,
+                                                    vertical: 10,
                                                   ),
                                               decoration: BoxDecoration(
-                                                color: isCorrect
-                                                    ? (isDark
-                                                        ? Colors.green.withAlpha(50)
-                                                        : Colors.green.shade50)
-                                                    : (isDark
-                                                        ? Colors.red.withAlpha(50)
-                                                        : Colors.red.shade50),
-                                                borderRadius: BorderRadius.circular(14),
+                                                color:
+                                                    isCorrect
+                                                        ? (isDark
+                                                            ? Colors.green
+                                                                .withAlpha(45)
+                                                            : Colors
+                                                                .green
+                                                                .shade50)
+                                                        : (isDark
+                                                            ? Colors.red
+                                                                .withAlpha(45)
+                                                            : Colors
+                                                                .red
+                                                                .shade50),
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
                                                 border: Border.all(
-                                                  color: isCorrect
-                                                      ? (isDark
-                                                          ? Colors.greenAccent
-                                                          : Colors.green.shade600)
-                                                      : (isDark
-                                                          ? Colors.redAccent
-                                                          : Colors.red.shade600),
+                                                  color:
+                                                      isCorrect
+                                                          ? (isDark
+                                                              ? Colors
+                                                                  .greenAccent
+                                                                  .withAlpha(
+                                                                    160,
+                                                                  )
+                                                              : Colors
+                                                                  .green
+                                                                  .shade600)
+                                                          : (isDark
+                                                              ? Colors.redAccent
+                                                                  .withAlpha(
+                                                                    160,
+                                                                  )
+                                                              : Colors
+                                                                  .red
+                                                                  .shade600),
                                                   width: 1.5,
                                                 ),
                                               ),
                                               child: Row(
                                                 children: [
-                                                  Icon(
-                                                    isCorrect
-                                                        ? CupertinoIcons
-                                                            .checkmark_circle_fill
-                                                        : CupertinoIcons
-                                                            .xmark_circle_fill,
-                                                    size: 22,
-                                                    color: isCorrect
-                                                        ? (isDark
-                                                            ? Colors.greenAccent
-                                                            : Colors.green.shade700)
-                                                        : (isDark
-                                                            ? Colors.redAccent
-                                                            : Colors.red.shade700),
+                                                  // Status Pill
+                                                  Container(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 8,
+                                                          vertical: 3,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color:
+                                                          isCorrect
+                                                              ? Colors.green
+                                                              : Colors
+                                                                  .redAccent,
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            8,
+                                                          ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisSize:
+                                                          MainAxisSize.min,
+                                                      children: [
+                                                        Icon(
+                                                          isCorrect
+                                                              ? CupertinoIcons
+                                                                  .checkmark_alt
+                                                              : CupertinoIcons
+                                                                  .arrow_right_to_line,
+                                                          size: 11,
+                                                          color: Colors.white,
+                                                        ),
+                                                        const SizedBox(
+                                                          width: 4,
+                                                        ),
+                                                        Text(
+                                                          isCorrect
+                                                              ? "+1"
+                                                              : "PASS",
+                                                          style:
+                                                              const TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .w900,
+                                                                fontSize: 10,
+                                                                color:
+                                                                    Colors
+                                                                        .white,
+                                                                letterSpacing:
+                                                                    0.5,
+                                                              ),
+                                                        ),
+                                                      ],
+                                                    ),
                                                   ),
                                                   const SizedBox(width: 12),
                                                   Expanded(
@@ -655,14 +1097,24 @@ class _ResultScreenState extends State<ResultScreen> {
                                                           TextOverflow.ellipsis,
                                                       style: TextStyle(
                                                         fontWeight:
-                                                            FontWeight.w800,
-                                                        fontSize: 16,
+                                                            FontWeight.w900,
+                                                        fontSize: 15,
                                                         letterSpacing: 0.3,
-                                                        color: isDark
-                                                            ? Colors.white
-                                                            : Colors.black87,
+                                                        color:
+                                                            isDark
+                                                                ? Colors.white
+                                                                : Colors
+                                                                    .black87,
                                                       ),
                                                     ),
+                                                  ),
+                                                  Icon(
+                                                    Icons.swap_horiz_rounded,
+                                                    size: 18,
+                                                    color:
+                                                        isDark
+                                                            ? Colors.white38
+                                                            : Colors.black26,
                                                   ),
                                                 ],
                                               ),
@@ -807,7 +1259,10 @@ class _ResultScreenState extends State<ResultScreen> {
                                   borderRadius: BorderRadius.circular(16),
                                 ),
                               ),
-                              child: const Icon(CupertinoIcons.house_fill, size: 22),
+                              child: const Icon(
+                                CupertinoIcons.house_fill,
+                                size: 22,
+                              ),
                             ),
                           ),
                         ),

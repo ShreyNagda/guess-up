@@ -21,9 +21,9 @@ const lilitaOne = Lilita_One({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: "Bujho — The Desi Charades Game",
+  title: "Bujho - The Desi Charades Game | Indie Party Game",
   description:
-    "Phone on forehead. Friends screaming. Tilt to score. Get early access before public launch.",
+    "The desi charades game, built by an indie dev. Phone on forehead, friends act out clues, tilt to score. 8 hand-crafted desi decks. Ad-free. Offline. Become a founding tester!",
   applicationName: "Bujho",
   keywords: [
     "Bujho",
@@ -37,6 +37,7 @@ export const metadata: Metadata = {
     "Headbands Game India",
     "Ad Free Charades",
     "Offline Party Game",
+    "Founding Testers",
   ],
   authors: [{ name: "Shrey Nagda" }],
   creator: "Bujho",
@@ -47,20 +48,20 @@ export const metadata: Metadata = {
     apple: "/images/bujho-splash-icon.png",
   },
   alternates: {
-    canonical: SITE_URL,
+    canonical: "https://bujho.vercel.app/",
   },
   openGraph: {
-    title: "Bujho — The Desi Charades Game",
+    title: "Bujho - The Desi Charades Game",
     description:
-      "Phone on forehead. Friends screaming. Tilt to score. Get early access before public launch.",
-    url: SITE_URL,
+      "Phone on forehead. Friends screaming clues. Tilt to score. Built by an indie dev. 8 hand-crafted desi decks.",
+    url: "https://bujho.vercel.app/",
     siteName: "Bujho",
     images: [
       {
-        url: `${SITE_URL}/opengraph-image`,
+        url: "https://bujho.vercel.app/og-image.png",
         width: 1200,
         height: 630,
-        alt: "Bujho — The Desi Charades Game | Get Early Access",
+        alt: "Bujho - The Desi Charades Game",
       },
     ],
     locale: "en_IN",
@@ -68,10 +69,10 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "Bujho — The Desi Charades Game",
+    title: "Bujho - The Desi Charades Game",
     description:
-      "Phone on forehead. Friends screaming. Tilt to score. Get early access before public launch.",
-    images: [`${SITE_URL}/opengraph-image`],
+      "Phone on forehead. Friends screaming clues. Tilt to score. Built by an indie dev. 8 hand-crafted desi decks.",
+    images: ["https://bujho.vercel.app/og-image.png"],
   },
   robots: {
     index: true,
@@ -94,9 +95,9 @@ const jsonLdApp = {
   "@context": "https://schema.org",
   "@type": "MobileApplication",
   name: "Bujho",
-  alternateName: "Bujho — The Desi Charades Game",
+  alternateName: "Bujho - The Desi Charades Game",
   description:
-    "The desi charades party game. Phone on forehead, friends act out clues, tilt to score.",
+    "The desi charades game, built by an indie dev. Phone on forehead, friends act out clues, tilt to score. 8 hand-crafted desi decks. Ad-free. Offline. Become a founding tester!",
   applicationCategory: "GameApplication",
   operatingSystem: "Android",
   offers: { "@type": "Offer", price: "0", priceCurrency: "INR" },
@@ -113,12 +114,6 @@ export default function RootLayout({
       className={`${manrope.variable} ${lilitaOne.variable}`}
       suppressHydrationWarning
     >
-      <head>
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdApp) }}
-        />
-      </head>
       <body className="min-h-screen bg-brand-bg text-brand-text transition-colors duration-300 font-sans selection:bg-brand-primary selection:text-brand-text relative">
         <ThemeProvider
           attribute="class"
@@ -128,6 +123,10 @@ export default function RootLayout({
           <ArcadeBackground />
           {children}
         </ThemeProvider>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLdApp) }}
+        />
       </body>
     </html>
   );

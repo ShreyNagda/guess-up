@@ -36,3 +36,7 @@ export const FOUNDER_COUNT = 47;
 // 8. Base Canonical Site URL
 export const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL || "https://bujho.vercel.app";
+
+// 9. Official Instagram Link
+export const INSTAGRAM_URL =
+  process.env.NEXT_PUBLIC_INSTAGRAM_URL || "https://instagram.com/its.shreyn";

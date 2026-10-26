@@ -183,6 +183,24 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
     }
   }
 
+  void _triggerStartCountdown() {
+    if (isGamePaused ||
+        isGameFinished ||
+        isCountdownRunning ||
+        _isStartingCountdown ||
+        isPlacedOnForehead) {
+      return;
+    }
+    if (mounted) {
+      setState(() {
+        isPlacedOnForehead = true;
+        isCountdownRunning = true;
+        getReadyCountdown = GameConstants.preGameCountdownSeconds;
+      });
+      _startGetReadyCountdown();
+    }
+  }
+
   void _startGetReadyCountdown() {
     GameAudioEngine().pauseBgm();
     _stopAccelerometerListener(); // Stop redundant 60Hz sensor listening once forehead detected
@@ -643,7 +661,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                                                   border: Border.all(
                                                     color: (_isInvertedControls
                                                             ? Colors.redAccent
-                                                            : Colors.greenAccent)
+                                                            : Colors
+                                                                .greenAccent)
                                                         .withAlpha(140),
                                                   ),
                                                 ),
@@ -655,7 +674,8 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                                                     color:
                                                         _isInvertedControls
                                                             ? Colors.redAccent
-                                                            : Colors.greenAccent,
+                                                            : Colors
+                                                                .greenAccent,
                                                     fontWeight: FontWeight.w900,
                                                     fontSize: 11,
                                                     letterSpacing: 1.0,
@@ -899,7 +919,9 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        "Screen facing your friends! Countdown starts automatically when held flat.",
+                        _isTapControl
+                            ? "Screen facing your friends! Tap the screen to score or pass."
+                            : "Screen facing your friends! Countdown starts automatically when held flat.",
                         textAlign: TextAlign.center,
                         style: theme.textTheme.bodyMedium?.copyWith(
                           color:
@@ -908,42 +930,257 @@ class _GameScreenState extends State<GameScreen> with WidgetsBindingObserver {
                         ),
                         softWrap: true,
                       ),
-                      if (isFlat) ...[
-                        const SizedBox(height: 12),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 5,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withAlpha(50),
-                            borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Colors.amberAccent.withAlpha(140),
+                      const SizedBox(height: 16),
+
+                      // Two Prompts based on Control Mode (Tilt or Tap, Normal or Inverted)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          // 1. Correct Action Prompt
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withAlpha(isDark ? 45 : 25),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.greenAccent.withAlpha(
+                                    isDark ? 180 : 140,
+                                  ),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.green,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      _isTapControl
+                                          ? (_isInvertedControls
+                                              ? Icons.arrow_back_rounded
+                                              : Icons.arrow_forward_rounded)
+                                          : (_isInvertedControls
+                                              ? Icons.arrow_upward_rounded
+                                              : Icons.arrow_downward_rounded),
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          "CORRECT (+1)",
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w900,
+                                            color:
+                                                isDark
+                                                    ? Colors.greenAccent
+                                                    : Colors.green.shade800,
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                        Text(
+                                          _isTapControl
+                                              ? (_isInvertedControls
+                                                  ? "👈 Tap Left side"
+                                                  : "👉 Tap Right side")
+                                              : (_isInvertedControls
+                                                  ? "👆 Tilt Up"
+                                                  : "👇 Tilt Down"),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w900,
+                                            color:
+                                                isDark
+                                                    ? Colors.white
+                                                    : const Color(0xFF0F0C1C),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          child: const Row(
+                          const SizedBox(width: 12),
+
+                          // 2. Pass Action Prompt
+                          Flexible(
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 14,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.red.withAlpha(isDark ? 45 : 25),
+                                borderRadius: BorderRadius.circular(16),
+                                border: Border.all(
+                                  color: Colors.redAccent.withAlpha(
+                                    isDark ? 180 : 140,
+                                  ),
+                                  width: 1.5,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(6),
+                                    decoration: const BoxDecoration(
+                                      color: Colors.redAccent,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: Icon(
+                                      _isTapControl
+                                          ? (_isInvertedControls
+                                              ? Icons.arrow_forward_rounded
+                                              : Icons.arrow_back_rounded)
+                                          : (_isInvertedControls
+                                              ? Icons.arrow_downward_rounded
+                                              : Icons.arrow_upward_rounded),
+                                      size: 16,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          "PASS (SKIP)",
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.w900,
+                                            color:
+                                                isDark
+                                                    ? Colors.redAccent
+                                                    : Colors.red.shade800,
+                                            letterSpacing: 0.8,
+                                          ),
+                                        ),
+                                        Text(
+                                          _isTapControl
+                                              ? (_isInvertedControls
+                                                  ? "👉 Tap Right side"
+                                                  : "👈 Tap Left side")
+                                              : (_isInvertedControls
+                                                  ? "👇 Tilt Down"
+                                                  : "👆 Tilt Up"),
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w900,
+                                            color:
+                                                isDark
+                                                    ? Colors.white
+                                                    : const Color(0xFF0F0C1C),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 14),
+
+                      // Start Ready Indicator / Manual Tap to Start Action
+                      GestureDetector(
+                        onTap: _triggerStartCountdown,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color:
+                                (isFlat
+                                        ? Colors.amber
+                                        : (isTeamMode
+                                            ? teamColor
+                                            : (isDark
+                                                ? Colors.amber
+                                                : Colors.amber.shade700)))
+                                    .withAlpha(isFlat ? 60 : 35),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(
+                              color:
+                                  (isFlat
+                                          ? Colors.amberAccent
+                                          : (isTeamMode
+                                              ? teamColor
+                                              : (isDark
+                                                  ? Colors.amberAccent
+                                                  : Colors.amber.shade700)))
+                                      .withAlpha(isFlat ? 220 : 140),
+                              width: isFlat ? 2 : 1,
+                            ),
+                          ),
+                          child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Icon(
-                                Icons.check_circle_rounded,
-                                size: 14,
-                                color: Colors.amberAccent,
+                                isFlat
+                                    ? Icons.check_circle_rounded
+                                    : (_isTapControl
+                                        ? Icons.touch_app_rounded
+                                        : Icons.play_arrow_rounded),
+                                size: 16,
+                                color:
+                                    isFlat
+                                        ? Colors.amberAccent
+                                        : (isTeamMode
+                                            ? teamColor
+                                            : (isDark
+                                                ? Colors.amberAccent
+                                                : Colors.amber.shade800)),
                               ),
-                              SizedBox(width: 6),
+                              const SizedBox(width: 6),
                               Text(
-                                "HELD FLAT • STARTING...",
+                                isFlat
+                                    ? "HELD FLAT • STARTING..."
+                                    : (_isTapControl
+                                        ? "TAP ANYWHERE TO START NOW"
+                                        : "HOLD FLAT ON FOREHEAD OR TAP TO START"),
                                 style: TextStyle(
                                   fontSize: 11,
                                   fontWeight: FontWeight.w900,
-                                  color: Colors.amberAccent,
-                                  letterSpacing: 1.0,
+                                  color:
+                                      isFlat
+                                          ? Colors.amberAccent
+                                          : (isTeamMode
+                                              ? teamColor
+                                              : (isDark
+                                                  ? Colors.amberAccent
+                                                  : Colors.amber.shade800)),
+                                  letterSpacing: 0.8,
                                 ),
                               ),
                             ],
                           ),
                         ),
-                      ],
+                      ),
                     ],
                   ),
                 ),

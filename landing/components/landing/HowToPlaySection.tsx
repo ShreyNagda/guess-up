@@ -22,7 +22,7 @@ export function HowToPlaySection() {
       id: 1,
       title: "Pick Your Category Deck",
       subtitle:
-        "Choose from 50+ hand-curated decks like Bollywood Buff, Cricket Fever, or Sweet & Spicy street food.",
+        "Choose from 8 hand-crafted decks like Bollywood Buff, Cricket Fever, or Sweet & Spicy street food.",
       icon: <Layers className="w-6 h-6 text-party-pink" />,
       tagline: "Deck Selection",
       badge: "Step 1",
@@ -82,7 +82,8 @@ export function HowToPlaySection() {
             How To Play Bujho
           </h2>
           <p className="text-base sm:text-xl text-brand-muted font-bold leading-relaxed">
-            Zero setup, zero rules to learn. Grab a phone, gather your crew, and let the chaos begin!
+            Zero setup, zero rules to learn. Grab a phone, gather your crew, and
+            let the chaos begin!
           </p>
         </motion.div>
 
@@ -131,4 +132,3 @@ export function HowToPlaySection() {
     </section>
   );
 }
-
