@@ -25,6 +25,9 @@ export const metadata: Metadata = {
   description:
     "Bujho is India's favorite desi charades and offline party game. Put phone on forehead, guess Bollywood movies, cricket, food & desi memes, and tilt to score. 100% free, works offline, no ads.",
   applicationName: "Bujho",
+  verification: {
+    google: "tauIxHUHEw88e7Ua7LJ2davVhf6bo8V3cy-BtEKa5jw",
+  },
   keywords: [
     "Bujho",
     "Bujho game",
