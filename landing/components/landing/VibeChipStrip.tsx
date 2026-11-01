@@ -17,7 +17,10 @@ export function VibeChipStrip() {
   const marqueeItems = [...chips, ...chips, ...chips, ...chips];
 
   return (
-    <section className="py-12 md:py-16 bg-transparent border-y border-brand-border/40 overflow-hidden transition-colors duration-300">
+    <aside
+      aria-label="Bujho Key Highlights Marquee"
+      className="py-12 md:py-16 bg-transparent border-y border-brand-border/40 overflow-hidden transition-colors duration-300"
+    >
       <div className="w-full flex overflow-hidden select-none">
         <motion.div
           className="flex items-center gap-4 sm:gap-6 md:gap-8 shrink-0"
@@ -39,7 +42,7 @@ export function VibeChipStrip() {
           ))}
         </motion.div>
       </div>
-    </section>
+    </aside>
   );
 }
 

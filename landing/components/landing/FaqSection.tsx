@@ -16,19 +16,23 @@ export function FaqSection() {
   const faqs: FaqItem[] = [
     {
       question: "Is Bujho really free?",
-      answer: "Yes, and no ads ever. No subscriptions, no paywalled decks, and no video interruptions between rounds.",
+      answer:
+        "Yes, and no ads ever. No subscriptions, no paywalled decks, and no video interruptions between rounds.",
     },
     {
       question: "Does it work without internet?",
-      answer: "Fully offline. Once downloaded, you can play on flights, road trips, remote house parties, or beaches without Wi-Fi or data.",
+      answer:
+        "Fully offline. Once downloaded, you can play on flights, road trips, remote house parties, or beaches without Wi-Fi or data.",
     },
     {
       question: "What's the catch with early access?",
-      answer: "Nothing. You get the game first, plus a Founding Player badge when we launch publicly.",
+      answer:
+        "Nothing. You get the game first, plus a Founding Player badge when we launch publicly.",
     },
     {
       question: "What Android version do I need?",
-      answer: "Android 8.0 and above. Any modern Android phone with tilt sensors (accelerometer) runs it smoothly at 60 FPS.",
+      answer:
+        "Android 8.0 and above. Any modern Android phone with tilt sensors (accelerometer) runs it smoothly at 60 FPS.",
     },
     {
       question: "How long is early access?",
@@ -40,11 +44,13 @@ export function FaqSection() {
     },
     {
       question: "Why do I need to join a group to get access?",
-      answer: "Google Play's early-access system works this way. It's a one-tap step — takes 10 seconds. Guide below.",
+      answer:
+        "Google Play's early-access system works this way. It's a one-tap step — takes 10 seconds. Guide below.",
     },
     {
       question: "I joined but Play Store says it's not available.",
-      answer: "Two common reasons: (1) Google takes 5–10 minutes to sync your spot — try again in a bit. (2) Make sure you're signed into the same Google account you used to join. Details in the guide below.",
+      answer:
+        "Two common reasons: (1) Google takes 5–10 minutes to sync your spot — try again in a bit. (2) Make sure you're signed into the same Google account you used to join. Details in the guide below.",
     },
   ];
 
@@ -55,28 +61,34 @@ export function FaqSection() {
   return (
     <section
       id="faq"
+      aria-labelledby="faq-title"
       className="py-16 md:py-24 bg-transparent transition-colors duration-300 scroll-mt-16"
     >
       <div className="max-w-4xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="text-center max-w-2xl mx-auto mb-12 sm:mb-16"
-        >
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-primary/10 text-brand-text text-xs font-bold uppercase tracking-wider mb-3 border border-brand-border">
-            <HelpCircle className="w-3.5 h-3.5 text-brand-primary fill-brand-primary/20" />
-            <span>Got Questions?</span>
-          </div>
-          <h2 className="text-3xl sm:text-5xl font-lilita font-black text-brand-text tracking-tight mb-4 uppercase">
-            Frequently Asked Questions
-          </h2>
-          <p className="text-sm sm:text-base text-brand-muted font-bold">
-            Everything you need to know about early access, offline play, and getting the app.
-          </p>
-        </motion.div>
+        <header className="text-center max-w-2xl mx-auto mb-12 sm:mb-16">
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.5 }}
+          >
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-brand-primary/10 text-brand-text text-xs font-bold uppercase tracking-wider mb-3 border border-brand-border">
+              <HelpCircle className="w-3.5 h-3.5 text-brand-primary fill-brand-primary/20" />
+              <span>Got Questions?</span>
+            </div>
+            <h2
+              id="faq-title"
+              className="text-3xl sm:text-5xl font-lilita font-black text-brand-text tracking-tight mb-4 uppercase"
+            >
+              Frequently Asked Questions
+            </h2>
+            <p className="text-sm sm:text-base text-brand-muted font-bold">
+              Everything you need to know about early access, offline play, and
+              getting the app.
+            </p>
+          </motion.div>
+        </header>
 
         {/* Accordion List */}
         <div className="space-y-3.5">

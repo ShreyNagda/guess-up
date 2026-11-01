@@ -5,7 +5,9 @@ import { Navbar } from "@/components/landing/Navbar";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { ScreenshotsAndDecksSection } from "@/components/landing/ScreenshotsAndDecksSection";
 import { VibeChipStrip } from "@/components/landing/VibeChipStrip";
+import { SpecialThanksSection } from "@/components/landing/SpecialThanksSection";
 import { FoundingTestersSection } from "@/components/landing/FoundingTestersSection";
+import { FaqSection } from "@/components/landing/FaqSection";
 import { Footer } from "@/components/landing/Footer";
 
 export default function LandingPage() {
@@ -30,10 +32,16 @@ export default function LandingPage() {
       {/* SECTION 4 — VIBE CHIP STRIP */}
       <VibeChipStrip />
 
-      {/* SECTION 5 — FOUNDING TESTERS CTA (The Core Focus) */}
+      {/* SECTION 5 — SPECIAL THANKS TO (Founding Testers Wall of Fame) */}
+      <SpecialThanksSection onJoinClick={scrollToTesters} />
+
+      {/* SECTION 6 — FOUNDING TESTERS CTA (The Core Focus) */}
       <FoundingTestersSection />
 
-      {/* SECTION 6 — FOOTER */}
+      {/* SECTION 7 — FAQ (Search Engine Rich Snippets & Help) */}
+      <FaqSection />
+
+      {/* SECTION 8 — FOOTER */}
       <Footer />
     </main>
   );

@@ -24,12 +24,19 @@ export function Navbar({ onScrollToTesters }: NavbarProps) {
 
   return (
     <header className="sticky top-0 z-50 w-full bg-brand-surface/90 backdrop-blur-md border-b border-brand-border py-2.5 transition-colors duration-300">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 h-11 flex items-center justify-between gap-3">
-        {/* Left: BUJHO (font-lilita) + a tiny badge next to it: Indie Made 🇮🇳 (using party-orange text) */}
-        <Link href="/" className="flex items-center gap-2 group shrink-0">
+      <nav
+        aria-label="Main Navigation"
+        className="max-w-6xl mx-auto px-4 sm:px-6 h-11 flex items-center justify-between gap-3"
+      >
+        {/* Left: BUJHO logo brand link */}
+        <Link
+          href="/"
+          aria-label="Bujho Home - The Desi Charades Game"
+          className="flex items-center gap-2 group shrink-0"
+        >
           <Image
             src="/images/bujho-icon.png"
-            alt="Bujho Logo"
+            alt="Bujho Desi Charades App Icon"
             width={30}
             height={30}
             className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-contain shadow-xs group-hover:scale-105 transition-transform border border-brand-border"
@@ -38,24 +45,26 @@ export function Navbar({ onScrollToTesters }: NavbarProps) {
           <span className="font-lilita text-2xl sm:text-3xl text-brand-text tracking-tight uppercase">
             BUJHO
           </span>
-          <span className="ml-1 px-2.5 py-0.5 rounded-full bg-party-orange/10 border border-party-orange/25 text-party-orange text-[10px] sm:text-xs font-extrabold tracking-wide select-none">
-            Indie Made 🇮🇳
+          <span className="ml-1 px-2.5 py-0.5 rounded-full bg-party-orange/10 border border-party-orange/25 text-party-orange text-[10px] sm:text-xs font-extrabold tracking-wide select-none uppercase">
+            Indie
           </span>
         </Link>
 
-        {/* Right: Theme toggle icon (🌙 / ☀️) + compact Become a Tester button */}
+        {/* Right: Theme toggle + Become a Tester button */}
         <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
           <ThemeToggle />
 
           <a
             href="#founding-testers"
+            role="button"
+            aria-label="Scroll to Become a Founding Tester section"
             onClick={handleScroll}
             className="btn-theme-primary font-lilita text-xs sm:text-sm uppercase tracking-wider px-3.5 py-2 sm:px-4 sm:py-2 rounded-full shadow-sm hover:scale-105 active:scale-95 transition-all text-center select-none cursor-pointer"
           >
             Become a Tester
           </a>
         </div>
-      </div>
+      </nav>
     </header>
   );
 }
